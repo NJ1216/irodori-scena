@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="54" height="48" viewBox="0 0 54 48" role="img" aria-labelledby="title">
+  <title id="title">見開きの台本とボイスキャスト</title>
+  <g fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <g transform="translate(1 0) rotate(-20 21 22)">
+      <path d="M21 10C16 7 10 6 4 7v27c6-1 12 0 17 3V10c5-3 11-4 17-3v14M21 37l4-2"/>
+      <path d="M9 15q4 0 7 2m-7 5q4 0 7 2m-7 5q4 0 7 2M26 17q3-2 7-2m-7 9 3-1"/>
+    </g>
+    <g transform="translate(6 0)">
+      <circle cx="34" cy="29" r="5"/>
+      <path d="M25 42c0-5 4-8 9-8s9 3 9 8q-9 3-18 0Z"/>
+    </g>
+  </g>
+</svg>

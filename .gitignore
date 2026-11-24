@@ -1,0 +1,47 @@
+# macOS Finder metadata
+.DS_Store
+
+# Local environment and credential files
+.env
+.env.*
+!.env.example
+!.env.*.example
+.direnv/
+*.pem
+*.p12
+*.pfx
+
+# Locally generated inference experiment audio and manifests
+/artifacts/
+/build/
+/*.spec
+/.playwright-cli/
+
+# Python bytecode
+__pycache__/
+/.ruff_cache/
+
+# Local development environments and generated app state
+/.venv/
+/.uv-cache/
+/node_modules/
+/dist/
+/src-tauri/target/
+/src-tauri/binaries/scena-api-*
+/src-tauri/binaries/scena-api/
+/src-tauri/resources/omlx-runtime/
+/src-tauri/resources/environment-manager/
+/src-tauri/gen/
+/coverage/
+/playwright-report/
+/test-results/
+/.test-temp/
+/scena-data/
+/userproject/
+/userimage/
+.coverage
+*.tsbuildinfo
+scena_native*.so
+native/scena-native/target/
+
+scena_native*.pyd

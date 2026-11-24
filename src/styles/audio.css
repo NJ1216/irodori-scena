@@ -1,0 +1,194 @@
+.master-audio-controls {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--scena-space-2);
+}
+.master-stereo-meter {
+  display: block;
+  width: var(--scena-master-meter-width);
+  color: var(--scena-text-muted);
+}
+.master-meter-box {
+  position: relative;
+  display: grid;
+  height: var(--scena-master-meter-height);
+  overflow: hidden;
+  box-sizing: border-box;
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  background: var(--scena-meter-track);
+  border: 1px solid var(--scena-meter-border);
+  border-radius: var(--scena-radius-pill);
+}
+.master-meter-box::after {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  z-index: 2;
+  height: 1px;
+  background: var(--scena-meter-border);
+  content: "";
+  pointer-events: none;
+  transform: translateY(-0.5px);
+}
+.master-meter-track {
+  position: relative;
+  display: block;
+  min-height: 0;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--scena-meter-track) 76%, var(--scena-canvas));
+}
+.master-meter-track i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--scena-master-meter-level);
+}
+.master-meter-track em {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--scena-meter-clip);
+  box-shadow: 0 0 5px color-mix(in srgb, var(--scena-meter-clip) 72%, transparent);
+  opacity: 0;
+}
+.master-meter-track em.is-clipping {
+  opacity: 1;
+}
+.master-meter-track b {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--scena-master-meter-peak);
+  opacity: 0;
+}
+.master-meter-track b.is-clipped {
+  width: 2px;
+  background: var(--scena-meter-clip);
+}
+.master-stereo-meter.is-active .master-meter-box {
+  box-shadow: 0 0 4px color-mix(in srgb, var(--scena-master-meter-level) 32%, transparent);
+}
+.master-stereo-meter.is-active .master-meter-track b {
+  opacity: 1;
+}
+.master-volume-control {
+  position: relative;
+  display: grid;
+  width: var(--scena-master-knob-size);
+  height: var(--scena-master-knob-size);
+  place-items: center;
+}
+.master-volume-knob {
+  position: relative;
+  width: var(--scena-master-knob-size);
+  height: var(--scena-master-knob-size);
+  min-height: 0;
+  padding: 0;
+  background: var(--scena-surface-raised);
+  border: 1px solid var(--scena-border-strong);
+  border-radius: var(--scena-radius-circle);
+  box-shadow: inset 0 0 0 3px var(--scena-brand-soft);
+  touch-action: none;
+}
+.master-volume-knob i {
+  position: absolute;
+  inset: 2px;
+  display: block;
+  transform: rotate(var(--master-knob-angle));
+}
+.master-volume-knob i::before {
+  position: absolute;
+  top: 1px;
+  left: 50%;
+  width: 1px;
+  height: 7px;
+  background: var(--scena-brand-strong);
+  content: "";
+  transform: translateX(-50%);
+}
+.master-volume-knob:hover,
+.master-volume-knob:focus-visible {
+  border-color: var(--scena-focus);
+  outline: 2px solid color-mix(in srgb, var(--scena-focus) 35%, transparent);
+  outline-offset: 1px;
+}
+.master-volume-control output {
+  position: absolute;
+  z-index: var(--scena-z-tooltip);
+  bottom: calc(100% + 7px);
+  left: 50%;
+  display: none;
+  width: max-content;
+  padding: 5px 7px;
+  color: var(--scena-text);
+  background: var(--scena-surface-raised);
+  border: 1px solid var(--scena-border);
+  border-radius: var(--scena-radius-sm);
+  box-shadow: var(--scena-shadow-md);
+  font-size: var(--type-micro-size);
+  transform: translateX(-50%);
+}
+.master-volume-control:hover output,
+.master-volume-control:focus-within output {
+  display: block;
+}
+.main-window-footer-menu > .master-audio-controls:last-child {
+  margin-left: var(--scena-space-3);
+}
+.main-window-footer-menu > .master-audio-controls:last-child .master-volume-control output {
+  right: 0;
+  left: auto;
+  transform: none;
+}
+
+@media (max-width: 680px) {
+  .main-window-footer {
+    height: var(--studio-footer-height);
+    min-height: var(--studio-footer-height);
+    box-sizing: border-box;
+    gap: 4px;
+    padding-inline: 8px;
+    overflow: visible;
+    white-space: nowrap;
+  }
+  .main-window-meters {
+    gap: 6px;
+  }
+  .unified-memory-value,
+  .gpu-meter-value,
+  .gpu-meter-label,
+  .unified-memory-label {
+    display: none;
+  }
+  .unified-memory-bar,
+  .gpu-meter-bar {
+    width: 36px;
+  }
+  .main-window-footer-menu > .main-window-footer-item > button {
+    width: 26px;
+    min-height: 26px;
+    justify-content: center;
+    padding: 3px;
+    overflow: hidden;
+  }
+  .main-window-token-menu > button::before {
+    content: "T";
+  }
+  .main-window-expression-menu > button span:last-child,
+  .main-window-shortcut-menu > button span:last-child {
+    display: none;
+  }
+  .master-stereo-meter {
+    --scena-master-meter-width: 42px;
+  }
+  .main-window-footer-menu > .master-audio-controls:last-child {
+    margin-left: 0;
+  }
+  .resource-meter-icon {
+    width: 13px;
+    height: 13px;
+  }
+}

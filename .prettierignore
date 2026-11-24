@@ -1,0 +1,17 @@
+artifacts
+coverage
+decisions
+dist
+docs
+node_modules
+playwright-report
+scena-data
+src/generated
+src-tauri/target
+test-results
+userproject
+tests/fixtures
+*.md
+
+/licenses/inventory.json
+/release-license-supplements.json

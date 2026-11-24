@@ -1,0 +1,14 @@
+Package license declaration and upstream attribution (registry metadata):
+{
+  "name": "stackback",
+  "version": "0.0.2",
+  "license": "MIT",
+  "author": {
+    "name": "Roman Shtylman",
+    "email": "shtylman@gmail.com"
+  },
+  "repository": {
+    "url": "git://github.com/shtylman/node-stackback.git",
+    "type": "git"
+  }
+}

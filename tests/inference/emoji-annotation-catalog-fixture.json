@@ -1,0 +1,364 @@
+{
+  "suite_version": 1,
+  "title": "Irodori-TTS emoji annotation catalog: line direction only",
+  "purpose": "Exercise every emoji published in EMOJI_ANNOTATIONS.md once, at the beginning of its spoken line. No shared scene caption is supplied; only each line's direction is passed as caption.",
+  "checkpoint": "Aratako/Irodori-TTS-v4.1-Small",
+  "sway_16": {
+    "num_steps": 16,
+    "t_schedule_mode": "sway",
+    "sway_coeff": -1.0,
+    "cfg_scale_text": 3.0,
+    "cfg_scale_caption": 3.0,
+    "cfg_scale_speaker": 5.0,
+    "cfg_guidance_mode": "independent",
+    "model_device": "mps",
+    "codec_device": "mps",
+    "model_precision": "fp32",
+    "codec_precision": "fp32"
+  },
+  "speakers": [
+    {
+      "id": "C",
+      "name": "美咲",
+      "seed": 2026081403,
+      "reference_text": "美咲です。二人の話を聞いて、私にできることを一緒に考えたいな。",
+      "reference_caption": "明るい二十代女性。澄んだ自然な声で、親しい友人へ率直に話しかける。"
+    },
+    {
+      "id": "D",
+      "name": "菜月",
+      "seed": 2026081604,
+      "reference_text": "菜月です。大切な人が不安なときは、焦らずそばにいて一緒に考えたいと思っています。",
+      "reference_caption": "明るい二十代女性。澄んだ自然な声で、親しい友人へ率直に話しかける。美咲とは別人だが、近い年齢と親しみやすさを持つ。"
+    }
+  ],
+  "scene_context": "未使用。各行のト書きだけをcaptionとして渡す。",
+  "dialogue": [
+    {
+      "id": "001",
+      "speaker": "C",
+      "seed": 2026081901,
+      "text": "ねえ、少しだけ聞いて。",
+      "stage_direction": "耳元で、息をひそめてささやく。"
+    },
+    {
+      "id": "002",
+      "speaker": "D",
+      "seed": 2026081902,
+      "text": "はぁ……間に合ってよかった。",
+      "stage_direction": "息を吐き、安堵のため息を混ぜて話す。"
+    },
+    {
+      "id": "003",
+      "speaker": "C",
+      "seed": 2026081903,
+      "text": "待って……今は、答えないで。",
+      "stage_direction": "意図的な間と沈黙を置き、低く制止する。"
+    },
+    {
+      "id": "004",
+      "speaker": "D",
+      "seed": 2026081904,
+      "text": "それ、ちょっとおかしいよ。",
+      "stage_direction": "くすくすと含み笑いを混ぜて言う。"
+    },
+    {
+      "id": "005",
+      "speaker": "C",
+      "seed": 2026081905,
+      "text": "暑くて、息が上がっちゃった。",
+      "stage_direction": "荒い息と苦しげな吐息を伴って話す。"
+    },
+    {
+      "id": "006",
+      "speaker": "D",
+      "seed": 2026081906,
+      "text": "こちら、忘れ物センターです。",
+      "stage_direction": "反響する館内放送のように話す。"
+    },
+    {
+      "id": "007",
+      "speaker": "C",
+      "seed": 2026081907,
+      "text": "本当に、そう思ってる？",
+      "stage_direction": "からかうように、少し甘えた調子で問いかける。"
+    },
+    {
+      "id": "008",
+      "speaker": "D",
+      "seed": 2026081908,
+      "text": "私だけじゃ、だめかな……。",
+      "stage_direction": "声を震わせ、自信なさげに尋ねる。"
+    },
+    {
+      "id": "009",
+      "speaker": "C",
+      "seed": 2026081909,
+      "text": "待って、ちょっと息が……。",
+      "stage_direction": "息切れし、荒い呼吸をしながら話す。"
+    },
+    {
+      "id": "010",
+      "speaker": "D",
+      "seed": 2026081910,
+      "text": "え……今、なんて言ったの？",
+      "stage_direction": "息をのみ、驚いて問い返す。"
+    },
+    {
+      "id": "011",
+      "speaker": "C",
+      "seed": 2026081911,
+      "text": "これ、すごく甘いね。",
+      "stage_direction": "口元の水音を伴うような近い声で言う。"
+    },
+    {
+      "id": "012",
+      "speaker": "D",
+      "seed": 2026081912,
+      "text": "うん、聞いてるよ。",
+      "stage_direction": "リップノイズを伴う近接した声で答える。"
+    },
+    {
+      "id": "013",
+      "speaker": "C",
+      "seed": 2026081913,
+      "text": "大丈夫。ここにいるよ。",
+      "stage_direction": "優しく、相手を包むように話す。"
+    },
+    {
+      "id": "014",
+      "speaker": "D",
+      "seed": 2026081914,
+      "text": "ごめん……もう、我慢できない。",
+      "stage_direction": "嗚咽し、泣きながら言う。"
+    },
+    {
+      "id": "015",
+      "speaker": "C",
+      "seed": 2026081915,
+      "text": "やだっ！ 後ろに誰かいる！",
+      "stage_direction": "恐怖で悲鳴を上げる。"
+    },
+    {
+      "id": "016",
+      "speaker": "D",
+      "seed": 2026081916,
+      "text": "あと五分だけ……。",
+      "stage_direction": "眠そうで、気だるげに話す。"
+    },
+    {
+      "id": "017",
+      "speaker": "C",
+      "seed": 2026081917,
+      "text": "急いで！ 時間がないの！",
+      "stage_direction": "早口で一気にまくしたてる。"
+    },
+    {
+      "id": "018",
+      "speaker": "D",
+      "seed": 2026081918,
+      "text": "もしもし、今どこ？",
+      "stage_direction": "電話越しのような声で話す。"
+    },
+    {
+      "id": "019",
+      "speaker": "C",
+      "seed": 2026081919,
+      "text": "ゆっくりでいいから、話して。",
+      "stage_direction": "ゆっくり、落ち着いた速度で話す。"
+    },
+    {
+      "id": "020",
+      "speaker": "D",
+      "seed": 2026081920,
+      "text": "ごくん。……大丈夫。",
+      "stage_direction": "唾を飲み込んでから、短く答える。"
+    },
+    {
+      "id": "021",
+      "speaker": "C",
+      "seed": 2026081921,
+      "text": "ごほっ、ごめんね。",
+      "stage_direction": "咳き込み、鼻をすするように話す。"
+    },
+    {
+      "id": "022",
+      "speaker": "D",
+      "seed": 2026081922,
+      "text": "また、その話？",
+      "stage_direction": "不満げに舌打ちを混ぜて言う。"
+    },
+    {
+      "id": "023",
+      "speaker": "C",
+      "seed": 2026081923,
+      "text": "えっと、その……違うの。",
+      "stage_direction": "慌てて動揺し、少しどもりながら話す。"
+    },
+    {
+      "id": "024",
+      "speaker": "D",
+      "seed": 2026081924,
+      "text": "やった！ 本当にできた！",
+      "stage_direction": "喜びを抑えきれず、明るく言う。"
+    },
+    {
+      "id": "025",
+      "speaker": "C",
+      "seed": 2026081925,
+      "text": "もう、勝手に決めないで！",
+      "stage_direction": "怒りと不満をはっきり表して言う。"
+    },
+    {
+      "id": "026",
+      "speaker": "D",
+      "seed": 2026081926,
+      "text": "わあ……こんなにきれいなんだ。",
+      "stage_direction": "感嘆し、目を見開いたように言う。"
+    },
+    {
+      "id": "027",
+      "speaker": "C",
+      "seed": 2026081927,
+      "text": "ふぁ……眠くなってきた。",
+      "stage_direction": "あくびを交えて、眠そうに話す。"
+    },
+    {
+      "id": "028",
+      "speaker": "D",
+      "seed": 2026081928,
+      "text": "痛っ……でも、平気。",
+      "stage_direction": "痛みに耐えるように、苦しげに言う。"
+    },
+    {
+      "id": "029",
+      "speaker": "C",
+      "seed": 2026081929,
+      "text": "本当に、間に合うのかな。",
+      "stage_direction": "不安そうに、小さく尋ねる。"
+    },
+    {
+      "id": "030",
+      "speaker": "D",
+      "seed": 2026081930,
+      "text": "見ないで……恥ずかしい。",
+      "stage_direction": "照れて恥ずかしそうに話す。"
+    },
+    {
+      "id": "031",
+      "speaker": "C",
+      "seed": 2026081931,
+      "text": "はいはい、わかりましたよ。",
+      "stage_direction": "呆れたように、投げやり気味に答える。"
+    },
+    {
+      "id": "032",
+      "speaker": "D",
+      "seed": 2026081932,
+      "text": "来てくれて、うれしいな。",
+      "stage_direction": "楽しげに、嬉しそうに話す。"
+    },
+    {
+      "id": "033",
+      "speaker": "C",
+      "seed": 2026081933,
+      "text": "うん、うん。聞いてるよ。",
+      "stage_direction": "相槌を打ち、頷くように答える。"
+    },
+    {
+      "id": "034",
+      "speaker": "D",
+      "seed": 2026081934,
+      "text": "お願い。あと一度だけ、待って。",
+      "stage_direction": "懇願するように、切実に頼む。"
+    },
+    {
+      "id": "035",
+      "speaker": "C",
+      "seed": 2026081935,
+      "text": "あれ……目が回る。",
+      "stage_direction": "酔っ払ったように、呂律を少し崩して話す。"
+    },
+    {
+      "id": "036",
+      "speaker": "D",
+      "seed": 2026081936,
+      "text": "ららら……今日はいい天気。",
+      "stage_direction": "短い鼻歌を交えて、上機嫌に話す。"
+    },
+    {
+      "id": "037",
+      "speaker": "C",
+      "seed": 2026081937,
+      "text": "んー……声を出せない。",
+      "stage_direction": "口を塞がれたように、くぐもった声で話す。"
+    },
+    {
+      "id": "038",
+      "speaker": "D",
+      "seed": 2026081938,
+      "text": "これで、ようやく安心できる。",
+      "stage_direction": "安堵して、満足げに話す。"
+    },
+    {
+      "id": "039",
+      "speaker": "C",
+      "seed": 2026081939,
+      "text": "それって、どういうことだろう？",
+      "stage_direction": "疑問を抱き、考え込みながら尋ねる。"
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "every-emoji-leading-line-caption-only",
+      "description": "公式の全39種類の絵文字を、その対象行の先頭に各1回だけ置く。共有シーンは渡さず、行別ト書きだけをcaptionとして渡す。",
+      "include_scene_context": false,
+      "include_stage_directions": true,
+      "line_text_prefixes": {
+        "001": "👂",
+        "002": "😮‍💨",
+        "003": "⏸️",
+        "004": "🤭",
+        "005": "🥵",
+        "006": "📢",
+        "007": "😏",
+        "008": "🥺",
+        "009": "🌬️",
+        "010": "😮",
+        "011": "👅",
+        "012": "💋",
+        "013": "🫶",
+        "014": "😭",
+        "015": "😱",
+        "016": "😪",
+        "017": "⏩",
+        "018": "📞",
+        "019": "🐢",
+        "020": "🥤",
+        "021": "🤧",
+        "022": "😒",
+        "023": "😰",
+        "024": "😆",
+        "025": "😠",
+        "026": "😲",
+        "027": "🥱",
+        "028": "😖",
+        "029": "😟",
+        "030": "🫣",
+        "031": "🙄",
+        "032": "😊",
+        "033": "👌",
+        "034": "🙏",
+        "035": "🥴",
+        "036": "🎵",
+        "037": "🤐",
+        "038": "😌",
+        "039": "🤔"
+      }
+    }
+  ],
+  "evaluation": {
+    "listen_for": ["絵文字の指定がト書きだけの場合にも意図した効果を補強するか", "絵文字が実際の非言語音として割り込むか、声色・話し方として効くか", "各絵文字を1回だけ行頭に置いた場合の強さと副作用"],
+    "decision_rule": "個々の絵文字を、演技タグとして候補化するかどうかを聴感で個別に判断する。"
+  }
+}

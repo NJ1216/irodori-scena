@@ -1,0 +1,16 @@
+{
+  "identifier": "com.irodori-scena.dev",
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "irodori SCENA [DEV]",
+        "width": 1440,
+        "height": 960,
+        "minWidth": 1280,
+        "minHeight": 900,
+        "visible": false
+      }
+    ]
+  }
+}

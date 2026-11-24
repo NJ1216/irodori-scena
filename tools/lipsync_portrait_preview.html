@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="ja">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>葵の口パクLAB比較</title>
+  <style>
+    body {
+      max-width: 1500px;
+      margin: auto;
+      padding: 20px;
+      color: #182438;
+      background: #eef2f7;
+      font:
+        15px/1.5 system-ui,
+        sans-serif;
+    }
+    header,
+    article {
+      margin: 18px 0;
+      padding: 18px;
+      border: 1px solid #b9c4d1;
+      border-radius: 12px;
+      background: white;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 2px 12px #19233821;
+    }
+    h1 {
+      margin: 0;
+      font-size: 21px;
+    }
+    h2 {
+      margin: 0 0 4px;
+      font-size: 17px;
+    }
+    h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+    }
+    article > p {
+      margin: 8px 0 14px;
+    }
+    button,
+    select,
+    input {
+      font: inherit;
+    }
+    button {
+      padding: 9px 14px;
+      cursor: pointer;
+    }
+    audio {
+      display: block;
+      width: 100%;
+      margin: 12px 0;
+    }
+    .comparison {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(270px, 1fr));
+      gap: 12px;
+      overflow-x: auto;
+    }
+    .comparison section {
+      min-width: 270px;
+      padding: 10px;
+      border: 1px solid #cad5e2;
+      border-radius: 10px;
+      background: #f8fbff;
+      text-align: center;
+    }
+    .stage {
+      position: relative;
+      height: 440px;
+      overflow: hidden;
+      border-radius: 8px;
+      background: linear-gradient(#dce9f4, #f2e9ee);
+    }
+    .portrait {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .face {
+      position: absolute;
+      right: 7px;
+      bottom: 7px;
+      width: min(42%, 175px);
+      aspect-ratio: 447 / 410;
+      object-fit: cover;
+      border: 3px solid white;
+      border-radius: 8px;
+      background: #dce9f4;
+      box-shadow: 0 2px 12px #17253899;
+    }
+    .shape {
+      margin: 7px 0;
+    }
+    select {
+      min-width: 130px;
+      padding: 5px;
+    }
+    .note {
+      width: min(70%, 550px);
+    }
+    label {
+      display: inline-block;
+      margin: 4px 16px 4px 0;
+    }
+    @media (max-width: 850px) {
+      body {
+        padding: 8px;
+      }
+      header {
+        display: block;
+      }
+      header p {
+        margin: 5px 0;
+      }
+      article {
+        padding: 10px;
+      }
+    }
+  </style>
+  <header>
+    <div>
+      <h1>葵の口パクLAB比較</h1>
+      <p>同じ音声に合わせ、PSDの全身と顔を3方式で表示します。TXTは読み方の参考です。</p>
+    </div>
+    <button id="save" type="button">評価JSONを保存</button>
+  </header>
+  <!-- CARDS -->
+  <script>
+    /* RECORDS */
+    const shapes = ["pau", "a", "i", "u", "e", "o", "N"];
+    for (const shape of shapes) {
+      for (const suffix of [".png", "-face.png"]) {
+        const image = new Image();
+        image.src = "portrait/" + shape + suffix;
+      }
+    }
+    for (const card of document.querySelectorAll("article")) {
+      const record = records[card.dataset.stem];
+      const audio = card.querySelector("audio");
+      const panels = [...card.querySelectorAll("[data-variant]")];
+      const draw = () => {
+        const tick = audio.currentTime * 1e7;
+        for (const panel of panels) {
+          const rows = record[panel.dataset.variant];
+          const row = rows.find((item) => item[0] <= tick && tick < item[1]);
+          const resting = audio.paused || audio.ended || audio.currentTime <= 0;
+          const shape = !resting && row ? row[2] : "pau";
+          if (panel.dataset.shape === shape) continue;
+          panel.dataset.shape = shape;
+          panel.querySelector(".portrait").src = "portrait/" + shape + ".png";
+          panel.querySelector(".face").src = "portrait/" + shape + "-face.png";
+          panel.querySelector("b").textContent = shape;
+        }
+        if (!audio.paused) requestAnimationFrame(draw);
+      };
+      audio.addEventListener("play", () => {
+        for (const other of document.querySelectorAll("audio")) {
+          if (other !== audio) other.pause();
+        }
+        draw();
+      });
+      audio.addEventListener("seeked", draw);
+      audio.addEventListener("pause", draw);
+      audio.addEventListener("ended", draw);
+      audio.addEventListener("loadedmetadata", draw);
+    }
+    document.getElementById("save").addEventListener("click", () => {
+      const ratings = [...document.querySelectorAll("article")].map((card) => ({
+        stem: card.dataset.stem,
+        choice: card.querySelector("input[type=radio]:checked")?.value || null,
+        variants: Object.fromEntries([...card.querySelectorAll("[data-variant]")].map((panel) => [panel.dataset.variant, panel.querySelector("select").value || null])),
+        note: card.querySelector(".note").value,
+      }));
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(new Blob([JSON.stringify({ schemaVersion: 1, ratings }, null, 2)], { type: "application/json" }));
+      link.download = "lipsync-review.json";
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+    });
+  </script>
+</html>

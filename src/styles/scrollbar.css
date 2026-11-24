@@ -1,0 +1,55 @@
+.scena-scroll-region {
+  scrollbar-width: none;
+}
+.scena-scroll-region::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+.scena-scrollbar {
+  position: fixed;
+  z-index: var(--scena-z-scrollbar);
+  width: var(--scena-scrollbar-hit-width);
+  opacity: 0;
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: opacity var(--scena-scrollbar-fade-duration) ease;
+}
+.scena-scrollbar.is-visible,
+.scena-scrollbar:focus-within,
+.scena-scrollbar.is-dragging {
+  opacity: 1;
+}
+.scena-scrollbar-track {
+  position: absolute;
+  inset: 0 calc((var(--scena-scrollbar-hit-width) - var(--scena-scrollbar-width)) / 2);
+  border-radius: var(--scena-radius-pill);
+  background: var(--scena-scrollbar-track);
+}
+.scena-scrollbar-thumb {
+  position: absolute;
+  top: 0;
+  left: calc((var(--scena-scrollbar-hit-width) - var(--scena-scrollbar-width)) / 2);
+  width: var(--scena-scrollbar-width);
+  min-height: var(--scena-scrollbar-thumb-min);
+  box-sizing: border-box;
+  border: 1px solid rgb(255 255 255 / 72%);
+  border-radius: var(--scena-radius-pill);
+  outline: 0;
+  background: var(--scena-scrollbar-thumb);
+  cursor: grab;
+}
+.scena-scrollbar:hover .scena-scrollbar-thumb,
+.scena-scrollbar-thumb:focus-visible,
+.scena-scrollbar.is-dragging .scena-scrollbar-thumb {
+  background: var(--scena-scrollbar-thumb-active);
+}
+.scena-scrollbar-thumb:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--scena-focus) 55%, transparent);
+  outline-offset: 2px;
+}
+.scena-scrollbar.is-dragging .scena-scrollbar-thumb {
+  cursor: grabbing;
+}

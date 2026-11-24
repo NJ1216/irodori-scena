@@ -1,0 +1,1 @@
+export const jobLabels: Record<string, string> = { queued: "待機中", preparing: "素材を準備中", running: "学習中", cancelling: "中断処理中", cancelled: "中断しました", interrupted: "中断しました", completed: "保存しました", failed: "学習できませんでした" };

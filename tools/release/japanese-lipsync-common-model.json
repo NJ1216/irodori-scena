@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "analysisVersion": "japanese-ctc-isolated-fallback-v7",
+  "license": "Apache-2.0",
+  "weights": {
+    "repository": "mnaoizyyy/charsiu-js-models",
+    "revision": "d22b7e9b99d5fb2bed3e10fa8014917c2a4403dd",
+    "path": "japanese-hubert-base-phoneme-ctc/model_quantized.onnx",
+    "conversion": "Third-party torch.onnx export and ONNX Runtime dynamic INT8 quantization; exporter does not pin the upstream checkpoint revision"
+  },
+  "processor": {
+    "repository": "prj-beatrice/japanese-hubert-base-phoneme-ctc",
+    "revision": "1ec4eb3c45b2a1cafb7c477d447df34ca03070f2"
+  },
+  "files": {
+    "model_quantized.onnx": "984fb84aa37b1e5dd9217c92cb8f3325fbbc19be52fc19c7e12a9bca349fba33",
+    "config.json": "1623b1662bab72550a0ff4fddae50ee78ed839b92f9c00bb02a8beb0f4a16df5",
+    "vocab.json": "58ba6eb59cb2c953ef3f61d7d60ec64cc25cfbeb80e94fe7b4226899c50d7a07",
+    "preprocessor_config.json": "3698647300e38b0a83ccf0ee9b24834e2d262157410305d54a3a1f655ead3002"
+  },
+  "publicationReview": "Rebuilt common Mac/Windows candidate; quality differs from reviewed v3 and publication requires separate acceptance",
+  "executionProfile": "japanese-ctc-common-fp32-v4",
+  "derivedFromSha256": "ad29e980cb0f50044854bf25324506ace4ff0c48b98b4d194953028236c3ab6f",
+  "derivation": "74 quantized linear layers use float32 MatMul with original INT8 weights dequantized; activation DynamicQuantizeLinear removed; retained initializers unchanged"
+}

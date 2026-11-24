@@ -1,0 +1,15 @@
+Package license declaration and upstream attribution (registry metadata):
+{
+  "name": "uri-js-replace",
+  "version": "1.0.1",
+  "license": "MIT",
+  "author": {
+    "name": "https://github.com/andreinwald"
+  },
+  "repository": {
+    "url": "git+https://github.com/andreinwald/uri-js-replace.git",
+    "type": "git"
+  },
+  "homepage": "https://github.com/andreinwald/uri-js-replace",
+  "gitHead": "38927505b51a74b53444dc723be10e0d2e53823c"
+}

@@ -1,0 +1,214 @@
+/* Page-specific layout; surfaces, fields and buttons use shared primitives. */
+.lora-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--scena-space-3);
+}
+.lora-fields > label {
+  flex: 1;
+  min-width: 0;
+}
+.lora-fields > button {
+  align-self: end;
+  flex: 0 0 auto;
+}
+.lora-job {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--scena-space-3);
+  align-items: center;
+}
+
+.lora-composer {
+  display: grid;
+  gap: var(--scena-space-3);
+}
+.lora-step-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--scena-space-3);
+}
+.lora-management-back {
+  margin-bottom: var(--scena-space-4);
+}
+
+.cast-lora-setting {
+  display: grid;
+  flex: 1 1 100%;
+  gap: var(--scena-space-2);
+  min-width: 0;
+}
+.cast-lora-setting .warning-text {
+  margin: 0;
+}
+
+.lora-register-fields {
+  display: grid;
+  gap: var(--scena-space-3);
+}
+.lora-register-path {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--scena-space-2);
+  align-items: center;
+}
+.lora-register-path input {
+  min-width: 0;
+}
+
+.lora-asset-list {
+  display: grid;
+  gap: var(--scena-space-2);
+}
+.lora-asset-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--scena-space-3);
+}
+.lora-asset-row > div,
+.lora-asset-row > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.lora-asset-row button {
+  flex-shrink: 0;
+}
+
+.lora-input-scroll {
+  max-height: 50dvh;
+  overflow: auto;
+}
+.lora-input-table {
+  min-width: 0;
+}
+.lora-input-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: var(--scena-z-header);
+  background: var(--scena-surface-soft);
+}
+.lora-input-file-column {
+  width: 27%;
+}
+.lora-input-text-column {
+  width: 39%;
+}
+.lora-input-audio-column {
+  width: 14%;
+}
+.lora-input-status-column {
+  width: 13%;
+}
+.lora-input-exclude-column {
+  width: 7%;
+}
+.lora-input-table .lora-input-selected {
+  background: var(--scena-brand-soft);
+}
+.lora-input-table td:last-child {
+  text-align: center;
+}
+.lora-input-audio {
+  display: flex;
+  align-items: center;
+  gap: var(--scena-space-2);
+  white-space: nowrap;
+}
+.lora-input-audio .audio-playback-bar {
+  flex: 0 0 auto;
+}
+.lora-input-editor {
+  display: grid;
+  gap: var(--scena-space-2);
+  text-align: left;
+}
+.lora-input-editor > p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.lora-input-editor textarea {
+  resize: vertical;
+}
+.lora-review-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: var(--scena-z-header);
+  padding-block: var(--scena-space-3);
+  background: var(--scena-surface-raised);
+}
+
+.lora-review-intro {
+  display: grid;
+  gap: var(--scena-space-1);
+}
+.lora-review-intro p {
+  margin: 0;
+}
+.lora-input-table th,
+.lora-input-table td {
+  padding-block: var(--scena-space-1);
+}
+
+.lora-training-page.is-review {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: hidden;
+}
+.lora-training-page.is-review > .page-heading {
+  flex: 0 0 auto;
+}
+.lora-review-composer {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.lora-review-composer > :not(.lora-input-scroll) {
+  flex: 0 0 auto;
+}
+.lora-review-composer .lora-input-scroll {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+}
+.lora-review-composer > .warning-box {
+  flex: 0 1 auto;
+  max-height: var(--scena-script-import-source-min-height);
+  overflow: auto;
+}
+
+.lora-review-progress {
+  flex: 0 0 auto;
+  align-self: flex-end;
+}
+
+.tabs.lora-library-toolbar {
+  width: fit-content;
+  max-width: 100%;
+  background: var(--scena-surface-soft);
+  border-color: var(--scena-border);
+}
+.tabs.lora-library-toolbar > button {
+  color: var(--scena-brand-strong);
+  border: 0;
+  box-shadow: none;
+}
+.tabs.lora-library-toolbar > button:not(:disabled):hover {
+  background: var(--scena-brand-soft);
+}
+.tabs.lora-library-toolbar > .danger {
+  color: var(--scena-danger);
+  background: var(--scena-danger-soft);
+}
+.tabs.lora-library-toolbar > .danger:not(.is-confirming):not(:disabled):hover,
+.tabs.lora-library-toolbar > .danger:not(.is-confirming):not(:disabled):focus-visible {
+  color: var(--scena-danger-strong);
+  background: var(--scena-danger-soft);
+}
+.tabs.lora-library-toolbar > .danger.is-confirming {
+  color: var(--scena-surface-raised);
+  background: var(--scena-danger);
+}

@@ -1,0 +1,118 @@
+---
+license: mit
+language:
+- ja
+pipeline_tag: text-to-speech
+tags:
+- speech
+- voice
+- tts
+base_model:
+- Aratako/Irodori-TTS-500M-v2
+---
+
+# Irodori-TTS-500M-v2-VoiceDesign
+
+[![Code](https://img.shields.io/badge/Code-GitHub-black)](https://github.com/Aratako/Irodori-TTS) [![Demo Space](https://img.shields.io/badge/Demo-HuggingFace%20Space-red)](https://huggingface.co/spaces/Aratako/Irodori-TTS-500M-v2-VoiceDesign-Demo)
+
+**Irodori-TTS-500M-v2-VoiceDesign** is a Japanese Text-to-Speech model based on a Rectified Flow Diffusion Transformer (RF-DiT) architecture. Derived from the [base v2 model](https://huggingface.co/Aratako/Irodori-TTS-500M-v2), this variant replaces the reference latent encoder with a caption encoder. 
+
+Instead of requiring reference audio for voice cloning, this model features **Voice Design**—allowing you to fully control and generate the speaker's voice, emotion, and speaking style solely through a descriptive text prompt (caption). 
+
+Additionally, the model retains the **emoji-based style and sound effect control** — by inserting specific emojis into the input text, you can further fine-tune speaking styles, emotions, and sound effects during generation.
+
+## 🌟 Key Features
+
+  * **Flow Matching TTS:** Rectified Flow Diffusion Transformer over continuous DACVAE latents for high-quality Japanese speech synthesis.
+  * **Voice Design (Caption Conditioning):** Generate diverse voices by describing the speaker's tone, age, gender, and emotion in a text caption. No reference audio is required.
+  * **Emoji-based Style Control:** Embed emojis directly in the input text for granular control over the delivery. See  [`EMOJI_ANNOTATIONS.md`](EMOJI_ANNOTATIONS.md) for the full list of supported emojis.
+
+## 🏗️ Architecture
+
+The model (approximately 500M parameters) consists of three main components:
+
+1.  **Text Encoder:** Token embeddings initialized from [llm-jp/llm-jp-3-150m](https://huggingface.co/llm-jp/llm-jp-3-150m), followed by self-attention + SwiGLU transformer layers with RoPE.
+2.  **Caption Encoder:** Encodes the style-control text (captions) to define the speaker and acoustic environment, bypassing the need for a reference audio branch.
+3.  **Diffusion Transformer:** Joint-attention DiT blocks with Low-Rank AdaLN (timestep-conditioned adaptive layer normalization), half-RoPE, and SwiGLU MLPs.
+
+Audio is represented as continuous latent sequences via the [Aratako/Semantic-DACVAE-Japanese-32dim](https://huggingface.co/Aratako/Semantic-DACVAE-Japanese-32dim) codec (32-dim), enabling high-quality 48kHz waveform reconstruction.
+
+## 🎧 Audio Samples
+
+### Voice Design via Captions
+
+Examples of controlling the speaker's voice, emotion, and style purely through descriptive text captions. Notice how the same input text can be delivered in entirely different ways.
+
+| Text (Input) | Caption (Voice Design) | Generated Audio |
+| :--- | :--- | :--- |
+| 明日の午後に予定していた会議だけど、急遽来週に延期になったみたい。悪いんだけど、資料の準備は一旦ストップしておいてくれるかな。 | 低い声の女性が、苛立ちを隠せない様子で焦って話している。クリアな音質、少し感情的なトーンで、呆れたような様子。 | <audio controls src="https://huggingface.co/Aratako/Irodori-TTS-500M-v2-VoiceDesign/resolve/main/samples/caption_sample1.wav"></audio> |
+| 明日の午後に予定していた会議だけど、急遽来週に延期になったみたい。悪いんだけど、資料の準備は一旦ストップしておいてくれるかな。 | やや高めの男性の声で、気遣いを見せて申し訳なさそうなトーンでやさしく話してほしい。 | <audio controls src="https://huggingface.co/Aratako/Irodori-TTS-500M-v2-VoiceDesign/resolve/main/samples/caption_sample2.wav"></audio> |
+| おかしいな、さっきまで確かにここにあったはずなんだけど。誰かが気を利かせて、別の場所に片付けちゃったのかな。 | 若めの女性が、困惑している様子で独り言を言うかのように囁くような声で話している。 | <audio controls src="https://huggingface.co/Aratako/Irodori-TTS-500M-v2-VoiceDesign/resolve/main/samples/caption_sample3.wav"></audio> |
+| おかしいな、さっきまで確かにここにあったはずなんだけど。誰かが気を利かせて、別の場所に片付けちゃったのかな。 | 強い疑いや不満を覚えているような様子の大人の女性。かなり怒っている様子で、わざと周りに聞こえるように大きな声で話している。 | <audio controls src="https://huggingface.co/Aratako/Irodori-TTS-500M-v2-VoiceDesign/resolve/main/samples/caption_sample4.wav"></audio> |
+
+### Combining Voice Design with Emojis
+
+You can also combine **Voice Design captions with emoji annotations** embedded in the text. This allows for even finer control over the delivery, adding specific emotional nuances, pauses, or sound effects on top of the base voice design.
+
+| Text (with Emoji) | Caption (Voice Design) | Generated Audio |
+| :--- | :--- | :--- |
+| これ、昨日からずっと机の上に置きっぱなしになってますよ🤭早く片付けておいてくださいね🫶 | 大人の男性が、途中笑いながらやさしく諭すように話している。余裕を感じる様子で、少し呆れも混ざっているようなトーン。 | <audio controls src="https://huggingface.co/Aratako/Irodori-TTS-500M-v2-VoiceDesign/resolve/main/samples/caption_sample5.wav"></audio> |
+| これ😠、昨日からずっと机の上に置きっぱなしになってますよ😒早く片付けておいてくださいね😠 | 低めの女性の声で、嫌悪感を示しながら怒っているように話してほしいです。途中で舌打ちを挟み、強い憎しみを持って見下している感じでお願いします。 | <audio controls src="https://huggingface.co/Aratako/Irodori-TTS-500M-v2-VoiceDesign/resolve/main/samples/caption_sample6.wav"></audio> |
+## 🚀 Usage
+
+For inference code, installation instructions, and training scripts, please refer to the GitHub repository:
+
+👉 **[GitHub: Aratako/Irodori-TTS](https://github.com/Aratako/Irodori-TTS)**
+
+## 📊 Training Data & Annotation
+
+The model was trained on a high-quality Japanese speech dataset. To enable the Voice Design functionality, the training data was enriched with comprehensive text captions describing the audio characteristics. 
+
+The emoji annotations and initial text captions were generated and labeled using a fine-tuned model based on [Qwen/Qwen3-Omni-30B-A3B-Instruct](https://huggingface.co/Qwen/Qwen3-Omni-30B-A3B-Instruct). Subsequently, the text captions were rephrased and refined using [Qwen/Qwen3.5-35B-A3B](https://huggingface.co/Qwen/Qwen3.5-35B-A3B).
+
+## ⚠️ Limitations
+
+  - **Japanese Only:** This model currently supports Japanese text input only.
+  - **Prompt Adherence:** While the model generally follows the caption's instructions, highly complex or contradictory descriptions might result in inconsistent voice generation.
+  - **Emoji Control:** While emoji-based style control adds expressiveness, the effect may vary depending on context and is not always perfectly consistent.
+  - **Kanji Reading Accuracy:** The model's ability to accurately read Kanji is relatively weak compared to other TTS models of a similar size. You may need to convert complex Kanji into Hiragana or Katakana beforehand.
+
+## 📜 License & Ethical Restrictions
+
+### License
+
+This model is released under **[MIT](https://choosealicense.com/licenses/mit/)**.
+
+### Ethical Restrictions
+
+In addition to the license terms, the following ethical restrictions apply:
+
+1.  **No Impersonation:** Do not use this model's captioning capabilities to intentionally generate voices that impersonate specific real-world individuals (e.g., voice actors, celebrities, public figures) without their explicit consent.
+2.  **No Misinformation:** Do not use this model to generate synthetic speech intended to mislead others or spread misinformation.
+3.  **Voice Generation Disclaimer:** The caption data used to train this model does not include specific speaker names; it only contains descriptive attributes such as gender, pitch, tone, and speaking speed. While it is possible that the generated audio may coincidentally resemble the voice of a real person, this is strictly a probabilistic artifact within the latent space. The model was not trained with the intent of reproducing specific individuals.
+4.  **Liability Disclaimer:** The developers assume no liability for any misuse of this model. Users are solely responsible for ensuring their use of the generated content complies with applicable laws and regulations in their jurisdiction.
+
+## 🙏 Acknowledgments
+
+This project builds upon the following works:
+
+  - [Echo-TTS](https://jordandarefsky.com/blog/2025/echo/) — Architecture and training design reference
+  - [DACVAE](https://github.com/facebookresearch/dacvae) — Audio VAE
+  - [llm-jp/llm-jp-3-150m](https://huggingface.co/llm-jp/llm-jp-3-150m) — Tokenizer and embedding weight initialization
+
+We would also like to extend our special thanks to **[Respair](https://huggingface.co/Respair)** for the inspiration behind the emoji annotation feature.
+
+## 🖊️ Citation
+
+If you use Irodori-TTS in your research or project, please cite it as follows:
+
+```bibtex
+@misc{irodori-tts,
+  author = {Chihiro Arata},
+  title = {Irodori-TTS: A Flow Matching-based Text-to-Speech Model with Emoji-driven Style Control},
+  year = {2026},
+  publisher = {Hugging Face},
+  journal = {Hugging Face repository},
+  howpublished = {\url{https://huggingface.co/Aratako/Irodori-TTS-500M-v2-VoiceDesign}}
+}
+```

@@ -1,0 +1,116 @@
+{
+  "suite_version": 1,
+  "title": "Two-speaker emotional dialogue context baseline",
+  "purpose": "Keep the previously successful C voice-design reference fixed, add a nearby but distinct D voice, and compare an emotional C/D exchange with no caption, scene context only, and scene context plus line stage directions. The spoken text contains no emoji annotations so that unintended nonverbal sounds do not confound the comparison.",
+  "checkpoint": "Aratako/Irodori-TTS-v4.1-Small",
+  "sway_16": {
+    "num_steps": 16,
+    "t_schedule_mode": "sway",
+    "sway_coeff": -1.0,
+    "cfg_scale_text": 3.0,
+    "cfg_scale_caption": 3.0,
+    "cfg_scale_speaker": 5.0,
+    "cfg_guidance_mode": "independent",
+    "model_device": "mps",
+    "codec_device": "mps",
+    "model_precision": "fp32",
+    "codec_precision": "fp32"
+  },
+  "speakers": [
+    {
+      "id": "C",
+      "name": "美咲",
+      "seed": 2026081403,
+      "reference_text": "美咲です。二人の話を聞いて、私にできることを一緒に考えたいな。",
+      "reference_caption": "明るい二十代女性。澄んだ自然な声で、親しい友人へ率直に話しかける。"
+    },
+    {
+      "id": "D",
+      "name": "菜月",
+      "seed": 2026081604,
+      "reference_text": "菜月です。大切な人が不安なときは、焦らずそばにいて一緒に考えたいと思っています。",
+      "reference_caption": "明るい二十代女性。澄んだ自然な声で、親しい友人へ率直に話しかける。美咲とは別人だが、近い年齢と親しみやすさを持つ。"
+    }
+  ],
+  "scene_context": "夜の静かなカフェの閉店後。美咲は重要な決断を一人で進めたことで菜月を傷つけたのではないかと不安になり、菜月は悲しみを正直に伝えながらも美咲を責めずに寄り添おうとしている。二人は親しい友人で、関係を修復したいと心から思っている。",
+  "dialogue": [
+    {
+      "id": "001",
+      "speaker": "C",
+      "text": "菜月、まだ怒ってる？ 私、さっきあなたの話を最後まで聞かなかった。",
+      "stage_direction": "相手の表情を恐る恐るうかがい、拒まれるのを怖がりながら小さく問いかける。"
+    },
+    {
+      "id": "002",
+      "speaker": "D",
+      "text": "怒ってる、というより……悲しかった。大事な話なのに、ひとりで決められた気がして。",
+      "stage_direction": "怒鳴らず、ため息まじりに傷ついた気持ちを正直に打ち明ける。"
+    },
+    {
+      "id": "003",
+      "speaker": "C",
+      "text": "ごめん。怖くて、否定される前に逃げようとした。ちゃんと聞かせて。あなたは、どうしたかった？",
+      "stage_direction": "自分の弱さを認め、相手の本音を知りたいと切実に頼む。"
+    },
+    {
+      "id": "004",
+      "speaker": "D",
+      "text": "一緒に考えたかった。美咲を止めたかったんじゃない。ただ、ひとりで泣かないでほしかったの。",
+      "stage_direction": "やわらかく、抱きしめるような親しさで本意を伝える。"
+    },
+    {
+      "id": "005",
+      "speaker": "C",
+      "text": "そんなふうに言ってくれるのに、私は……本当に自分勝手だね。",
+      "stage_direction": "自分への苛立ちをこぼし、声を少し強めた後でしぼませる。"
+    },
+    {
+      "id": "006",
+      "speaker": "D",
+      "text": "自分を責めないで。今からでも遅くないよ。私にできること、教えて。",
+      "stage_direction": "自責をきっぱり止め、まっすぐ前向きに支える意志を示す。"
+    },
+    {
+      "id": "007",
+      "speaker": "C",
+      "text": "じゃあ、隣にいて。答えが出るまで、何度でも話を聞いてほしい。",
+      "stage_direction": "涙をこらえながら、安心を求めるように素直にお願いする。"
+    },
+    {
+      "id": "008",
+      "speaker": "D",
+      "text": "うん。何度でも聞く。今日は帰らない。ふたりで、ちゃんと明日を迎えよう。",
+      "stage_direction": "あたたかい確信と静かな安堵を込め、友人として約束する。"
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "no-scene-no-stage-notes",
+      "description": "captionを渡さず、固定参照ボイスと本文だけで生成する。",
+      "include_scene_context": false,
+      "include_stage_directions": false
+    },
+    {
+      "id": "scene-context-only",
+      "description": "各行に同一のシーン共有説明だけをcaptionとして渡す。",
+      "include_scene_context": true,
+      "include_stage_directions": false
+    },
+    {
+      "id": "scene-context-plus-stage-directions",
+      "description": "シーン共有説明と、その行に紐づく詳細なト書きをcaptionとして渡す。",
+      "include_scene_context": true,
+      "include_stage_directions": true
+    }
+  ],
+  "evaluation": {
+    "listen_for": [
+      "Cの声が前回の参照ボイスと同じ人物として十分に保たれているか",
+      "DがCと同じ若い女性系の品質感を保ちつつ、別人物として区別できるか",
+      "絵文字に頼らない本文とト書きだけで、問いかけ・悲しみ・謝罪・安心の往復として聴き取れるか",
+      "シーン説明と行別ト書きが、自然な掛け合いを補強するか",
+      "ノイズ、破綻、意図しない話者ドリフト"
+    ],
+    "decision_rule": "まずC/Dの参照ボイスの品質と識別性を確認し、その後に三条件で演技の差を試聴する。"
+  }
+}

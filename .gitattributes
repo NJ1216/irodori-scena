@@ -1,0 +1,5 @@
+# Keep checkout bytes stable for build contracts, generated files and licenses.
+# Automatic text detection preserves binary assets.
+* text=auto eol=lf
+# Upstream license texts are stored and verified by their exact byte hashes.
+licenses/texts/** -text

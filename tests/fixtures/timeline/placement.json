@@ -1,0 +1,7 @@
+[
+  {"name":"three simultaneous","units":[{"gap":-4,"members":[{"id":"a","duration":5}]},{"gap":-4,"members":[{"id":"b","duration":5}]},{"gap":0,"members":[{"id":"c","duration":5}]}],"starts":[0,1,2],"resolved":[true,true,true],"end":7},
+  {"name":"reversed onset across scene boundaries","units":[{"gap":2,"members":[{"id":"a","duration":4}]},{"gap":-8,"members":[{"id":"b","duration":3}]},{"gap":0,"members":[{"id":"c","duration":2}]}],"starts":[0,6,1],"resolved":[true,true,true],"end":9},
+  {"name":"zero clamp retains requested gap","units":[{"gap":-99,"members":[{"id":"a","duration":2}]},{"gap":0,"members":[{"id":"b","duration":1}]}],"starts":[0,0],"resolved":[true,true],"end":2},
+  {"name":"cue member offsets","units":[{"gap":-3,"members":[{"id":"a","offset":0,"duration":2},{"id":"b","offset":3,"duration":2}]},{"gap":0,"members":[{"id":"c","duration":1}]}],"starts":[0,2],"resolved":[true,true],"end":5},
+  {"name":"unknown anchor remains at zero","units":[{"gap":0,"members":[{"id":"a","duration":null}]},{"gap":0,"members":[{"id":"b","duration":4}]}],"starts":[0,0],"resolved":[false,false],"end":4}
+]

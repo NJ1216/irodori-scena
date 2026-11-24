@@ -1,0 +1,158 @@
+diff --git a/server/modules/draft_dialogue.py b/server/modules/draft_dialogue.py
+index 283bc23..50b36f5 100644
+--- a/server/modules/draft_dialogue.py
++++ b/server/modules/draft_dialogue.py
+@@ -31,6 +31,7 @@ def generate_draft_dialogue(
+     on_progress: Callable[[str], None] | None = None,
+     should_cancel: Callable[[], bool] | None = None,
+     job_id: str | None = None,
++    benchmark_seed: int | None = None,
+ ) -> tuple[dict[str, Any], str | None]:
+     _, filler_guidance = deps.draft_expression_guidance(request)
+     existing_lines = accepted_dialogue.get("lines", [])
+@@ -176,6 +177,7 @@ NORMAL|B|えっと……少し相談があって。||emoji=😌@相談|rate=0.92
+             should_cancel=should_cancel,
+             job_id=job_id,
+             loop_detector=deps.draft_dialogue_loop_reason,
++            benchmark_seed=benchmark_seed,
+         )
+         content = "\n".join(
+             f"{row.get('cue') or 'NORMAL'}|{row['speaker']}|{row['text']}||" + "|".join(
+diff --git a/server/modules/draft_forward_job.py b/server/modules/draft_forward_job.py
+index 0a3332c..a3f3522 100644
+--- a/server/modules/draft_forward_job.py
++++ b/server/modules/draft_forward_job.py
+@@ -104,6 +104,9 @@ def run_forward_draft_job(job_id: str, request: deps.DraftRequest, characters: l
+ def _run(job_id: str, request: deps.DraftRequest, characters: list[dict[str, Any]], usage_card_id: str) -> None:
+     debug_directory = deps.draft_debug_directory(job_id)
+     target = max(160, round(request.target_minutes * 360 * request.speech_rate))
++    with deps.DRAFT_JOBS_LOCK:
++        configured_seed = deps.DRAFT_JOBS.get(job_id, {}).get("benchmarkSeed")
++    benchmark_seed = int(configured_seed) if isinstance(configured_seed, int) else None
+     minimum = deps.minimum_acceptable_characters(target)
+     capability = deps.build_draft_capability_profile(request, characters)
+     deps.DRAFT_LLM_THREAD_CONTEXT.capability_profile = capability
+@@ -119,7 +122,8 @@ def _run(job_id: str, request: deps.DraftRequest, characters: list[dict[str, Any
+     plan = deps.create_draft_plan(request, cast_context=text_cast, chunk_count=1,
+         target_characters=target, token_budget=token_budget, debug_directory=debug_directory,
+         on_call=lambda _: deps.begin_draft_llm_call(job_id, phase="planning", message="全体構成を設計しています…"),
+-        should_cancel=lambda: deps.draft_cancel_requested(job_id), job_id=job_id)
++        should_cancel=lambda: deps.draft_cancel_requested(job_id), job_id=job_id,
++        benchmark_seed=benchmark_seed)
+     chapters = plan["chapters"]
+     development_count = deps.required_draft_developments(target, max_block, len(chapters))
+     developments, detail_calls = _prepare_developments(job_id, request, chapters, development_count,
+@@ -189,7 +193,8 @@ def _run(job_id: str, request: deps.DraftRequest, characters: list[dict[str, Any
+                 cast_alias_by_id=chapter_aliases,
+                 debug_response_path=debug_directory / f"dialogue-{calls:02d}.txt",
+                 on_progress=_progress(job_id, accepted, aliases, target),
+-                should_cancel=lambda: deps.draft_cancel_requested(job_id), job_id=job_id)
++                should_cancel=lambda: deps.draft_cancel_requested(job_id), job_id=job_id,
++                benchmark_seed=(benchmark_seed + calls - 1) if benchmark_seed is not None else None)
+             failure = str(loop_reason or "")
+         except deps.GenerationCancelled:
+             raise
+diff --git a/server/modules/draft_planning.py b/server/modules/draft_planning.py
+index 834693c..c4355e6 100644
+--- a/server/modules/draft_planning.py
++++ b/server/modules/draft_planning.py
+@@ -36,6 +36,7 @@ def select_draft_optional_context(
+     on_call: Callable[[], None] | None = None,
+     should_cancel: Callable[[], bool] | None = None,
+     job_id: str | None = None,
++    benchmark_seed: int | None = None,
+ ) -> dict[str, set[str]]:
+     """Let the planner select only theme-relevant optional facts."""
+     allowed_cast_ids = {str(character.get("id", "")) for character in characters}
+@@ -265,6 +266,7 @@ def create_draft_plan(
+     on_call: Callable[[int], None] | None = None,
+     should_cancel: Callable[[], bool] | None = None,
+     job_id: str | None = None,
++    benchmark_seed: int | None = None,
+ ) -> dict[str, Any]:
+     theme_sections = draft_theme_sections(request.theme)
+     story_chapter_count = max(1, min(8, len(theme_sections) if len(theme_sections) > 1 else 4))
+@@ -308,6 +310,7 @@ theme_or_situation は作者が指定した最上位の事実制約です。キ
+         debug_response_path=debug_directory / "plan-attempt-1.txt",
+         should_cancel=should_cancel,
+         job_id=job_id,
++        benchmark_seed=benchmark_seed,
+     )
+     if should_cancel and should_cancel():
+         raise deps.GenerationCancelled("台本生成をキャンセルしました。")
+diff --git a/server/modules/llm_client.py b/server/modules/llm_client.py
+index 760696b..fb0149d 100644
+--- a/server/modules/llm_client.py
++++ b/server/modules/llm_client.py
+@@ -132,6 +132,7 @@ def openai_json_completion(
+     job_id: str | None = None,
+     sampling_policy: Literal["creative", "deterministic"] = "creative",
+     feature: str = "llm-json",
++    benchmark_seed: int | None = None,
+ ) -> dict[str, Any] | str:
+     request = deps.resolve_logical_llm_request(request)
+     max_tokens = deps.prepare_draft_llm_call(request, system=system, user=user, max_tokens=max_tokens, feature=feature)
+@@ -151,6 +152,7 @@ def openai_json_completion(
+     observation = deps.begin_llm_observation(
+         logical_request, feature=feature, system=system, user=user, max_tokens=max_tokens,
+     )
++    observation["benchmarkSeed"] = benchmark_seed
+     base = request.base_url.rstrip("/")
+     endpoint = base if base.endswith("/chat/completions") else f"{base}/chat/completions"
+     if debug_response_path is not None:
+@@ -172,6 +174,8 @@ def openai_json_completion(
+         ],
+     }
+     deps.apply_sampling_settings(payload, sampling)
++    if benchmark_seed is not None:
++        payload["seed"] = benchmark_seed
+     payload.update(_completion_options(logical_request))
+     deps.apply_ollama_context(payload, logical_request)
+     response_payload = deps.openai_nonstream_payload(request, endpoint, payload, should_cancel)
+diff --git a/server/modules/llm_completion_service.py b/server/modules/llm_completion_service.py
+index 3576385..1b16666 100644
+--- a/server/modules/llm_completion_service.py
++++ b/server/modules/llm_completion_service.py
+@@ -47,7 +47,8 @@ def _schema_enabled(request: Any, stream: bool) -> bool:
+ 
+ 
+ def _openai_schema_content(request: Any, contract: Any, *, system: str, user: dict[str, Any],
+-                           max_tokens: int, temperature: float, sampling_policy: str, should_cancel) -> tuple[str, Any]:
++                           max_tokens: int, temperature: float, sampling_policy: str, should_cancel,
++                           benchmark_seed: int | None = None) -> tuple[str, Any]:
+     logical = deps.resolve_logical_llm_request(request)
+     resolved = deps.resolve_local_llm_request(logical)
+     sampling = deps.resolve_sampling_settings(resolved, temperature, sampling_policy)
+@@ -62,6 +63,8 @@ def _openai_schema_content(request: Any, contract: Any, *, system: str, user: di
+         }},
+     }
+     deps.apply_sampling_settings(payload, sampling)
++    if benchmark_seed is not None:
++        payload["seed"] = benchmark_seed
+     if logical.provider == "lmstudio":
+         payload["store"] = False
+     response = deps.openai_nonstream_payload(resolved, endpoint, payload, should_cancel)
+@@ -70,11 +73,12 @@ def _openai_schema_content(request: Any, contract: Any, *, system: str, user: di
+ 
+ 
+ def _structured_content(request: Any, contract: Any, *, system: str, user: dict[str, Any],
+-                        max_tokens: int, temperature: float, sampling_policy: str, should_cancel) -> tuple[str, Any]:
++                        max_tokens: int, temperature: float, sampling_policy: str, should_cancel,
++                        benchmark_seed: int | None = None) -> tuple[str, Any]:
+     if request.provider != "ollama":
+         return _openai_schema_content(request, contract, system=system, user=user, max_tokens=max_tokens,
+                                       temperature=temperature, sampling_policy=sampling_policy,
+-                                      should_cancel=should_cancel)
++                                      should_cancel=should_cancel, benchmark_seed=benchmark_seed)
+     sampling = deps.resolve_sampling_settings(request, temperature, sampling_policy)
+     content, _ = deps.ollama_native_completion(
+         request, system=system, user=user, max_tokens=max_tokens, sampling=sampling, stream=False,
+@@ -138,6 +142,7 @@ def complete_records(
+             content, payload = _structured_content(
+                 request, contract, system=system, user=user, max_tokens=max_tokens,
+                 temperature=temperature, sampling_policy=sampling_policy, should_cancel=should_cancel,
++                benchmark_seed=benchmark_seed,
+             )
+         except Exception as error:
+             if not _unsupported_schema(error):
+

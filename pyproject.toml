@@ -1,0 +1,59 @@
+[project]
+name = "irodori-scena-local-api"
+version = "26.11.24"
+description = "Local API for irodori SCENA"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115,<1",
+  "httptools>=0.6",
+  "huggingface-hub>=1.2,<2",
+  "keyring>=25.7.0",
+  "psutil>=7.2.2",
+  "pydantic>=2.7,<3",
+  "pywin32-ctypes>=0.2.3; sys_platform == 'win32'",
+  "uvicorn>=0.30,<1",
+  "zstandard>=0.25,<1",
+]
+
+[dependency-groups]
+bundle = ["pyinstaller==6.22.2", "pyinstaller-hooks-contrib==2026.7"]
+dev = [
+  "coverage[toml]>=7.10,<8",
+  "httpx>=0.28,<1",
+  "numpy>=2.1,<3",
+  "onnxruntime>=1.24,<2",
+  "ruff>=0.12,<1",
+  "scipy>=1.17,<2",
+  "watchfiles>=1.0",
+]
+
+[tool.coverage.run]
+source = ["server"]
+omit = ["server/irodori_worker.py"]
+
+[tool.coverage.report]
+exclude_also = [
+  "if TYPE_CHECKING:",
+  "if __name__ == .__main__.:",
+]
+skip_covered = true
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+extend-exclude = ["artifacts", "scena-data", "userproject"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "C90"]
+
+[tool.ruff.lint.per-file-ignores]
+"server/app_deps.py" = ["F401"]
+"server/app.py" = ["C901"]
+"server/draft_protocol.py" = ["C901"]
+"tests/test_draft_pipeline.py" = ["C901"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15
+
+[tool.uv]
+package = false

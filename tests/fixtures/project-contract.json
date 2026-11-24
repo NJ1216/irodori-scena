@@ -1,0 +1,106 @@
+{
+  "version": 1,
+  "id": "project_contract",
+  "title": "契約テスト",
+  "characters": [
+    {
+      "id": "character_contract",
+      "name": "彩",
+      "profile": "落ち着いた話し方",
+      "profileDetails": {
+        "aliases": [
+          "あや"
+        ],
+        "castRelations": {}
+      },
+      "voiceKeywords": "clear, warm",
+      "referenceAudioUrl": "/media/characters/character_contract/reference.wav",
+      "referenceFile": "media/characters/character_contract/reference.wav",
+      "createdAt": 1000,
+      "loraMix": {
+        "version": 1,
+        "baseWeight": 2500,
+        "entries": [
+          {
+            "assetId": "contract-0",
+            "adapterHash": "1111111111111111111111111111111111111111111111111111111111111111",
+            "baseModelRepo": "Aratako/Irodori-TTS-v4.1-Small",
+            "baseModelRevision": "2b28324dc263ed5e6638b3cf3dd94c82ead07b4b",
+            "weight": 3750
+          },
+          {
+            "assetId": "contract-1",
+            "adapterHash": "2222222222222222222222222222222222222222222222222222222222222222",
+            "baseModelRepo": "Aratako/Irodori-TTS-v4.1-Small",
+            "baseModelRevision": "2b28324dc263ed5e6638b3cf3dd94c82ead07b4b",
+            "weight": 3750
+          }
+        ]
+      },
+      "sampleText": "こんにちは。よろしくお願いします。"
+    }
+  ],
+  "candidates": [],
+  "scenes": [
+    {
+      "id": "scene_contract",
+      "title": "Scene A",
+      "lines": [
+        {
+          "id": "line_contract",
+          "characterId": "character_contract",
+          "text": "こんにちは。",
+          "stageDirection": "穏やかに挨拶する",
+          "speechRate": 1.2,
+          "gapSeconds": 0.7,
+          "takes": [
+            {
+              "id": "take_contract",
+              "audioUrl": "/media/takes/line_contract/take_contract.wav",
+              "seed": 42,
+              "quality": "fast",
+              "stageDirection": "穏やかに挨拶する",
+              "durationSeconds": 1.25,
+              "generationSeconds": 0.8,
+              "createdAt": 2000,
+              "loraMix": {
+                "version": 1,
+                "baseWeight": 2500,
+                "entries": [
+                  {
+                    "assetId": "contract-0",
+                    "adapterHash": "1111111111111111111111111111111111111111111111111111111111111111",
+                    "baseModelRepo": "Aratako/Irodori-TTS-v4.1-Small",
+                    "baseModelRevision": "2b28324dc263ed5e6638b3cf3dd94c82ead07b4b",
+                    "weight": 3750
+                  },
+                  {
+                    "assetId": "contract-1",
+                    "adapterHash": "2222222222222222222222222222222222222222222222222222222222222222",
+                    "baseModelRepo": "Aratako/Irodori-TTS-v4.1-Small",
+                    "baseModelRevision": "2b28324dc263ed5e6638b3cf3dd94c82ead07b4b",
+                    "weight": 3750
+                  }
+                ]
+              }
+            }
+          ],
+          "selectedTakeId": "take_contract"
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "speechRate": 1.2,
+    "steps": 16,
+    "textCfg": 3.0,
+    "voiceCfg": 5.0,
+    "captionCfg": 3.0,
+    "seed": 0,
+    "quality": "fast",
+    "lineGap": 0.7,
+    "llmBaseUrl": "http://127.0.0.1:11434/v1",
+    "llmModel": ""
+  },
+  "revision": 0
+}

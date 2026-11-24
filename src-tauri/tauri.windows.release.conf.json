@@ -1,0 +1,24 @@
+{
+  "app": {
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; connect-src 'self' ipc: http://ipc.localhost http://127.0.0.1:*; img-src 'self' data: blob: http://127.0.0.1:*; media-src 'self' data: blob: http://127.0.0.1:*; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
+    }
+  },
+  "bundle": {
+    "icon": ["icons/icon.ico", "icons/icon.png"],
+    "resources": {
+      "resources/environment-manager/": "environment-manager/",
+      "binaries/scena-api/": "scena-api-runtime/"
+    },
+    "targets": ["nsis"],
+    "windows": {
+      "webviewInstallMode": { "type": "downloadBootstrapper", "silent": true },
+      "nsis": {
+        "installMode": "both",
+        "languages": ["Japanese"],
+        "template": "windows/installer.nsi",
+        "installerHooks": "windows/installer-hooks.nsh"
+      }
+    }
+  }
+}

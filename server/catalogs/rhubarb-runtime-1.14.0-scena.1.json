@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "releaseId": "1.14.0-scena.1",
+  "version": "1.14.0",
+  "upstreamCommit": "9b9573cd21b253c9ba58739bbd1aa0b50b991bff",
+  "license": "MIT",
+  "sourceUrl": "https://github.com/DanielSWolf/rhubarb-lip-sync",
+  "releaseUrl": "https://github.com/NJ1216/irodori-scena/releases/tag/rhubarb-addon",
+  "platforms": {
+    "darwin-arm64": {
+      "available": true,
+      "url": "https://github.com/NJ1216/irodori-scena/releases/download/rhubarb-addon/rhubarb-1.14.0-scena.1-macos-arm64.zip",
+      "archiveName": "rhubarb-1.14.0-scena.1-macos-arm64.zip",
+      "archiveBytes": 70121832,
+      "archiveSha256": "9dd66f81c2d486a72eb25df3804513407965ffa1785f9ab94ab1c544e59d2190",
+      "executable": "rhubarb/rhubarb",
+      "executableSha256": "e7b4e9bd4513ca8534660314c1f5c91fcb6da00bb8e8e54a5942cb5b4eb157b8",
+      "files": [
+        "rhubarb/BUILD-INFO.json",
+        "rhubarb/LICENSE.md",
+        "rhubarb/res/sphinx/acoustic-model/README",
+        "rhubarb/res/sphinx/acoustic-model/feat.params",
+        "rhubarb/res/sphinx/acoustic-model/feature_transform",
+        "rhubarb/res/sphinx/acoustic-model/mdef",
+        "rhubarb/res/sphinx/acoustic-model/means",
+        "rhubarb/res/sphinx/acoustic-model/mixture_weights",
+        "rhubarb/res/sphinx/acoustic-model/noisedict",
+        "rhubarb/res/sphinx/acoustic-model/transition_matrices",
+        "rhubarb/res/sphinx/acoustic-model/variances",
+        "rhubarb/res/sphinx/cmudict-en-us.dict",
+        "rhubarb/res/sphinx/en-us-phone.lm.bin",
+        "rhubarb/res/sphinx/en-us.lm.bin",
+        "rhubarb/rhubarb"
+      ]
+    },
+    "windows-x64": {
+      "available": true,
+      "url": "https://github.com/NJ1216/irodori-scena/releases/download/rhubarb-addon/rhubarb-1.14.0-scena.1-windows-x64.zip",
+      "archiveName": "rhubarb-1.14.0-scena.1-windows-x64.zip",
+      "archiveBytes": 70169769,
+      "archiveSha256": "0451c98973e278bc8cb75eb80a732762e758d88c7c7e51ff73d7a02aa836dbf4",
+      "executable": "rhubarb/rhubarb.exe",
+      "executableSha256": "9e289c6b5939ef6b306a61e8105ec721fd8d52b3ce950d08891ea3cc7df5718d",
+      "files": [
+        "rhubarb/BUILD-INFO.json",
+        "rhubarb/LICENSE.md",
+        "rhubarb/res/sphinx/acoustic-model/README",
+        "rhubarb/res/sphinx/acoustic-model/feat.params",
+        "rhubarb/res/sphinx/acoustic-model/feature_transform",
+        "rhubarb/res/sphinx/acoustic-model/mdef",
+        "rhubarb/res/sphinx/acoustic-model/means",
+        "rhubarb/res/sphinx/acoustic-model/mixture_weights",
+        "rhubarb/res/sphinx/acoustic-model/noisedict",
+        "rhubarb/res/sphinx/acoustic-model/transition_matrices",
+        "rhubarb/res/sphinx/acoustic-model/variances",
+        "rhubarb/res/sphinx/cmudict-en-us.dict",
+        "rhubarb/res/sphinx/en-us-phone.lm.bin",
+        "rhubarb/res/sphinx/en-us.lm.bin",
+        "rhubarb/rhubarb.exe"
+      ]
+    }
+  }
+}

@@ -1,0 +1,11 @@
+[
+  "RELATION|cast-0|呼び方候補|R1C1|h1|name\nRELATION|cast-0|関係性|雨の日に本音を話せる友人。",
+  "RELATION|cast-0|呼び方候補|c1|h1|name\nRELATION|cast-0|関係性|雨の日に本音を話せる友人。",
+  "RELATION|cast-0|呼び方候補|相手0|h1|name\nRELATION|cast-0|関係性|雨の日に本音を話せる友人。",
+  "RELATION|cast-0|呼び方|相手0さん\nRELATION|cast-0|関係性|雨の日に本音を話せる友人。",
+  "RELATION|cast-0|呼び方候補|相手0さん|h1|name\nRELATION|cast-0|関係性|雨の日に本音を話せる友人。",
+  "RELATION|RELATION|cast-0|呼び方候補|R1C1|h1|name\nRELATION|cast-0|関係性|雨の日に本音を話せる友人。",
+  "RELATION|cast-0|呼び方候補|相手0|さん|name\nRELATION|cast-0|関係性|雨の日に本音を話せる友人。",
+  "RELATION|cast-0|呼び方候補|R1C1|さん|name\nRELATION|cast-0|関係性|雨の日に本音を話せる友人。",
+  "RELATION|cast-0|呼び方|相手0さん\nRELATION|cast-0|関係性|雨の日に本音を話せる友人。|分類:友人"
+]

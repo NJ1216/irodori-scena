@@ -1,0 +1,134 @@
+.lora-mix-editor {
+  display: grid;
+  gap: var(--scena-space-2);
+  width: 100%;
+}
+.lora-mix-graph-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--scena-space-2);
+  width: 100%;
+}
+.lora-mix-graph {
+  display: flex;
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: var(--scena-lora-mix-height);
+  border-radius: var(--scena-radius-sm);
+  background: var(--scena-surface-muted);
+}
+.lora-mix-segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  color: var(--scena-brand-strong);
+  font-size: var(--type-small-size);
+}
+.lora-mix-segment:first-child {
+  border-radius: var(--scena-radius-sm) 0 0 var(--scena-radius-sm);
+}
+.lora-mix-segment:last-of-type {
+  border-radius: 0 var(--scena-radius-sm) var(--scena-radius-sm) 0;
+}
+.lora-mix-segment:only-of-type {
+  border-radius: var(--scena-radius-sm);
+}
+.mix-color-0 {
+  background: var(--scena-lora-mix-base);
+}
+.mix-color-1 {
+  background: var(--scena-lora-mix-1);
+}
+.mix-color-2 {
+  background: var(--scena-lora-mix-2);
+}
+.mix-color-3 {
+  background: var(--scena-lora-mix-3);
+}
+.mix-color-4 {
+  background: var(--scena-lora-mix-4);
+}
+.lora-mix-graph .lora-mix-boundary {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: var(--scena-space-3);
+  margin-left: calc(var(--scena-space-3) / -2);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  cursor: ew-resize;
+  touch-action: none;
+  box-shadow: none;
+}
+.lora-mix-boundary::after {
+  content: "";
+  position: absolute;
+  inset: var(--scena-space-1) auto var(--scena-space-1) 50%;
+  border-left: var(--scena-lora-boundary-line);
+}
+.lora-mix-graph .lora-mix-boundary:hover {
+  background: color-mix(in srgb, var(--scena-surface) 25%, transparent);
+}
+
+.cast-lora-setting {
+  width: 100%;
+}
+
+.lora-mix-graph-row > .voice-action-button {
+  flex: 0 0 auto;
+}
+
+.lora-mix-track {
+  flex: 1;
+  min-width: 0;
+}
+.lora-mix-names {
+  display: flex;
+  margin-top: var(--scena-space-1);
+  color: var(--scena-brand-strong);
+  font-size: var(--type-eyebrow-size);
+}
+.lora-mix-names > span {
+  min-width: 0;
+  padding-inline: var(--scena-space-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+}
+.lora-mix-segment > .lora-mix-percent {
+  appearance: none;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  font: inherit;
+}
+.lora-mix-segment > .lora-mix-percent:hover {
+  color: var(--scena-brand-strong);
+  background: transparent;
+}
+/* Override shared modal field chrome, including focus and invalid states.
+   The text selection/caret identifies editing; errors remain below the graph. */
+.lora-mix-editor .lora-mix-graph .lora-mix-segment > input.lora-mix-percent-input:not([type="checkbox"]):not([type="radio"]):not([type="range"]) {
+  appearance: none;
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  outline: 0;
+  box-shadow: none;
+  font: inherit;
+  text-align: center;
+}

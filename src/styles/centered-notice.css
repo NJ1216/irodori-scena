@@ -1,0 +1,45 @@
+/* Shared centered notice: destructive confirmation, TTS model operation, and notices raised over dialogs. */
+.centered-notice {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: var(--scena-z-notice-overlay);
+  display: grid;
+  gap: var(--scena-space-2);
+  width: max-content;
+  max-width: min(var(--scena-dialog-width), calc(100vw - var(--scena-space-5) * 2));
+  padding: var(--scena-space-4) var(--scena-space-5);
+  color: var(--scena-text-strong);
+  background: var(--scena-surface-raised);
+  border: 1px solid var(--scena-border-strong);
+  border-radius: var(--scena-radius-control);
+  box-shadow: var(--scena-shadow-modal);
+  font-size: var(--type-body-size);
+  overflow-wrap: anywhere;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.centered-notice.is-danger {
+  border-color: var(--scena-danger-border);
+}
+.centered-notice.is-danger strong {
+  color: var(--scena-danger-strong);
+}
+.centered-notice small {
+  color: var(--scena-text-muted);
+}
+.centered-notice.is-interactive {
+  pointer-events: auto;
+}
+.notice-overlay-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--scena-z-notice-overlay) - 1);
+  background: var(--scena-dialog-backdrop);
+}
+.notice-overlay-text {
+  margin: 0;
+}
+.centered-notice .notice-overlay-close {
+  justify-self: end;
+}

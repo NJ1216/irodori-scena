@@ -1,0 +1,44 @@
+{
+  "fixture_scope": "Internal cross-repository semantic probe; not a wire schema or adopted resource manifest",
+  "project": {
+    "id": "fixture-project",
+    "revision": 1,
+    "title": "Synthetic motion fixture",
+    "characters": [{
+      "id": "fixture-cast", "name": "Fixture speaker", "referenceAudioUrl": "/media/reference.wav",
+      "referenceFile": "fixture-reference.wav", "createdAt": 0
+    }],
+    "candidates": [],
+    "scenes": [{
+      "id": "fixture-scene", "title": "Fixture scene", "lines": [{
+        "id": "fixture-line", "characterId": "fixture-cast", "text": "これはfixtureの本文です。",
+        "stageDirection": "quiet", "selectedTakeId": "fixture-take", "gapSeconds": 0.25,
+        "takes": [{"id": "fixture-take", "audioUrl": "/media/takes/fixture.wav", "seed": 7,
+                   "quality": "fast", "createdAt": 0, "renderedText": "これはfixtureの本文です。"}]
+      }]
+    }],
+    "settings": {
+      "speechRate": 1.0, "steps": 16, "textCfg": 3.0, "voiceCfg": 5.0, "captionCfg": 3.0,
+      "seed": 7, "quality": "fast", "lineGap": 0.7, "llmBaseUrl": "http://unused-fixture.invalid",
+      "llmModel": "unused-fixture", "privateExtra": "exclude-from-capture"
+    },
+    "ttsSelection": {"legacyExtra": "not-the-runtime-truth"}
+  },
+  "media_recipe": {"channels": 1, "sample_width": 2, "sample_rate": 16000, "frames": 16000, "sample_value": 1},
+  "lab_utf8": "0 10000000 pau\n",
+  "analysis_identity": "synthetic-pau-v1",
+  "destination_use": {"destination_id": "fixture-destination", "use_id": "fixture-use"},
+  "expected_semantics": {
+    "identical_adopted_content": "skip",
+    "same_take_and_path_different_wav_bytes": "replace",
+    "body_only_change": "replace",
+    "lab_only_change": "replace",
+    "gap_change_smaller_than_one_movie_frame": "replace",
+    "unrelated_project_revision": "skip",
+    "same_new_take_selected_after_preparation": "skip",
+    "path_only_copy_of_identical_bytes": "skip",
+    "signed_zero_interval": "skip",
+    "speaker_change": "replace",
+    "another_destination_or_use": "requires separate successful adoption baseline"
+  }
+}

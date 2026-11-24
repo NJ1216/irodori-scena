@@ -1,0 +1,136 @@
+---
+license: apache-2.0
+language:
+- en
+- ja
+programming_language:
+  - C
+  - C++
+  - C#
+  - Go
+  - Java
+  - JavaScript
+  - Lua
+  - PHP
+  - Python
+  - Ruby
+  - Rust
+  - Scala
+  - TypeScript
+pipeline_tag: text-generation
+library_name: transformers
+inference: false
+---
+
+# llm-jp-3-150m
+
+LLM-jp-3 is the series of large language models developed by the [Research and Development Center for Large Language Models](https://llmc.nii.ac.jp/) at the [National Institute of Informatics](https://www.nii.ac.jp/en/).
+
+This repository provides **llm-jp-3-150m** model.
+For an overview of the LLM-jp-3 models across different parameter sizes, please refer to:
+  - [LLM-jp-3 Pre-trained Models](https://huggingface.co/collections/llm-jp/llm-jp-3-pre-trained-models-672c6096472b65839d76a1fa)
+  - [LLM-jp-3 Fine-tuned Models](https://huggingface.co/collections/llm-jp/llm-jp-3-fine-tuned-models-672c621db852a01eae939731).
+
+
+Checkpoints format: Hugging Face Transformers
+
+## Required Libraries and Their Versions
+
+- torch>=2.3.0
+- transformers>=4.40.1
+- tokenizers>=0.19.1
+- accelerate>=0.29.3
+- flash-attn>=2.5.8
+
+## Usage
+
+```python
+import torch
+from transformers import AutoTokenizer, AutoModelForCausalLM
+tokenizer = AutoTokenizer.from_pretrained("llm-jp/llm-jp-3-150m")
+model = AutoModelForCausalLM.from_pretrained("llm-jp/llm-jp-3-150m", device_map="auto", torch_dtype=torch.bfloat16)
+text = "自然言語処理とは何か"
+tokenized_input = tokenizer.encode(text, add_special_tokens=False, return_tensors="pt").to(model.device)
+with torch.no_grad():
+    output = model.generate(
+        tokenized_input,
+        max_new_tokens=100,
+        do_sample=True,
+        top_p=0.95,
+        temperature=0.7,
+        repetition_penalty=1.05,
+    )[0]
+print(tokenizer.decode(output))
+```
+
+## Model Details
+
+- **Model type:** Transformer-based Language Model
+- **Total seen tokens:** 2.1T
+
+|Params|Layers|Hidden size|Heads|Context length|Embedding parameters|Non-embedding parameters|
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+|150M|12|512|8|4096|101,874,688|50,344,448|
+|440M|16|1024|8|4096|203,749,376|243,303,424|
+|980M|20|1536|8|4096|305,624,064|684,258,816|
+|1.8b|24|2048|16|4096|407,498,752|1,459,718,144|
+|3.7b|28|3072|24|4096|611,248,128|3,171,068,928|
+|7.2b|32|4096|32|4096|814,997,504|6,476,271,616|
+|13b|40|5120|40|4096|1,018,746,880|12,688,184,320|
+|172b|96|12288|96|4096|2,444,992,512|169,947,181,056|
+
+## Tokenizer
+
+The tokenizer of this model is based on [huggingface/tokenizers](https://github.com/huggingface/tokenizers) Unigram byte-fallback model.
+The vocabulary entries were converted from [`llm-jp-tokenizer v3.0`](https://github.com/llm-jp/llm-jp-tokenizer/releases/tag/v3.0b2).
+Please refer to [README.md](https://github.com/llm-jp/llm-jp-tokenizer) of `llm-jp-tokenizer` for details on the vocabulary construction procedure (the pure SentencePiece training does not reproduce our vocabulary).
+
+## Datasets
+
+### Pre-training
+
+The models have been pre-trained using a blend of the following datasets.
+
+| Language | Dataset | Tokens|
+|:---|:---|---:|
+|Japanese|[Wikipedia](https://gitlab.llm-jp.nii.ac.jp/datasets/llm-jp-corpus-v3)|2.6B
+||[Common Crawl](https://gitlab.llm-jp.nii.ac.jp/datasets/llm-jp-corpus-v3)|762.8B
+||[WARP/PDF](https://gitlab.llm-jp.nii.ac.jp/datasets/llm-jp-corpus-v3)|237.3B
+||[WARP/HTML](https://gitlab.llm-jp.nii.ac.jp/datasets/llm-jp-corpus-v3)|2.7B
+||[Kaken](https://gitlab.llm-jp.nii.ac.jp/datasets/llm-jp-corpus-v3)|1.8B
+|English|[Wikipedia](https://gitlab.llm-jp.nii.ac.jp/datasets/llm-jp-corpus-v3)|4.7B
+||[Dolma/CC-head](https://gitlab.llm-jp.nii.ac.jp/datasets/llm-jp-corpus-v3)|608.5B
+||[Dolma/C4](https://gitlab.llm-jp.nii.ac.jp/datasets/llm-jp-corpus-v3)|181.6B
+||[Dolma/Reddit](https://gitlab.llm-jp.nii.ac.jp/datasets/llm-jp-corpus-v3)|83.1B
+||[Dolma/PeS2o](https://gitlab.llm-jp.nii.ac.jp/datasets/llm-jp-corpus-v3)|62.9B
+||[Dolma/Gutenberg](https://gitlab.llm-jp.nii.ac.jp/datasets/llm-jp-corpus-v3)|5.5B
+||[Dolma/Wiki](https://gitlab.llm-jp.nii.ac.jp/datasets/llm-jp-corpus-v3)|3.9B
+|Code|[The Stack](https://huggingface.co/datasets/bigcode/the-stack)|114.1B
+|Chinese|[Wikipedia](https://huggingface.co/datasets/bigcode/the-stack)|0.8B
+|Korean|[Wikipedia](https://huggingface.co/datasets/bigcode/the-stack)|0.3B
+
+## Evaluation
+
+Detailed evaluation results are reported in this [blog](https://llm-jp.nii.ac.jp/blog/2025/02/05/instruct3.html).
+
+
+## Risks and Limitations
+
+The models released here are in the early stages of our research and development and have not been tuned to ensure outputs align with human intent and safety considerations.
+
+
+## Send Questions to
+
+llm-jp(at)nii.ac.jp
+
+
+## License
+
+[Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+
+
+## Model Card Authors
+
+*The names are listed in alphabetical order.*
+
+Hirokazu Kiyomaru and Takashi Kodama.

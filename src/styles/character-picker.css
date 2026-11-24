@@ -1,0 +1,174 @@
+.line-main {
+  grid-template-columns: 28px 43px minmax(0, 1fr) 56px;
+}
+.line-character-picker {
+  position: relative;
+  z-index: 2;
+  width: 43px;
+}
+.line-character-picker.is-field {
+  width: 100%;
+}
+.line-character-trigger {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 43px;
+  height: 43px;
+  padding: 0;
+  color: var(--scena-brand-strong);
+  background: transparent;
+  border: 0;
+}
+.line-character-trigger:hover:not(:disabled) .line-character-avatar,
+.line-character-trigger:focus-visible .line-character-avatar,
+.line-character-picker.is-open .line-character-avatar {
+  box-shadow: 0 0 0 3px #aaa5d64d;
+}
+.line-character-trigger i {
+  display: none;
+}
+.line-character-picker.is-field .line-character-trigger {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 12px;
+  width: 100%;
+  height: var(--scena-control-height);
+  padding: var(--scena-space-1) var(--scena-space-2);
+  gap: var(--scena-space-2);
+  color: var(--scena-text);
+  background: var(--scena-surface-raised);
+  border: 1px solid var(--scena-border);
+  border-radius: var(--scena-radius-sm);
+  box-shadow: none;
+  text-align: left;
+}
+.line-character-picker.is-field .line-character-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--scena-radius-avatar);
+}
+.line-character-picker.is-field .line-character-name {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.line-character-picker.is-field .line-character-trigger i {
+  display: grid;
+  place-items: center;
+}
+.line-character-avatar {
+  display: grid;
+  place-items: center;
+  width: 43px;
+  height: 43px;
+  overflow: hidden;
+  color: var(--scena-surface-raised);
+  background: var(--scena-gradient-brand);
+  border-radius: var(--scena-radius-control) var(--scena-radius-control) var(--scena-radius-control) 5px;
+  font-size: 13px;
+  font-weight: 800;
+  transition: box-shadow var(--scena-transition);
+}
+.line-character-avatar.is-empty {
+  color: var(--scena-brand);
+  background: var(--scena-brand-soft);
+}
+.cast-picker-menu {
+  position: absolute;
+  top: calc(100% + var(--scena-space-2));
+  z-index: var(--scena-z-menu);
+  display: grid;
+  min-width: 184px;
+  max-height: 240px;
+  padding: var(--scena-space-1);
+  overflow-y: auto;
+  background: var(--scena-surface-raised);
+  border: 1px solid var(--scena-border);
+  border-radius: var(--scena-radius-control);
+  box-shadow: var(--scena-shadow-modal);
+}
+.cast-picker-menu.is-left {
+  left: 0;
+}
+.cast-picker-menu.is-right {
+  right: 0;
+}
+.cast-picker-menu.is-portal {
+  position: fixed;
+  right: auto;
+  box-sizing: border-box;
+  min-width: 0;
+}
+.cast-picker-menu .cast-picker-option {
+  display: flex;
+  min-width: 0;
+  height: 40px;
+  padding: var(--scena-space-1) var(--scena-space-2);
+  align-items: center;
+  gap: var(--scena-space-2);
+  color: var(--scena-text);
+  background: transparent;
+  border: 0;
+  border-radius: var(--scena-radius-sm);
+  box-shadow: none;
+  font-size: 12px;
+  text-align: left;
+  white-space: nowrap;
+}
+.cast-picker-option > span:last-child {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+}
+.cast-picker-menu.is-compact .cast-picker-option {
+  font-size: 11px;
+}
+.cast-picker-menu .cast-picker-option:hover,
+.cast-picker-menu .cast-picker-option:focus-visible,
+.cast-picker-menu .cast-picker-option[aria-selected="true"] {
+  color: var(--scena-brand-strong);
+  background: var(--scena-brand-soft);
+  outline: 0;
+}
+.cast-picker-option-avatar {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  overflow: hidden;
+  place-items: center;
+  color: var(--scena-surface-raised);
+  background: var(--scena-gradient-brand);
+  border-radius: var(--scena-radius-avatar);
+  font-size: 12px;
+  font-weight: 800;
+}
+.virtual-scene-cue:has(.line-character-picker.is-open) {
+  z-index: var(--scena-z-menu);
+}
+.line-card:has(.line-character-picker.is-open) {
+  position: relative;
+  z-index: 5;
+  overflow: visible;
+}
+@media (max-width: 680px) {
+  .delete-scene {
+    padding: 6px 7px;
+    font-size: var(--type-micro-size);
+  }
+  .scene-header {
+    align-items: flex-start;
+  }
+  .line-main {
+    grid-template-columns: 27px 43px minmax(0, 1fr) 54px;
+  }
+  .line-main textarea,
+  .line-text-editor-wrap {
+    grid-column: 3;
+  }
+}

@@ -1,0 +1,600 @@
+/* Shared SCENA roles. Feature styles may set layout, never redefine a role's meaning. */
+.pin-icon {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+  transform: rotate(45deg);
+}
+.dropdown-indicator {
+  display: block;
+  width: 8px;
+  height: 6px;
+  flex: 0 0 auto;
+  fill: currentColor;
+}
+.type-display {
+  color: var(--scena-text-strong);
+  font-size: var(--type-display-size);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+}
+.type-section-title {
+  color: var(--scena-text-strong);
+  font-size: var(--type-section-title-size);
+  font-weight: 800;
+  line-height: 1.35;
+}
+.type-body {
+  color: var(--scena-text);
+  font-size: var(--type-body-size);
+  line-height: 1.7;
+}
+.type-small,
+.subtle,
+.warning-text {
+  font-size: var(--type-small-size);
+  line-height: 1.7;
+}
+.type-small,
+.subtle {
+  color: var(--scena-text-muted);
+}
+.warning-text {
+  color: var(--scena-warning-text);
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+.type-field-label {
+  color: var(--scena-brand-strong);
+  font-size: var(--type-small-size);
+  font-weight: 800;
+}
+.type-label {
+  color: var(--scena-text);
+  font-size: var(--type-label-size);
+  font-weight: 700;
+  line-height: 1.45;
+}
+.type-eyebrow,
+.eyebrow {
+  color: var(--scena-brand);
+  font-size: var(--type-eyebrow-size);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  line-height: 1.4;
+}
+.page-heading h1:not(.type-display) {
+  color: var(--scena-text-strong);
+  font-size: var(--type-display-size);
+  font-weight: 800;
+  line-height: 1.2;
+}
+.page-heading > p:not(.eyebrow):not(.type-body) {
+  color: var(--scena-text-muted);
+  font-size: var(--type-body-size);
+  line-height: 1.7;
+}
+
+.surface,
+.panel,
+.saved-characters,
+.draft-preview {
+  background: var(--scena-surface);
+  border: 1px solid var(--scena-border);
+  border-radius: var(--scena-radius-panel);
+  box-shadow: var(--scena-shadow-md);
+}
+.surface-soft {
+  background: var(--scena-surface-soft);
+  border: 1px solid var(--scena-border);
+  border-radius: var(--scena-radius-panel);
+}
+.surface-ai {
+  background: var(--scena-ai-soft);
+  border: 1px solid var(--scena-ai-border);
+  border-radius: var(--scena-radius-panel);
+}
+.modal {
+  background: var(--scena-dialog-surface);
+  border: 1px solid var(--scena-dialog-border);
+  border-radius: var(--scena-radius-panel);
+  box-shadow: var(--scena-dialog-shadow);
+}
+.dialog-form-fields {
+  display: grid;
+  min-width: 0;
+  gap: var(--scena-dialog-form-gap);
+}
+.dialog-form-field {
+  display: grid;
+  min-width: 0;
+  gap: var(--scena-dialog-field-gap);
+  margin: 0;
+  color: var(--scena-text-strong);
+  font-size: var(--type-label-size);
+  font-weight: 700;
+}
+.dialog-form-field input,
+.dialog-form-field textarea,
+.dialog-form-field select {
+  width: 100%;
+  margin: 0;
+}
+
+.button-primary,
+.primary {
+  min-height: var(--scena-control-height);
+  padding: var(--scena-control-padding);
+  color: var(--scena-surface-raised);
+  background: var(--scena-brand);
+  border: 1px solid var(--scena-brand);
+  border-radius: var(--scena-radius-control);
+  font-weight: 800;
+}
+.button-secondary,
+.secondary {
+  min-height: var(--scena-control-height);
+  padding: var(--scena-control-padding);
+  color: var(--scena-brand-strong);
+  background: var(--scena-surface-raised);
+  border: 1px solid var(--scena-border-strong);
+  border-radius: var(--scena-radius-control);
+  font-weight: 800;
+}
+.button-ai,
+.ai-action-button {
+  min-height: var(--scena-control-height);
+  padding: var(--scena-control-padding);
+  color: var(--scena-surface-raised);
+  background: var(--scena-ai);
+  border: 1px solid var(--scena-ai);
+  border-radius: var(--scena-radius-control);
+  font-weight: 800;
+}
+.button-quiet,
+.quiet-button {
+  color: var(--scena-brand-strong);
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: var(--scena-radius-control);
+  font-weight: 800;
+}
+.button-danger,
+.danger,
+.delete-button {
+  color: var(--scena-danger);
+  background: var(--scena-danger-soft);
+  border: 1px solid var(--scena-danger-border);
+  border-radius: var(--scena-radius-control);
+  font-weight: 800;
+}
+.topbar .quiet-button {
+  color: var(--scena-surface-soft);
+  background: #ffffff1e;
+  border-color: #ffffff44;
+  border-radius: var(--scena-radius-pill);
+}
+.topbar .project-menu:hover .quiet-button,
+.topbar .project-menu:focus-within .quiet-button {
+  color: var(--scena-brand-strong);
+  background: var(--scena-brand-soft);
+  border-color: var(--scena-border);
+  border-radius: 14px 14px 0 0;
+}
+.topbar .quiet-button:not(:disabled):hover {
+  filter: none;
+  transform: none;
+}
+.project-submenu .danger {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+.cast-notebook-actions .delete-button {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.button-primary:not(:disabled):hover,
+.primary:not(:disabled):hover {
+  background: var(--scena-brand-strong);
+  border-color: var(--scena-brand-strong);
+}
+.button-secondary:not(:disabled):hover,
+.secondary:not(:disabled):hover {
+  color: var(--scena-brand-strong);
+  background: var(--scena-brand-soft);
+  border-color: var(--scena-brand);
+}
+.button-ai:not(:disabled):hover,
+.button-ai:not(:disabled):focus-visible,
+.ai-action-button:not(:disabled):hover,
+.ai-action-button:not(:disabled):focus-visible {
+  color: var(--scena-surface-raised);
+  background: var(--scena-ai-strong);
+  border-color: var(--scena-ai-strong);
+}
+.button-quiet:not(:disabled):hover,
+.quiet-button:not(:disabled):hover {
+  color: var(--scena-brand-strong);
+  background: var(--scena-brand-soft);
+  border-color: var(--scena-brand);
+}
+.button-danger:not(:disabled):hover,
+.danger:not(:disabled):hover {
+  color: var(--scena-danger-strong);
+  background: var(--scena-danger-soft);
+  border-color: var(--scena-danger);
+}
+.modal-actions > button[type="button"]:not(.button-primary):not(.primary):not(.button-ai):not(.ai-action-button):not(.button-danger):not(.danger) {
+  min-height: var(--scena-control-height);
+  padding: var(--scena-control-padding);
+  color: var(--scena-brand-strong);
+  background: var(--scena-surface-raised);
+  border: 1px solid var(--scena-border-strong);
+  border-radius: var(--scena-radius-control);
+  font-weight: 800;
+}
+.modal-actions .button-primary,
+.modal-actions .primary {
+  color: var(--scena-surface-raised);
+  background: var(--scena-brand);
+  border-color: var(--scena-brand);
+}
+.modal-actions .button-primary:not(:disabled):hover,
+.modal-actions .primary:not(:disabled):hover {
+  color: var(--scena-surface-raised);
+  background: var(--scena-brand-strong);
+  border-color: var(--scena-brand-strong);
+}
+.modal-actions .button-ai,
+.modal-actions .ai-action-button {
+  color: var(--scena-surface-raised);
+  background: var(--scena-ai);
+  border-color: var(--scena-ai);
+}
+.modal-actions .button-ai:not(:disabled):hover,
+.modal-actions .ai-action-button:not(:disabled):hover {
+  color: var(--scena-surface-raised);
+  background: var(--scena-ai-strong);
+  border-color: var(--scena-ai-strong);
+}
+button {
+  transition:
+    color var(--scena-transition),
+    background-color var(--scena-transition),
+    border-color var(--scena-transition),
+    box-shadow var(--scena-transition),
+    filter var(--scena-transition),
+    opacity var(--scena-transition);
+}
+button:not(:disabled):hover {
+  filter: brightness(0.97);
+}
+button:not(:disabled):active {
+  filter: brightness(0.93);
+}
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--scena-focus) 45%, transparent);
+  outline-offset: 2px;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+  transform: none;
+}
+
+button.is-confirming,
+.take-choice.is-confirming .delete-take {
+  animation: scena-confirmation-attention var(--scena-confirmation-attention-duration) var(--scena-confirmation-attention-easing) infinite;
+}
+@keyframes scena-confirmation-attention {
+  0%,
+  100% {
+    filter: brightness(1);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--scena-danger) 0%, transparent);
+  }
+  50% {
+    filter: brightness(var(--scena-confirmation-attention-brightness));
+    box-shadow:
+      0 0 0 var(--scena-confirmation-attention-ring-size) var(--scena-confirmation-attention-ring-color),
+      var(--scena-confirmation-attention-glow);
+  }
+}
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+textarea,
+select {
+  color: var(--scena-text);
+  background: var(--scena-surface-raised);
+  border: 1px solid var(--scena-border);
+  border-radius: var(--scena-radius-control);
+}
+.modal input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.modal textarea {
+  font-weight: var(--scena-dialog-text-field-weight);
+}
+.underlined-fields.underlined-fields input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.underlined-fields.underlined-fields textarea,
+.underlined-fields.underlined-fields select {
+  padding: var(--scena-underlined-field-padding-block) var(--scena-underlined-field-padding-inline);
+  background-color: transparent;
+  border: 0;
+  border-bottom: var(--scena-underlined-field-line);
+  border-radius: 0;
+  box-shadow: none;
+}
+.underlined-fields.underlined-fields input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.underlined-fields.underlined-fields select {
+  height: var(--scena-underlined-field-height);
+}
+.underlined-fields.underlined-fields select:not([multiple]) {
+  padding-right: 30px;
+  background-position: calc(100% - 14px) 50%;
+}
+.underlined-fields.underlined-fields input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+.underlined-fields.underlined-fields textarea:focus,
+.underlined-fields.underlined-fields select:focus {
+  border-bottom: var(--scena-underlined-field-focus-line);
+  outline: 0;
+  box-shadow: var(--scena-underlined-field-focus-shadow);
+}
+select:not([multiple]) {
+  padding-right: 38px;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: var(--scena-select-indicator);
+  background-position: calc(100% - 14px) 50%;
+  background-repeat: no-repeat;
+  background-size: 8px 6px;
+}
+.panel input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.panel select,
+.modal input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.modal select {
+  height: var(--scena-control-height);
+  border-radius: var(--scena-radius-control);
+}
+.panel textarea,
+.modal textarea {
+  border-radius: var(--scena-radius-control);
+}
+.settings-panel input:not([type="checkbox"]):not([type="range"]),
+.settings-panel select {
+  border-radius: var(--scena-radius-control) !important;
+}
+.settings-panel select {
+  padding-right: 34px;
+  background-position: calc(100% - 13px) 50%;
+}
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+textarea:focus,
+select:focus {
+  border-color: var(--scena-focus);
+  outline: 3px solid color-mix(in srgb, var(--scena-focus) 28%, transparent);
+  outline-offset: 1px;
+}
+.modal input[aria-invalid="true"]:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.panel input[aria-invalid="true"]:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.modal textarea[aria-invalid="true"],
+.panel textarea[aria-invalid="true"] {
+  color: var(--scena-danger-strong);
+  background: var(--scena-danger-soft);
+  border-color: var(--scena-danger-border);
+}
+.modal input[aria-invalid="true"]:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+.panel input[aria-invalid="true"]:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+.modal textarea[aria-invalid="true"]:focus,
+.panel textarea[aria-invalid="true"]:focus {
+  border-color: var(--scena-danger);
+  outline-color: color-mix(in srgb, var(--scena-danger) 28%, transparent);
+}
+input:disabled,
+textarea:disabled,
+select:disabled {
+  color: var(--scena-text-muted);
+  background: var(--scena-surface-soft);
+  cursor: not-allowed;
+}
+input[type="checkbox"],
+input[type="radio"] {
+  width: var(--scena-choice-control-size);
+  height: var(--scena-choice-control-size);
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-content: center;
+  background: var(--scena-surface-raised);
+  border: 1px solid var(--scena-border-strong);
+  cursor: pointer;
+  transition:
+    background-color var(--scena-transition),
+    border-color var(--scena-transition);
+}
+input[type="checkbox"] {
+  border-radius: var(--scena-radius-sm);
+}
+input[type="radio"] {
+  border-radius: var(--scena-radius-circle);
+}
+input[type="checkbox"]::after,
+input[type="radio"]::after {
+  content: "";
+  transform: scale(0);
+  transition: transform var(--scena-transition);
+}
+input[type="checkbox"]::after {
+  width: 8px;
+  height: 4px;
+  border-bottom: 2px solid var(--scena-surface-raised);
+  border-left: 2px solid var(--scena-surface-raised);
+  transform: translateY(-1px) rotate(-45deg) scale(0);
+}
+input[type="radio"]::after {
+  width: var(--scena-choice-dot-size);
+  height: var(--scena-choice-dot-size);
+  border-radius: var(--scena-radius-circle);
+  background: var(--scena-surface-raised);
+}
+input[type="checkbox"]:checked,
+input[type="radio"]:checked {
+  background: var(--scena-brand);
+  border-color: var(--scena-brand);
+}
+input[type="checkbox"]:checked::after {
+  transform: translateY(-1px) rotate(-45deg) scale(1);
+}
+input[type="radio"]:checked::after {
+  transform: scale(1);
+}
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--scena-focus) 40%, transparent);
+  outline-offset: 2px;
+}
+input[type="checkbox"]:disabled,
+input[type="radio"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+.choice-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--scena-choice-group-gap);
+}
+.choice-option {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--scena-choice-item-gap);
+  margin: 0;
+  padding: 0;
+  color: var(--scena-text-strong);
+  font-size: var(--type-label-size);
+  font-weight: 700;
+  cursor: pointer;
+}
+.range-control,
+input[type="range"],
+.panel input.range-control,
+.modal input.range-control {
+  --range-color: var(--scena-brand);
+  width: 100%;
+  height: 18px;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: 0;
+  accent-color: var(--range-color);
+  cursor: pointer;
+}
+.range-control:focus-visible,
+input[type="range"]:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--scena-focus) 40%, transparent);
+  outline-offset: 3px;
+  border-radius: var(--scena-radius-pill);
+}
+.range-control::-webkit-slider-runnable-track,
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 5px;
+  border: 0;
+  border-radius: var(--scena-radius-pill);
+  box-shadow: none;
+  background: color-mix(in srgb, var(--range-color) 25%, var(--scena-surface-soft));
+}
+.range-control::-webkit-slider-thumb,
+input[type="range"]::-webkit-slider-thumb {
+  width: 16px;
+  height: 16px;
+  margin-top: -5px;
+  appearance: none;
+  background: var(--range-color);
+  border: 3px solid var(--scena-surface-raised);
+  border-radius: var(--scena-radius-circle);
+  box-shadow: var(--scena-shadow-sm);
+}
+.range-control::-moz-range-track,
+input[type="range"]::-moz-range-track {
+  height: 5px;
+  border: 0;
+  border-radius: var(--scena-radius-pill);
+  box-shadow: none;
+  background: color-mix(in srgb, var(--range-color) 25%, var(--scena-surface-soft));
+}
+.range-control::-moz-range-thumb,
+input[type="range"]::-moz-range-thumb {
+  width: 11px;
+  height: 11px;
+  background: var(--range-color);
+  border: 3px solid var(--scena-surface-raised);
+  border-radius: var(--scena-radius-circle);
+  box-shadow: var(--scena-shadow-sm);
+}
+.range-control[disabled],
+input[type="range"]:disabled {
+  --range-color: var(--scena-text-muted);
+  cursor: not-allowed;
+}
+.draft-composer.surface-ai {
+  background: var(--scena-surface-muted);
+  border-color: var(--scena-border);
+}
+.double-chevron {
+  width: 16px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
+  transform: rotate(0deg);
+  transition: transform var(--scena-transition);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button.is-confirming,
+  .take-choice.is-confirming .delete-take {
+    animation: none;
+  }
+}
+
+/* Avatar images fill their frame; the first group also removes the inline-image baseline gap. */
+.line-character-avatar img,
+.cast-picker-option-avatar img,
+.avatar img,
+.draft-cast-picker-avatar img,
+.draft-cast-settings-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.dictionary-avatar img,
+.script-assistant-cast-avatar img,
+.script-assistant-speaker-avatar img,
+.script-cast-context-avatar img,
+.cast-switch-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

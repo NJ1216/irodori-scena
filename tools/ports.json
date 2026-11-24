@@ -1,0 +1,5 @@
+{
+  "browser": { "vite": 5173, "api": 8787 },
+  "playwright": { "vite": 5174, "api": 8788 },
+  "tauri": { "vite": 5175, "api": "ephemeral" }
+}

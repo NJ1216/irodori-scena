@@ -1,0 +1,16 @@
+@import "./styles/lora-mix.css";
+@import "./styles/tokens.css";
+@import "./styles/base.css";
+@import "./styles/audio.css";
+@import "./styles/script.css";
+@import "./styles/characters.css";
+@import "./styles/script-actions.css";
+@import "./styles/draft-and-settings.css";
+@import "./styles/notebook.css";
+@import "./styles/shell-and-draft.css";
+@import "./styles/character-picker.css";
+@import "./styles/primitives.css";
+@import "./styles/centered-notice.css";
+@import "./styles/scrollbar.css";
+@import "./styles/pronunciation.css";
+@import "./styles/about.css";

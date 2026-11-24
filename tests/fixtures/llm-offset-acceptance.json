@@ -1,0 +1,419 @@
+{
+  "baseline": "46b42ee",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "owner": {
+        "type": "string"
+      },
+      "text": {
+        "type": "string"
+      },
+      "rate": {
+        "type": "number"
+      },
+      "direction": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "owner"
+    ],
+    "additionalProperties": false
+  },
+  "records": [
+    {
+      "content": "",
+      "records": [],
+      "partial": true,
+      "accepted": [],
+      "manifest": []
+    },
+    {
+      "content": "plain response",
+      "records": [],
+      "partial": true,
+      "accepted": [],
+      "manifest": []
+    },
+    {
+      "content": "{\"records\":[]}",
+      "records": [],
+      "partial": false,
+      "accepted": [],
+      "manifest": []
+    },
+    {
+      "content": "```json\n{\"records\":[{\"owner\":\"A\",\"text\":\"そのまま 🐢😊😊😊😊 [怒る]\",\"rate\":\"bad\",\"direction\":\"穏やか\"},{\"owner\":\"B\",\"text\":\"保持\"}]}\n```",
+      "records": [
+        {
+          "owner": "A",
+          "text": "そのまま 🐢😊😊😊😊 [怒る]",
+          "rate": "bad",
+          "direction": "穏やか"
+        },
+        {
+          "owner": "B",
+          "text": "保持"
+        }
+      ],
+      "partial": false,
+      "accepted": [
+        {
+          "owner": "A",
+          "text": "そのまま 🐢😊😊😊😊 [怒る]",
+          "direction": "穏やか"
+        },
+        {
+          "owner": "B",
+          "text": "保持"
+        }
+      ],
+      "manifest": [
+        {
+          "status": "accepted",
+          "owner": "A",
+          "field": "text"
+        },
+        {
+          "status": "rejected",
+          "reason": "invalid_field",
+          "owner": "A",
+          "field": "rate"
+        },
+        {
+          "status": "accepted",
+          "owner": "A",
+          "field": "direction"
+        },
+        {
+          "status": "accepted",
+          "owner": "B",
+          "field": "text"
+        }
+      ]
+    },
+    {
+      "content": "{\"records\":[{\"owner\":\"A\",\"text\":\"first\"},{\"owner\":\"B\",\"text\":\"途中",
+      "records": [
+        {
+          "owner": "A",
+          "text": "first"
+        }
+      ],
+      "partial": true,
+      "accepted": [
+        {
+          "owner": "A",
+          "text": "first"
+        }
+      ],
+      "manifest": [
+        {
+          "status": "accepted",
+          "owner": "A",
+          "field": "text"
+        }
+      ]
+    },
+    {
+      "content": "{\"records\":[{\"owner\":\"A\",\"text\":\"valid\"},{BROKEN},{\"owner\":\"B\",\"text\":\"later\"}]}",
+      "records": [
+        {
+          "owner": "A",
+          "text": "valid"
+        }
+      ],
+      "partial": true,
+      "accepted": [
+        {
+          "owner": "A",
+          "text": "valid"
+        }
+      ],
+      "manifest": [
+        {
+          "status": "accepted",
+          "owner": "A",
+          "field": "text"
+        }
+      ]
+    },
+    {
+      "content": "{\"meta\":{\"records\":[{\"owner\":\"B\",\"text\":\"nested\"}]},\"records\":[{\"text\":\"root\",\"owner\":\"A\"}]}",
+      "records": [
+        {
+          "text": "root",
+          "owner": "A"
+        }
+      ],
+      "partial": false,
+      "accepted": [
+        {
+          "owner": "A",
+          "text": "root"
+        }
+      ],
+      "manifest": [
+        {
+          "status": "accepted",
+          "owner": "A",
+          "field": "text"
+        }
+      ]
+    },
+    {
+      "content": "{\"records\":[{\"owner\":\"A\",\"text\":\"one\",\"rate\":1},{\"owner\":\"A\",\"text\":\"two\",\"rate\":1},{\"owner\":\"B\",\"unknown\":0,\"direction\":\"保持\"}]}",
+      "records": [
+        {
+          "owner": "A",
+          "text": "one",
+          "rate": 1
+        },
+        {
+          "owner": "A",
+          "text": "two",
+          "rate": 1
+        },
+        {
+          "owner": "B",
+          "unknown": 0,
+          "direction": "保持"
+        }
+      ],
+      "partial": false,
+      "accepted": [
+        {
+          "owner": "A",
+          "rate": 1
+        },
+        {
+          "owner": "B",
+          "direction": "保持"
+        }
+      ],
+      "manifest": [
+        {
+          "status": "accepted",
+          "owner": "A",
+          "field": "text"
+        },
+        {
+          "status": "accepted",
+          "owner": "A",
+          "field": "rate"
+        },
+        {
+          "status": "accepted",
+          "owner": "A",
+          "field": "text"
+        },
+        {
+          "status": "accepted",
+          "owner": "A",
+          "field": "rate"
+        },
+        {
+          "status": "rejected",
+          "reason": "conflicting_field",
+          "owner": "A",
+          "field": "text"
+        },
+        {
+          "status": "rejected",
+          "reason": "unknown_field",
+          "owner": "B",
+          "field": "unknown"
+        },
+        {
+          "status": "accepted",
+          "owner": "B",
+          "field": "direction"
+        }
+      ]
+    },
+    {
+      "content": "{\"before\":\"escaped \\\" quote \\u3042 { }\", \"records\":[{\"owner\":\"A\",\"text\":\"a \\\\\" quote \\n newline\"}]}",
+      "records": [],
+      "partial": true,
+      "accepted": [],
+      "manifest": []
+    },
+    {
+      "content": "<|im_start|>assistant\n{\"records\":[{\"owner\":\"Z\",\"text\":\"skip\"},{\"owner\":\"B\",\"rate\":false,\"text\":\"ok\"}]}<|im_end|>",
+      "records": [
+        {
+          "owner": "Z",
+          "text": "skip"
+        },
+        {
+          "owner": "B",
+          "rate": false,
+          "text": "ok"
+        }
+      ],
+      "partial": false,
+      "accepted": [
+        {
+          "owner": "B",
+          "text": "ok"
+        }
+      ],
+      "manifest": [
+        {
+          "status": "rejected",
+          "reason": "unknown_owner",
+          "field": "owner"
+        },
+        {
+          "status": "rejected",
+          "reason": "invalid_field",
+          "owner": "B",
+          "field": "rate"
+        },
+        {
+          "status": "accepted",
+          "owner": "B",
+          "field": "text"
+        }
+      ]
+    },
+    {
+      "content": "{\"records\":[{\"owner\":\"A\",\"text\":\"one\"}],\"records\":[{\"owner\":\"B\",\"text\":\"two\"}]}",
+      "records": [
+        {
+          "owner": "A",
+          "text": "one"
+        }
+      ],
+      "partial": false,
+      "accepted": [
+        {
+          "owner": "A",
+          "text": "one"
+        }
+      ],
+      "manifest": [
+        {
+          "status": "accepted",
+          "owner": "A",
+          "field": "text"
+        }
+      ]
+    },
+    {
+      "content": "{\"records\":[{\"owner\":\"A\",\"text\":\"first\",\"text\":\"last\"}]}",
+      "records": [
+        {
+          "owner": "A",
+          "text": "last"
+        }
+      ],
+      "partial": false,
+      "accepted": [
+        {
+          "owner": "A",
+          "text": "last"
+        }
+      ],
+      "manifest": [
+        {
+          "status": "accepted",
+          "owner": "A",
+          "field": "text"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "content": "",
+      "records": [],
+      "partial": false
+    },
+    {
+      "content": "plain",
+      "records": [],
+      "partial": true
+    },
+    {
+      "content": "{\"D1.1\":{\"lines\":[{\"speaker\":\"A\",\"text\":\"保持\"}]},\"D1.2\":{\"lines\":[",
+      "records": [
+        {
+          "speaker": "A",
+          "text": "保持",
+          "source": "D1.1",
+          "source_complete": true
+        }
+      ],
+      "partial": true
+    },
+    {
+      "content": "```json\n{\"D1.2\":{\"lines\":[{\"speaker\":\"B\",\"text\":\"二番\"}]},\"D1.1\":{\"lines\":[{\"speaker\":\"A\",\"text\":\"一番 🐢 [笑]\"},0]}}\n```",
+      "records": [
+        {
+          "speaker": "B",
+          "text": "二番",
+          "source": "D1.2",
+          "source_complete": true
+        },
+        {
+          "speaker": "A",
+          "text": "一番 🐢 [笑]",
+          "source": "D1.1",
+          "source_complete": true
+        }
+      ],
+      "partial": false
+    },
+    {
+      "content": "{\"D1.1\":{\"lines\":\"bad\"},\"D1.2\":{\"lines\":[{\"text\":\"valid\"}]}}",
+      "records": [
+        {
+          "text": "valid",
+          "source": "D1.2",
+          "source_complete": true
+        }
+      ],
+      "partial": false
+    },
+    {
+      "content": "{\"D1.1\":{\"lines\":[{\"text\":\"first\"}]},\"D1.1\":{\"lines\":[{\"text\":\"last\"}]}}",
+      "records": [
+        {
+          "text": "first",
+          "source": "D1.1",
+          "source_complete": true
+        }
+      ],
+      "partial": true
+    },
+    {
+      "content": "{\"unknown\":{\"lines\":[{\"text\":\"ignored\"}]},\"D1.1\":{\"lines\":[{\"text\":\"valid\"}]}}",
+      "records": [
+        {
+          "text": "valid",
+          "source": "D1.1",
+          "source_complete": true
+        }
+      ],
+      "partial": true
+    },
+    {
+      "content": "{\"D1.1\":{\"lines\":[{\"text\":\"escaped \\\" quote\"}]},BROKEN}",
+      "records": [
+        {
+          "text": "escaped \" quote",
+          "source": "D1.1",
+          "source_complete": true
+        }
+      ],
+      "partial": true
+    },
+    {
+      "content": "{\"D1.1\":{\"lines\":[]},\"D1.2\":{\"lines\":[]}}",
+      "records": [],
+      "partial": false
+    }
+  ]
+}
