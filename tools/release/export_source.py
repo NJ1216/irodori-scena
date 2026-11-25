@@ -11,8 +11,8 @@ from pathlib import Path
 from privacy import audit_file, public_bytes, safe_name
 
 ROOT = Path(__file__).resolve().parents[2]
-# Owner-local list of names, hosts and folders that must never be published; never committed.
-DEFAULT_PRIVATE_TERMS = Path.home() / ".config" / "irodori-scena" / "private-terms.txt"
+# Owner-local list of names, hosts and folders that must never be published; shared with the global github-push skill, never committed.
+DEFAULT_PRIVATE_TERMS = Path.home() / ".config" / "github-push" / "private-terms.txt"
 
 
 def classification_findings(tracked, published, excluded):

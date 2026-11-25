@@ -3,12 +3,12 @@ import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync } from "node:
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
-  REQUIRED_NODE_MAJOR,
-  REQUIRED_PNPM_MAJOR,
+  MINIMUM_NODE_MAJOR,
+  MINIMUM_PNPM_MAJOR,
   REQUIRED_UV_VERSION,
   WINDOWS_TARGET,
   generatedCleanupTargets,
-  parseMajor,
+  meetsMinimumMajor,
   parseUvVersion,
   pnpmInvocation,
   runStage,
@@ -39,9 +39,9 @@ function capture(command, args) {
 
 const [pnpmCommand, pnpmVersionArgs] = pnpmInvocation(process.env.npm_execpath, ["--version"]);
 runStage("1/7 環境確認", "docs/public/windows-development.md の固定バージョンと Visual Studio Build Tools 構成を確認してください。", () => {
-  if (parseMajor(process.version) !== REQUIRED_NODE_MAJOR) throw new Error(`Node.js ${REQUIRED_NODE_MAJOR}.x が必要です: ${process.version}`);
+  if (!meetsMinimumMajor(process.version, MINIMUM_NODE_MAJOR)) throw new Error(`Node.js ${MINIMUM_NODE_MAJOR} 以降が必要です: ${process.version}`);
   const pnpmVersion = capture(pnpmCommand, pnpmVersionArgs);
-  if (parseMajor(pnpmVersion) !== REQUIRED_PNPM_MAJOR) throw new Error(`pnpm ${REQUIRED_PNPM_MAJOR}.x が必要です: ${pnpmVersion}`);
+  if (!meetsMinimumMajor(pnpmVersion, MINIMUM_PNPM_MAJOR)) throw new Error(`pnpm ${MINIMUM_PNPM_MAJOR} 以降が必要です: ${pnpmVersion}`);
   const uvVersion = capture("uv", ["--version"]);
   if (parseUvVersion(uvVersion) !== REQUIRED_UV_VERSION) throw new Error(`uv ${REQUIRED_UV_VERSION} が必要です: ${uvVersion}`);
   const rust = capture("rustc", ["-vV"]);

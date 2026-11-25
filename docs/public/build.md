@@ -2,7 +2,7 @@
 
 ## 対応環境
 
-Apple Silicon搭載のmacOSとWindows 11 x64を対象とします。この節はMac版のビルドについて説明します。Windows版は[Windowsネイティブ開発](windows-development.md)を参照してください。Node.js 24以降、pnpm 11、Rust安定版とXcode Command Line Toolsが必要です。uvは0.12.5、Pythonは3.13.12、PyInstallerは6.22.2に固定しています。Pythonのビルド用依存関係も `uv.lock` で固定します。ホストのuvが別バージョンの場合、ビルド手順が一時環境にuv 0.12.5を準備して使用するため、グローバルのuvを変更する必要はありません。初回取得には通信が必要です。
+Apple Silicon搭載のmacOSとWindows 11 x64を対象とします。この節はMac版のビルドについて説明します。Windows版は[Windowsネイティブ開発](windows-development.md)を参照してください。Node.js 24以降（最新のLTS版を推奨）、pnpm 11以降（最新版を推奨）、Rust安定版とXcode Command Line Toolsが必要です。uvは0.12.5、Pythonは3.13.12、PyInstallerは6.22.2に固定しています。Pythonのビルド用依存関係も `uv.lock` で固定します。ホストのuvが別バージョンの場合、ビルド手順が一時環境にuv 0.12.5を準備して使用するため、グローバルのuvを変更する必要はありません。初回取得には通信が必要です。
 
 READMEの手順でビルドしてください。`pnpm tauri build` はネイティブ拡張、API sidecar、環境管理用uv、フロントエンドを用意してarm64アプリを作ります。oMLXは必要になった時点で管理環境へインストールします。`pnpm exec tauri build` の直接実行は必要なファイルを準備しないため使用しません。
 

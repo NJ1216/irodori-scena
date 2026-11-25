@@ -79,12 +79,12 @@ WindowsとMacで使えるベータ版です。Windows版はインストーラー
    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
    ```
 
-3. **Node.js 24以降**（画面部分のビルドに使います）。[Node.jsの公式サイト](https://nodejs.org/ja)からインストーラーを入手し、インストールします。
+3. **Node.js**（画面部分のビルドに使います）。24以降が必要で、最新のLTS版をおすすめします。[Node.jsの公式サイト](https://nodejs.org/ja)からインストーラーを入手し、インストールします。
 
-4. **pnpm 11**（Node.js用のパッケージ管理ツール）
+4. **pnpm**（Node.js用のパッケージ管理ツール）。11以降が必要で、最新版をおすすめします。
 
    ```bash
-   npm install -g pnpm@11
+   npm install -g pnpm@latest
    ```
 
 5. **uv**（Python用のパッケージ管理ツール）。バージョンは問いません。ビルドに必要なuv 0.12.5とPython 3.13.12は、ビルド時に自動で用意されます。

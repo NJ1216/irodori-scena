@@ -6,7 +6,7 @@ WindowsのLLMはOllama、LM Studio、OpenAI互換の外部接続に加え、SCEN
 
 ## 開発環境
 
-必要な構成はNode.js 24、pnpm 11、Rust MSVC stable、Visual Studio 2022 C++ Build Tools、Windows 11 SDK、uv、Python 3.13、Git for Windowsです。TTSの音声読込みにはFFmpeg共有DLLも必要です。
+必要な構成はNode.js 24以降（最新のLTS版を推奨）、pnpm 11以降（最新版を推奨）、Rust MSVC stable、Visual Studio 2022 C++ Build Tools、Windows 11 SDK、uv、Python 3.13、Git for Windowsです。TTSの音声読込みにはFFmpeg共有DLLも必要です。
 
 環境を新規構築する場合、`tools/windows-dev/setup-toolchain.ps1` を引数なしで実行すると導入計画だけを表示します。内容を確認したうえで、管理者PowerShellから `-Apply` を明示した場合に限って開発ツールを導入します。ドライバー、CUDA Toolkit、モデル、アプリの依存関係はこのスクリプトの対象外です。
 

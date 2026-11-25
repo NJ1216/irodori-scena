@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import process from "node:process";
 import { spawnSync } from "node:child_process";
+import { pnpmInvocation } from "./windows-build-contract.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 const temporary = await mkdtemp(path.join(tmpdir(), "scena-openapi-"));
@@ -17,9 +18,8 @@ try {
     encoding: "utf8",
   });
   if (schemaResult.status !== 0) throw new Error(schemaResult.stderr || schemaResult.stdout);
-  const pnpmScript = process.env.npm_execpath;
-  const packageManager = process.platform === "win32" && pnpmScript ? process.execPath : "pnpm";
-  const packageArguments = process.platform === "win32" && pnpmScript ? [pnpmScript, "exec", "openapi-typescript", schema, "-o", types] : ["exec", "openapi-typescript", schema, "-o", types];
+  const typeArguments = ["exec", "openapi-typescript", schema, "-o", types];
+  const [packageManager, packageArguments] = process.platform === "win32" && process.env.npm_execpath ? pnpmInvocation(process.env.npm_execpath, typeArguments) : ["pnpm", typeArguments];
   const typeResult = spawnSync(packageManager, packageArguments, {
     cwd: root,
     encoding: "utf8",

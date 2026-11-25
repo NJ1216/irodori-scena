@@ -1,8 +1,9 @@
 import { join, win32 } from "node:path";
 
 export const WINDOWS_TARGET = "x86_64-pc-windows-msvc";
-export const REQUIRED_NODE_MAJOR = 24;
-export const REQUIRED_PNPM_MAJOR = 11;
+// Node.js and pnpm track the latest releases; only these minimum major versions are required.
+export const MINIMUM_NODE_MAJOR = 24;
+export const MINIMUM_PNPM_MAJOR = 11;
 export const REQUIRED_UV_VERSION = "0.12.5";
 
 export function runnerBootstrapScript(workflow) {
@@ -55,6 +56,8 @@ export function generatedCleanupTargets(root) {
 
 export function pnpmInvocation(npmExecPath, args) {
   if (!npmExecPath) throw new Error("pnpm 経由で `pnpm.cmd tauri build` を実行してください。");
+  // pnpm 12 ships a standalone pnpm.exe; older releases point npm_execpath at a pnpm.cjs script for Node.
+  if (/\.exe$/i.test(npmExecPath)) return [npmExecPath, [...args]];
   return [process.execPath, [npmExecPath, ...args]];
 }
 
@@ -89,6 +92,11 @@ export function inspectInstallerEntries(entries, { productName, version, buildSt
 export function parseMajor(versionOutput) {
   const match = versionOutput.match(/(?:^|\s)v?(\d+)(?:\.|$)/);
   return match ? Number(match[1]) : null;
+}
+
+export function meetsMinimumMajor(versionOutput, minimum) {
+  const major = parseMajor(versionOutput);
+  return major !== null && major >= minimum;
 }
 
 export function parseUvVersion(versionOutput) {

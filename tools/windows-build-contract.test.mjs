@@ -8,6 +8,9 @@ import {
   expectedInstallerName,
   generatedCleanupTargets,
   inspectInstallerEntries,
+  MINIMUM_NODE_MAJOR,
+  MINIMUM_PNPM_MAJOR,
+  meetsMinimumMajor,
   parseUvVersion,
   platformPnpmInvocation,
   pnpmInvocation,
@@ -51,7 +54,7 @@ test("Windows runner setup parses and prints its plan without winget or Node", {
     env: { ...process.env, PATH: join(process.env.SystemRoot, "System32") },
   });
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /Node\.js 24\./);
+  assert.match(result.stdout, /Node\.js latest LTS/);
   assert.match(result.stdout, /Visual Studio/);
   assert.match(result.stdout, /\.NET SDK 10/);
 });
@@ -180,11 +183,29 @@ test("builds pnpm and Tauri commands without relying on pnpm.cmd lookup", () => 
   assert.throws(() => pnpmInvocation(undefined, []), /pnpm\.cmd tauri build/);
 });
 
+test("runs the standalone pnpm 12 executable directly instead of loading it into Node", () => {
+  const pnpmExe = "C:\\Users\\runner\\AppData\\Local\\tools\\node_modules\\pnpm\\pnpm.exe";
+  assert.deepEqual(pnpmInvocation(pnpmExe, ["--version"]), [pnpmExe, ["--version"]]);
+  assert.deepEqual(pnpmInvocation("C:\\pnpm\\PNPM.EXE", ["exec", "tauri"]), ["C:\\pnpm\\PNPM.EXE", ["exec", "tauri"]]);
+  const [command, args] = tauriBuildInvocation(pnpmExe, []);
+  assert.equal(command, pnpmExe);
+  assert.deepEqual(args.slice(0, 3), ["exec", "tauri", "build"]);
+  assert.deepEqual(platformPnpmInvocation("win32", pnpmExe, ["exec", "vite"]), [pnpmExe, ["exec", "vite"]]);
+});
+
 test("starts the Playwright Vite server through pnpm's resolved Windows script", () => {
   const args = ["dev:web", "--port", "5174"];
   assert.deepEqual(platformPnpmInvocation("win32", "C:\\pnpm\\pnpm.cjs", args), [process.execPath, ["C:\\pnpm\\pnpm.cjs", ...args]]);
   assert.deepEqual(platformPnpmInvocation("darwin", undefined, args), ["pnpm", args]);
   assert.deepEqual(platformPnpmInvocation("linux", undefined, args), ["pnpm", args]);
+});
+
+test("accepts current Node.js and pnpm releases at or above the minimum major versions", () => {
+  assert.equal(MINIMUM_NODE_MAJOR, 24);
+  assert.equal(MINIMUM_PNPM_MAJOR, 11);
+  for (const version of ["v24.21.0", "v26.13.1", "v30.0.0"]) assert.equal(meetsMinimumMajor(version, MINIMUM_NODE_MAJOR), true, version);
+  for (const version of ["11.22.0", "12.23.0"]) assert.equal(meetsMinimumMajor(version, MINIMUM_PNPM_MAJOR), true, version);
+  for (const version of ["v22.11.0", "10.13.1", "", "not a version"]) assert.equal(meetsMinimumMajor(version, version.startsWith("v") ? MINIMUM_NODE_MAJOR : MINIMUM_PNPM_MAJOR), false, version);
 });
 
 test("parses the uv version without rejecting official build metadata", () => {

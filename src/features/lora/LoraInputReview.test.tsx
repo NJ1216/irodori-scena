@@ -44,10 +44,22 @@ function Harness() {
     </>
   );
 }
+// Role queries over the whole 100-row table cost ~20x more than within one row; scope them to keep the suite fast under load.
+function rowOf(label: string) {
+  const row = screen.getByTitle(label).closest("tr");
+  if (!row) throw new Error(`No table row for ${label}`);
+  return within(row);
+}
+function editorOf(label: string) {
+  const editor = screen.getByTitle(label).closest("tr")?.nextElementSibling;
+  if (!(editor instanceof HTMLElement)) throw new Error(`No open editor for ${label}`);
+  return within(editor);
+}
 async function loaded() {
   render(<Harness />);
   fireEvent.click(screen.getByRole("button", { name: "取り込み" }));
-  await screen.findByRole("button", { name: "folder-0/0.wavを確認" });
+  await screen.findByTitle("folder-0/0.wav");
+  expect(rowOf("folder-0/0.wav").getByRole("button", { name: "folder-0/0.wavを確認" })).toBeVisible();
 }
 it("shows 100 compact rows with no eager audio loading or per-row textareas and hides internal IDs", async () => {
   await loaded();
@@ -71,16 +83,16 @@ it("edits only the selected row and preserves long transcript/caption drafts whi
   data[0].text = text;
   api.folderInputs.mockResolvedValue({ datasetId: "data", rows: data });
   await loaded();
-  fireEvent.click(screen.getByRole("button", { name: "folder-0/0.wavの台詞を編集" }));
-  expect(screen.getByLabelText("台詞")).toHaveValue(text);
-  fireEvent.change(screen.getByLabelText("台詞"), { target: { value: "-途中の台詞" } });
-  fireEvent.change(screen.getByLabelText("声・話し方の説明"), { target: { value: "声の説明" } });
-  fireEvent.click(screen.getByRole("button", { name: "folder-1/1.wavの台詞を編集" }));
+  fireEvent.click(rowOf("folder-0/0.wav").getByRole("button", { name: "folder-0/0.wavの台詞を編集" }));
+  expect(editorOf("folder-0/0.wav").getByLabelText("台詞")).toHaveValue(text);
+  fireEvent.change(editorOf("folder-0/0.wav").getByLabelText("台詞"), { target: { value: "-途中の台詞" } });
+  fireEvent.change(editorOf("folder-0/0.wav").getByLabelText("声・話し方の説明"), { target: { value: "声の説明" } });
+  fireEvent.click(rowOf("folder-1/1.wav").getByRole("button", { name: "folder-1/1.wavの台詞を編集" }));
   expect(screen.getAllByLabelText("台詞")).toHaveLength(1);
-  expect(screen.getByLabelText("台詞")).toHaveValue("台詞1");
-  fireEvent.click(screen.getByRole("button", { name: "folder-0/0.wavを確認" }));
-  expect(screen.getByLabelText("台詞")).toHaveValue("-途中の台詞");
-  expect(screen.getByLabelText("声・話し方の説明")).toHaveValue("声の説明");
+  expect(editorOf("folder-1/1.wav").getByLabelText("台詞")).toHaveValue("台詞1");
+  fireEvent.click(rowOf("folder-0/0.wav").getByRole("button", { name: "folder-0/0.wavを確認" }));
+  expect(editorOf("folder-0/0.wav").getByLabelText("台詞")).toHaveValue("-途中の台詞");
+  expect(editorOf("folder-0/0.wav").getByLabelText("声・話し方の説明")).toHaveValue("声の説明");
 });
 it("shows missing TXT and warnings inline, allows explicit transcript repair and exclusion without rewriting other rows", async () => {
   const data = rows();
@@ -90,14 +102,14 @@ it("shows missing TXT and warnings inline, allows explicit transcript repair and
   await loaded();
   expect(screen.getByText("台詞なし")).toBeVisible();
   expect(screen.getByText("要確認")).toBeVisible();
-  fireEvent.click(screen.getByRole("button", { name: "folder-0/0.wavを確認" }));
+  fireEvent.click(rowOf("folder-0/0.wav").getByRole("button", { name: "folder-0/0.wavを確認" }));
   expect(screen.getByRole("alert")).toHaveTextContent("TXTがありません");
-  fireEvent.change(screen.getByLabelText("台詞"), { target: { value: "手入力の台詞" } });
+  fireEvent.change(editorOf("folder-0/0.wav").getByLabelText("台詞"), { target: { value: "手入力の台詞" } });
   expect(screen.getByText("手入力済み")).toBeVisible();
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole("checkbox", { name: "folder-1/1.wavを除外" }));
-  expect(screen.getByRole("button", { name: "folder-1/1.wavを確認" }).closest("tr")).toHaveTextContent("除外");
-  expect(screen.getByRole("button", { name: "folder-0/0.wavの台詞を編集" })).toHaveTextContent("手入力の台詞");
+  fireEvent.click(rowOf("folder-1/1.wav").getByRole("checkbox", { name: "folder-1/1.wavを除外" }));
+  expect(rowOf("folder-1/1.wav").getByRole("button", { name: "folder-1/1.wavを確認" }).closest("tr")).toHaveTextContent("除外");
+  expect(rowOf("folder-0/0.wav").getByRole("button", { name: "folder-0/0.wavの台詞を編集" })).toHaveTextContent("手入力の台詞");
 });
 it("keeps ambiguous pairing blocked despite valid transcript text and allows only explicit exclusion or reimport", async () => {
   const data = rows();
@@ -105,11 +117,11 @@ it("keeps ambiguous pairing blocked despite valid transcript text and allows onl
   api.folderInputs.mockResolvedValue({ datasetId: "data", rows: data });
   await loaded();
   expect(screen.getByText("対応を確認")).toBeVisible();
-  fireEvent.click(screen.getByRole("button", { name: "folder-0/0.wavを確認" }));
-  expect(screen.getByLabelText("台詞")).toBeDisabled();
+  fireEvent.click(rowOf("folder-0/0.wav").getByRole("button", { name: "folder-0/0.wavを確認" }));
+  expect(editorOf("folder-0/0.wav").getByLabelText("台詞")).toBeDisabled();
   expect(screen.getByRole("alert")).toHaveTextContent("同名候補");
-  fireEvent.click(screen.getByRole("checkbox", { name: "folder-0/0.wavを除外" }));
-  expect(screen.getByRole("button", { name: "folder-0/0.wavを確認" }).closest("tr")).toHaveTextContent("除外");
+  fireEvent.click(rowOf("folder-0/0.wav").getByRole("checkbox", { name: "folder-0/0.wavを除外" }));
+  expect(rowOf("folder-0/0.wav").getByRole("button", { name: "folder-0/0.wavを確認" }).closest("tr")).toHaveTextContent("除外");
 });
 it("fetches only the selected preview and prevents an older slow load from starting after another row", async () => {
   await loaded();
@@ -122,20 +134,20 @@ it("fetches only the selected preview and prevents an older slow load from start
         }),
     )
     .mockResolvedValue(true);
-  fireEvent.click(screen.getByRole("button", { name: "folder-0/0.wavを再生" }));
-  fireEvent.click(screen.getByRole("button", { name: "folder-1/1.wavを再生" }));
+  fireEvent.click(rowOf("folder-0/0.wav").getByRole("button", { name: "folder-0/0.wavを再生" }));
+  fireEvent.click(rowOf("folder-1/1.wav").getByRole("button", { name: "folder-1/1.wavを再生" }));
   await waitFor(() => expect(player.play).toHaveBeenCalledOnce());
   await act(async () => {
     release(true);
   });
   expect(player.play).toHaveBeenCalledOnce();
   expect(player.setSource.mock.calls).toEqual([["/preview/0"], ["/preview/1"]]);
-  expect(screen.getByRole("button", { name: "folder-1/1.wavを停止" })).toBeVisible();
+  expect(rowOf("folder-1/1.wav").getByRole("button", { name: "folder-1/1.wavを停止" })).toBeVisible();
 });
 it("reports preview failures and disposes the one player when review closes", async () => {
   const view = render(<Harness />);
   fireEvent.click(screen.getByRole("button", { name: "取り込み" }));
-  await screen.findByRole("button", { name: "folder-0/0.wavを確認" });
+  await screen.findByTitle("folder-0/0.wav");
   act(() => {
     player.setCallbacks.mock.calls[0][0].onError(new Error("broken"));
   });

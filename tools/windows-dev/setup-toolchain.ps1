@@ -8,14 +8,14 @@ $plan = @(
     @{tool='FFmpeg Shared'; source='Gyan.FFmpeg.Shared'; version='8.1.2'; purpose='TorchCodec audio runtime; installed separately, not bundled'},
     @{tool='uv'; source='astral-sh.uv'; version='0.12.5'},
     @{tool='Python'; source='uv managed Python'; version='3.13.12'},
-    @{tool='pnpm'; source='npm registry'; version='11.x'; scope='user-local prefix'}
+    @{tool='pnpm'; source='npm registry'; version='latest'; scope='user-local prefix'}
 )
 if (!$Apply) { $plan | ConvertTo-Json -Depth 5; return }
 $principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
 if (!$principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { throw 'Run in an explicitly approved elevated session' }
 if (!(Get-Command winget.exe -ErrorAction SilentlyContinue)) { throw 'winget is required' }
 if (!(Get-Command npm.cmd -ErrorAction SilentlyContinue)) { throw 'Existing Node.js/npm is required' }
-if ((& node.exe --version) -notmatch '^v24\.') { throw 'This setup expects the verified Node.js 24 environment' }
+if ("$(& node.exe --version)" -notmatch '^v(\d+)\.' -or [int]$Matches[1] -lt 24) { throw 'This setup expects Node.js 24 or newer (the latest LTS is recommended)' }
 function Invoke-Checked($Executable, $Arguments) {
     & $Executable @Arguments
     if ($LASTEXITCODE -eq 3010) { throw 'Installation requires a restart; no restart was performed. Stop here.' }
@@ -35,7 +35,7 @@ $env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [En
 if (!(Get-Command uv.exe -ErrorAction SilentlyContinue)) { throw 'uv was installed but is not discoverable; inspect its location before continuing' }
 Invoke-Checked 'uv.exe' @('python', 'install', '3.13.12')
 $prefix = Join-Path $env:LOCALAPPDATA 'irodori-scena-dev-tools'
-Invoke-Checked 'npm.cmd' @('install', '--global', '--prefix', $prefix, '--ignore-scripts', 'pnpm@11')
+Invoke-Checked 'npm.cmd' @('install', '--global', '--prefix', $prefix, '--ignore-scripts', 'pnpm@latest')
 $env:Path = $prefix + ';' + $env:Path
 Invoke-Checked 'rustc.exe' @('--version')
 Invoke-Checked 'cargo.exe' @('--version')
