@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import scena_test_isolation  # noqa: F401
 import unittest
 from types import SimpleNamespace
 from unittest.mock import patch

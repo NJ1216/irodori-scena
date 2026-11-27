@@ -1,6 +1,7 @@
 """Exercise planning, dialogue parsing, usage and save with a fake HTTP server."""
 from __future__ import annotations
 
+import scena_test_isolation  # noqa: F401
 import io
 import json
 import tempfile

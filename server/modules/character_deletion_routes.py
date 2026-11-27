@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from server.app_deps import shutil, Any, HTTPException
 from server.modules.pronunciation_dictionary import dictionary_transaction
+from server.modules.project_repository import cast_mutation
 from server.registry import deps
 
 @deps.app.delete("/api/characters/{character_id}")
 @dictionary_transaction
+@cast_mutation
 def delete_character(character_id: str) -> dict[str, Any]:
     project = deps.read_project()
     character = deps.find_character(project, character_id)

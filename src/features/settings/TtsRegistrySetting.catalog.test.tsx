@@ -11,7 +11,7 @@ const item = {
   repo: "base",
   revision: "revision",
   installable: true,
-  sizeBytes: 3 * 1024 ** 3,
+  sizeBytes: 3 * 1_000_000_000,
   precision: "FP32",
 } as TtsCatalogItem;
 
@@ -22,7 +22,7 @@ const fp16 = {
   backend: "mlx",
   repo: "mlx/base",
   revision: "mlx-revision",
-  sizeBytes: 2 * 1024 ** 3,
+  sizeBytes: 2 * 1_000_000_000,
   runtimeProfile: "mlx-audio-0.5.0-fp16",
   available: true,
   recommendedOrder: 1,
@@ -56,7 +56,7 @@ describe("TTS catalog download metadata", () => {
 
   it("shows each variant's own download size immediately on hover and focus without native tooltips", () => {
     vi.useFakeTimers();
-    const variants = [{ ...fp16, id: "pytorch-fp32", precision: "FP32", sizeBytes: 3 * 1024 ** 3 }, fp16, { ...fp16, id: "mlx-bf16", precision: "BF16", sizeBytes: 7 * 1024 ** 3 }, { ...fp16, id: "mlx-8bit", precision: "8bit", sizeBytes: 1024 ** 3 }];
+    const variants = [{ ...fp16, id: "pytorch-fp32", precision: "FP32", sizeBytes: 3 * 1_000_000_000 }, fp16, { ...fp16, id: "mlx-bf16", precision: "BF16", sizeBytes: 7 * 1_000_000_000 }, { ...fp16, id: "mlx-8bit", precision: "8bit", sizeBytes: 1_000_000_000 }];
     render(
       <>
         <VariantPanel item={item} variants={variants} installed={new Set()} verified={false} busy={false} onVariant={vi.fn()} onChanged={vi.fn()} />
@@ -66,13 +66,13 @@ describe("TTS catalog download metadata", () => {
     for (const variant of variants) {
       const button = screen.getByRole("button", { name: variant.precision });
       fireEvent.mouseOver(button);
-      expect(screen.getByRole("tooltip")).toHaveTextContent(`ダウンロードサイズ：${variant.sizeBytes / 1024 ** 3}.0 GB`);
+      expect(screen.getByRole("tooltip")).toHaveTextContent(`ダウンロードサイズ：${variant.sizeBytes / 1_000_000_000}.0 GB`);
       expect(button).not.toHaveAttribute("title");
       fireEvent.mouseOut(button);
       expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
       expect(button).not.toHaveAttribute("title");
       fireEvent.focusIn(button);
-      expect(screen.getByRole("tooltip")).toHaveTextContent(`ダウンロードサイズ：${variant.sizeBytes / 1024 ** 3}.0 GB`);
+      expect(screen.getByRole("tooltip")).toHaveTextContent(`ダウンロードサイズ：${variant.sizeBytes / 1_000_000_000}.0 GB`);
       fireEvent.focusOut(button);
       expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
     }

@@ -10,7 +10,7 @@ function timelinePlan(project: StudioProject): TimelinePlan {
   const groups: Array<{ id: string; gap: number; members: Array<{ id: string; offset: number; duration: number | null; takeId: string; signature: string | null }> }> = [];
   for (const line of project.scenes.flatMap((scene) => scene.lines).filter((line) => line.enabled !== false)) {
     const take = line.takes.find((take) => take.id === line.selectedTakeId);
-    const member = { id: line.id, offset: Math.round((line.startOffsetSeconds ?? 0) * sampleRate), duration: take ? Math.round(take.durationSeconds * sampleRate) : null, takeId: take?.id ?? "", signature: take?.id ?? null };
+    const member = { id: line.id, offset: Math.round((line.startOffsetSeconds ?? 0) * sampleRate), duration: take?.durationSeconds !== undefined ? Math.round(take.durationSeconds * sampleRate) : null, takeId: take?.id ?? "", signature: take?.id ?? null };
     const previous = groups.at(-1);
     if (line.cueId && previous?.id === line.cueId) previous.members.push(member);
     else groups.push({ id: line.cueId ?? line.id, gap: Math.round((line.gapSeconds ?? project.settings.lineGap ?? 0.7) * sampleRate), members: [member] });

@@ -162,7 +162,7 @@ async function fulfillProjectOrSettings(route: Route, project: typeof projectFix
   if (await fulfillProjectPersistence(route, project)) return true;
   if (await fulfillBatchDelete(route, project)) return true;
   if (path === "/api/project/import-script" && request.method() === "POST") {
-    const lines = request.postDataJSON().lines;
+    const lines = request.postDataJSON().lines as Array<{ character_id: string; text: string }>;
     let scene = project.scenes.find((item) => !item.lines.length);
     if (!scene) {
       scene = { id: "scene-import", title: "読み込み台本", lines: [] };
@@ -238,7 +238,7 @@ export async function installMockApi(page: Page, options: MockApiOptions = {}) {
   const project = createMockProject(options);
   const ttsSelection = { modelId: registeredTts ? "Aratako/Irodori-TTS-v4.1-Small@2b28324" : null };
   const omlxState = { optionalInstalled: multipleOmlxRuntimes, recommendedInstalled: true };
-  let draft = { ...draftFixture };
+  let draft: typeof draftFixture & { cancelRequested?: boolean } = { ...draftFixture };
   async function fulfillDraft(route: Route) {
     const path = new URL(route.request().url()).pathname;
     if (path === "/api/ai/jobs" && route.request().method() === "POST") {

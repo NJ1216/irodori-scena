@@ -16,7 +16,7 @@ import numpy as np
 import psutil
 
 
-REPOSITORY = Path(__file__).resolve().parents[1]
+REPOSITORY = Path(__file__).resolve().parents[2]
 
 
 def make_fixture(root: Path, count: int = 8, seconds: int = 30) -> list[tuple[Path, float]]:

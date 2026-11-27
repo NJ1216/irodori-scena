@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import scena_test_isolation  # noqa: F401
 import unittest
 
 from server.modules.direction_optimization import direction_evidence_passes

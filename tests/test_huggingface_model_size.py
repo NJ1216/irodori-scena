@@ -1,3 +1,4 @@
+import scena_test_isolation  # noqa: F401
 import tempfile
 import unittest
 from pathlib import Path

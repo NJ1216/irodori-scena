@@ -11,7 +11,7 @@ const model = {
   gated: false,
   compatibility: "mlx" as const,
   warning: null,
-  downloadSizeBytes: 12 * 1024 ** 3,
+  downloadSizeBytes: 12 * 1_000_000_000,
   inferredTags: [
     { kind: "family" as const, value: "model" },
     { kind: "parameters" as const, value: "8B" },

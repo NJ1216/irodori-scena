@@ -1,3 +1,4 @@
+use crate::api_supervisor_common::{generate_token, health_response_ok};
 use std::fmt;
 use std::io::{self, Read, Write};
 use std::net::{TcpListener, TcpStream};
@@ -128,7 +129,7 @@ fn start_api_process(
     address: String,
     cancelled: &AtomicBool,
 ) -> Result<ApiProcess, SupervisorError> {
-    let token = generate_token()?;
+    let token = generate_token().map_err(SupervisorError::Io)?;
     command
         .env("SCENA_DESKTOP", "1")
         .env("SCENA_API_TOKEN", &token)
@@ -161,13 +162,6 @@ fn reserve_api_listener() -> Result<TcpListener, SupervisorError> {
         return Err(SupervisorError::Io(io::Error::last_os_error()));
     }
     Ok(listener)
-}
-
-fn generate_token() -> Result<String, SupervisorError> {
-    let mut bytes = [0_u8; 32];
-    getrandom::fill(&mut bytes)
-        .map_err(|error| SupervisorError::Io(io::Error::other(error.to_string())))?;
-    Ok(bytes.iter().map(|byte| format!("{byte:02x}")).collect())
 }
 
 pub fn validate_production_artifact(path: &Path) -> Result<(), SupervisorError> {
@@ -233,7 +227,7 @@ fn health_check(address: &str, token: &str) -> io::Result<bool> {
     )?;
     let mut response = String::new();
     stream.read_to_string(&mut response)?;
-    Ok(response.starts_with("HTTP/1.1 200") && response.contains("\"ok\":true"))
+    Ok(health_response_ok(&response))
 }
 
 impl ApiProcess {

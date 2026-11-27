@@ -4,10 +4,14 @@ from __future__ import annotations
 
 import asyncio
 import os
+
+import anyio
 from uuid import UUID
 
 from server.app_deps import hashlib, json, shutil, threading, time, uuid4, Path, Any, HTTPException
 from server.modules.history_coalescing import coalesce_auto_render, coalesce_generation_group, prune_unreferenced_blobs
+from server.modules.history_pending import PendingCaptures
+from server.modules.pronunciation_dictionary import DICTIONARY_LOCK
 from server.modules.history_targets import batch_delete_media_targets as _batch_delete_media_targets
 from server.modules.history_targets import line_delete_media_targets as _line_delete_media_targets
 from server.modules.history_targets import line_take_media_targets as _line_take_media_targets
@@ -25,6 +29,7 @@ _ROOT: Path | None = None
 _HISTORY: dict[str, list[dict[str, Any]]] = {"script": [], "characters": [], "pronunciation": []}
 _CURSOR = {scope: 0 for scope in _HISTORY}
 _RESTORING = False
+_PENDING = PendingCaptures()
 
 
 def _scope_for(path: str, method: str) -> str | None:
@@ -97,6 +102,7 @@ def begin_history_session() -> None:
         (_ROOT / "blobs").mkdir(parents=True, exist_ok=True)
         _HISTORY = {"script": [], "characters": [], "pronunciation": []}
         _CURSOR = {scope: 0 for scope in _HISTORY}
+        _PENDING.reset()
         stale = _stale_session_roots(base, _ROOT)
     # Cleanup is deliberately detached from startup/project switching.
     threading.Thread(
@@ -115,6 +121,7 @@ def end_history_session() -> None:
         _ROOT = None
         _HISTORY = {"script": [], "characters": [], "pronunciation": []}
         _CURSOR = {scope: 0 for scope in _HISTORY}
+        _PENDING.reset()
     if root is not None:
         shutil.rmtree(root, ignore_errors=True)
 
@@ -255,7 +262,17 @@ def capture_history_before(scope: str | None, include_media: bool = False, media
     if scope is None or _RESTORING:
         return None
     with _LOCK:
-        return _snapshot(scope, include_media, media_targets)
+        snapshot = _snapshot(scope, include_media, media_targets)
+        _PENDING.hold(snapshot)
+        return snapshot
+
+
+def release_history_capture(before: dict[str, Any] | None) -> None:
+    """Stop protecting a captured snapshot's blobs once its request has finished."""
+    if before is None:
+        return
+    with _LOCK:
+        _PENDING.release(before)
 
 
 def commit_history(scope: str | None, before: dict[str, Any] | None, auto_render_base_revision: int | None = None, generation_group_id: str | None = None) -> None:
@@ -266,17 +283,17 @@ def commit_history(scope: str | None, before: dict[str, Any] | None, auto_render
         if _same(before, after):
             return
         if coalesce_generation_group(_HISTORY[scope], _CURSOR[scope], scope, before, after, generation_group_id):
-            prune_unreferenced_blobs(_session_root() / "blobs", _HISTORY)
+            prune_unreferenced_blobs(_session_root() / "blobs", _HISTORY, _PENDING.blobs)
             return
         if coalesce_auto_render(_HISTORY[scope], _CURSOR[scope], scope, before, after, auto_render_base_revision, _session_root() / "blobs"):
-            prune_unreferenced_blobs(_session_root() / "blobs", _HISTORY)
+            prune_unreferenced_blobs(_session_root() / "blobs", _HISTORY, _PENDING.blobs)
             return
         cursor = _CURSOR[scope]
         entries = _HISTORY[scope][:cursor]
         entries.append({"before": before, "after": after, "createdAt": time.time(), "generationGroupId": generation_group_id})
         _HISTORY[scope] = entries[-_MAX_ENTRIES:]
         _CURSOR[scope] = len(_HISTORY[scope])
-        prune_unreferenced_blobs(_session_root() / "blobs", _HISTORY)
+        prune_unreferenced_blobs(_session_root() / "blobs", _HISTORY, _PENDING.blobs)
 
 
 def _restore(snapshot: dict[str, Any], displaced_media: set[str] | None = None) -> None:
@@ -349,7 +366,12 @@ def apply_history(scope: str, direction: str) -> dict[str, Any]:
     global _RESTORING
     if scope not in _HISTORY or direction not in {"undo", "redo"}:
         raise HTTPException(status_code=404, detail="Unknown history operation.")
-    with _LOCK:
+    # Lock order: history _LOCK, DICTIONARY_LOCK, PROJECT_ROOT_LOCK, GLOBAL_CHARACTERS_LOCK.
+    # The live check and file replacement must be one critical section so no
+    # project, dictionary or cast writer can commit between them and be
+    # silently undone. Every scope restores project.json, which carries the
+    # project pronunciation entries, so the dictionary lock is always taken.
+    with _LOCK, DICTIONARY_LOCK, deps.PROJECT_ROOT_LOCK, deps.GLOBAL_CHARACTERS_LOCK:
         cursor = _CURSOR[scope]
         if direction == "undo":
             if cursor == 0:
@@ -422,12 +444,17 @@ async def history_middleware(request, call_next):
     except ValueError:
         generation_group_id = None
     before = await asyncio.to_thread(capture_history_before, scope, media_mutation, media_targets)
-    response = await call_next(request)
-    if response.status_code < 400:
-        await asyncio.to_thread(commit_history, scope, before, auto_render_base_revision, generation_group_id)
-        if scope is not None:
-            response.headers["X-SCENA-History-Scope"] = scope
-    return response
+    try:
+        response = await call_next(request)
+        if response.status_code < 400:
+            await asyncio.to_thread(commit_history, scope, before, auto_render_base_revision, generation_group_id)
+            if scope is not None:
+                response.headers["X-SCENA-History-Scope"] = scope
+        return response
+    finally:
+        # A cancelled request (client disconnect) must still release its capture.
+        with anyio.CancelScope(shield=True):
+            await asyncio.to_thread(release_history_capture, before)
 
 
 @deps.app.on_event("startup")
@@ -459,5 +486,6 @@ deps.register(
         "commit_history",
         "end_history_session",
         "history_status",
+        "release_history_capture",
     ],
 )

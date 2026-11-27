@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import scena_test_isolation  # noqa: F401
 import sys
 import unittest
 from contextlib import redirect_stderr

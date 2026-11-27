@@ -1,3 +1,5 @@
+import scena_test_isolation  # noqa: F401
+import server.app  # noqa: F401  (registers the backend dependencies these modules read)
 import math
 import tempfile
 import unittest

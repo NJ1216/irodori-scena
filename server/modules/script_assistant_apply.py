@@ -98,6 +98,14 @@ def apply_script_assistant_proposal(request: Any) -> dict[str, Any]:
     if request.source_signature != proposal["sourceSignature"]:
         raise HTTPException(status_code=409, detail="提案の元になった台本と一致しません。再生成してください。")
     assistant_request = deps.ScriptAssistantRequest.model_validate(proposal["request"])
+    with deps.PROJECT_ROOT_LOCK:
+        project = _apply_proposal_locked(request, proposal, assistant_request)
+    with deps.SCRIPT_ASSISTANT_JOBS_LOCK:
+        deps.SCRIPT_ASSISTANT_PROPOSALS.pop(request.proposal_id, None)
+    return project
+
+
+def _apply_proposal_locked(request: Any, proposal: dict[str, Any], assistant_request: Any) -> dict[str, Any]:
     project = deps.read_project()
     if deps.script_assistant_signature(project, assistant_request) != proposal["sourceSignature"]:
         raise HTTPException(status_code=409, detail="生成後に台本が変更されています。再生成してください。")
@@ -124,8 +132,6 @@ def apply_script_assistant_proposal(request: Any) -> dict[str, Any]:
     deps.write_project(project)
     for path in remove_paths:
         path.unlink(missing_ok=True)
-    with deps.SCRIPT_ASSISTANT_JOBS_LOCK:
-        deps.SCRIPT_ASSISTANT_PROPOSALS.pop(request.proposal_id, None)
     return project
 
 

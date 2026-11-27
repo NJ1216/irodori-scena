@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import scena_test_isolation  # noqa: F401
 import copy
 import json
 import tempfile
@@ -51,7 +52,7 @@ class ProjectAtomicWriteTests(unittest.TestCase):
                     fsync=project_repository.os.fsync, replace=project_repository.os.replace,
                 )),
             ):
-                project_repository._atomic_write(target, b'{"saved": true}\n')
+                project_repository.atomic_write(target, b'{"saved": true}\n')
             self.assertEqual(target.read_bytes(), b'{"saved": true}\n')
             self.assertEqual(list(target.parent.glob(".project.json.*.tmp")), [])
 

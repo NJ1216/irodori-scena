@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import scena_test_isolation  # noqa: F401
 import os
 import io
 import tempfile
@@ -142,6 +143,40 @@ class LocalLlmCapabilityTests(unittest.TestCase):
         request = opened.call_args.args[0]
         self.assertEqual(request.full_url, "http://127.0.0.1:8791/api/scena/metrics")
         self.assertEqual(request.headers["Authorization"], "Bearer private-key")
+
+    def test_start_closes_the_parent_log_handle_after_launch(self) -> None:
+        for failure in (None, OSError("no exec")):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as directory:
+                handles = []
+
+                def popen(*_args, **kwargs):
+                    handles.append(kwargs["stdout"])
+                    if failure:
+                        raise failure
+                    return SimpleNamespace(poll=lambda: 1)
+
+                with (
+                    patch.dict(os.environ, {"SCENA_LOCAL_LLM_ENDPOINT": ""}),
+                    patch.object(local_llm_runtime, "require_builtin_llm"),
+                    patch.object(local_llm_runtime.platform, "system", return_value="Darwin"),
+                    patch.object(local_llm_runtime.platform, "machine", return_value="arm64"),
+                    patch.object(local_llm_runtime, "_runtime_command", return_value=["omlx"]),
+                    patch.object(local_llm_runtime, "_select_runtime_port", return_value=43125),
+                    patch("server.modules.constants.LOCAL_LLM_ROOT", Path(directory)),
+                    patch("server.modules.local_llm_storage.rebuild_local_llm_discovery", return_value=Path(directory)),
+                    patch.object(local_llm_runtime, "stop_local_llm"),
+                    patch.object(local_llm_runtime, "RUNTIME_PROCESS", None),
+                    patch.object(local_llm_runtime, "RUNTIME_PORT", None),
+                    patch.object(local_llm_runtime, "RUNTIME_ERROR", None),
+                    patch.object(local_llm_runtime, "RUNTIME_API_KEY", None),
+                    patch.object(local_llm_runtime, "RUNTIME_MEMORY_GUARD", None),
+                    patch.object(local_llm_runtime, "RUNTIME_ID", None),
+                    patch.object(local_llm_runtime.subprocess, "Popen", side_effect=popen),
+                ):
+                    with self.assertRaises(Exception):
+                        local_llm_runtime.start_local_llm()
+                self.assertEqual(len(handles), 1)
+                self.assertTrue(handles[0].closed)
 
     def test_runtime_uses_an_available_port_unless_explicitly_configured(self) -> None:
         with patch.dict(os.environ, {}, clear=False), patch.object(local_llm_runtime.socket, "socket") as create_socket:

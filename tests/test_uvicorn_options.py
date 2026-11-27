@@ -1,5 +1,6 @@
 """Uvicorn protocol choices must not depend on what else is importable next to the API."""
 
+import scena_test_isolation  # noqa: F401
 import subprocess
 import sys
 import tempfile

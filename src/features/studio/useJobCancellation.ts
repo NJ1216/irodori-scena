@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { isTerminalJobStatus } from "./jobEventMonitor";
 import type { ProjectEditSession } from "./projectEditSession";
 
 type Options = {
@@ -9,7 +10,6 @@ type Options = {
   pendingMessage: string;
   failurePrefix: string;
 };
-const terminal = new Set(["completed", "completed_with_warnings", "failed", "cancelled"]);
 
 /** Progress monitors own snapshots and terminal reconciliation; actions only acknowledge requests. */
 export function useJobCancellation({ job, editSession, request, setNotice, pendingMessage, failurePrefix }: Options) {
@@ -20,7 +20,7 @@ export function useJobCancellation({ job, editSession, request, setNotice, pendi
     return () => controller.abort();
   }, [job?.id, job?.status, editSession]);
   return async () => {
-    if (!job || job.cancelRequested || terminal.has(job.status)) return;
+    if (!job || job.cancelRequested || isTerminalJobStatus(job.status)) return;
     const signal = lifetime.current;
     const operation = editSession.capture();
     const current = () => signal && !signal.aborted && editSession.isCurrent(operation);

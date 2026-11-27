@@ -1,4 +1,5 @@
 """Execution metadata must stay with its request after the synthesis lock releases."""
+import scena_test_isolation  # noqa: F401
 import tempfile
 import threading
 import unittest

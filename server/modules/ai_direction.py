@@ -41,6 +41,11 @@ def _apply_removals(line: dict[str, Any], request: deps.AiDirectionRequest) -> b
 
 
 def _apply_updates(request: deps.AiDirectionRequest, updates: list[dict[str, Any]]) -> list[str]:
+    with deps.PROJECT_ROOT_LOCK:
+        return _apply_updates_locked(request, updates)
+
+
+def _apply_updates_locked(request: deps.AiDirectionRequest, updates: list[dict[str, Any]]) -> list[str]:
     latest = deps.read_project()
     updates_by_id = {update["id"]: update for update in updates}
     render_line_ids: list[str] = []

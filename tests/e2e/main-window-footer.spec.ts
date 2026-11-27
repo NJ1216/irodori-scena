@@ -66,7 +66,7 @@ async function expectExpressionPaletteInteractions(page: Page) {
   await page.mouse.move(expressionTriggerBox!.x + expressionTriggerBox!.width / 2, expressionTriggerBox!.y);
   await page.mouse.move(expressionMenuBox!.x + expressionMenuBox!.width - 16, expressionMenuBox!.y + expressionMenuBox!.height - 8, { steps: 8 });
   await expect(expressionMenu).toBeVisible();
-  const rowCounts = await expressionMenu.locator(".emoji-palette button").evaluateAll((buttons) => {
+  const rowCounts = await expressionMenu.locator(".emoji-palette button").evaluateAll((buttons: HTMLElement[]) => {
     const rows = new Map<number, number>();
     buttons.forEach((button) => rows.set(button.offsetTop, (rows.get(button.offsetTop) ?? 0) + 1));
     return [...rows.values()];

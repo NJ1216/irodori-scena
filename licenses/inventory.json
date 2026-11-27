@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "applicationLicense": "MIT License\n\nCopyright (c) 2026 NJ\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n",
   "inputs": {
-    "pnpm-lock.yaml": "4ac8bd759b31700758d11a98a041a09dead5a713c7ecabd64f092d5048859ae6",
-    "uv.lock": "875cc83c003a4d7e37fbfbca330629bf3faf67b9ea27ec5462de4a296913ad1b",
-    "src-tauri/Cargo.lock": "883075120023e53b166daac93e4dcfd15be9f2ccedc59b5c453b396f3d436e22",
+    "pnpm-lock.yaml": "47e41f922a26d2f74a87918f0c74c0deeb9a1d389ae00946f8bec1456b398f51",
+    "uv.lock": "a820868f6ef947cd10c654702c54bf5eee2c5f326a011ddb60a9b38f504c892b",
+    "src-tauri/Cargo.lock": "3093cd9d43d61d07761bb2b54d62aadd45d48720f5c73dd02c801f58318ae9c7",
     "native/scena-native/Cargo.lock": "8d224ae3e7cc7c846ed41de3bfc157e7c3bbff2b976eba3c0d053f340441bb94",
     "tools/omlx-runtime-requirements.txt": "5ad37b1a43f3821169420aafb98e7bb794f73f1889368f3196d5cee59b1c820e",
-    "release-license-supplements.json": "d5a382a9766158cd0aecd452230211e511ec2fe23a2f645f09f43ff704aeeb02",
+    "release-license-supplements.json": "44c812848d1ed47ebc3e6e7c8f071a2776f535842b43d1a624a6b04d74a66a16",
     "server/modules/tts_catalog.py": "0e6ea608d0313c9cf9a97194e05fa68fc5d6ab6e9524451bf7074625b815812b",
     "LICENSE": "e864b1d8e30b9eb18a773ea788512170bf1796aca96fa426cd260fca0ef80dfc"
   },
@@ -12864,6 +12864,22 @@
     },
     {
       "ecosystem": "npm",
+      "name": "@types/node",
+      "version": "26.6.11",
+      "license": "MIT",
+      "source": "https://www.npmjs.com/package/@types/node/v/26.6.11",
+      "scope": "build-and-application",
+      "id": "npm:@types/node@26.6.11",
+      "texts": [
+        {
+          "name": "LICENSE",
+          "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+        }
+      ],
+      "status": "collected"
+    },
+    {
+      "ecosystem": "npm",
       "name": "@types/react-dom",
       "version": "19.2.7",
       "license": "MIT",
@@ -16287,6 +16303,22 @@
           "sha256": "a5e9f9b1575301c7a7a03508fdaa2e05a918cc17fd21c6e898096a96d6a34f61"
         }
       ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "undici-types",
+      "version": "8.9.0",
+      "license": "MIT",
+      "source": "https://www.npmjs.com/package/undici-types/v/8.9.0",
+      "scope": "build-and-application",
+      "id": "npm:undici-types@8.9.0",
+      "texts": [
+        {
+          "name": "LICENSE",
+          "sha256": "a6db8096b2707bc0102d256917d4d33f298ba36d8c3f25de067a2b5bb379db27"
+        }
+      ],
+      "status": "collected"
     },
     {
       "ecosystem": "npm",

@@ -44,6 +44,13 @@ def _profile_value(field: str, value: str) -> object:
     return [item for item in normalized.split("、") if item and "+" not in item and "＋" not in item]
 
 
+def profile_record_value(field: str, value: object) -> object | None:
+    """Normalize one structured profile record value; None when it carries no usable content."""
+    if not isinstance(value, str) or not value.strip() or _is_unspecified_profile_value(value):
+        return None
+    return _profile_value(field, value) or None
+
+
 def _standard_profile_field(
     label: str, *, label_to_field: dict[str, str], blank_fields: set[str], details: dict[str, object]
 ) -> str | None:

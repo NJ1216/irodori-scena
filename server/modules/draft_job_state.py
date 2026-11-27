@@ -212,11 +212,12 @@ def rollback_cancelled_draft(job_id: str) -> None:
         generated_title = str(job.get("title", ""))
         previous_title = str(job.get("previousTitle", ""))
     if scene_ids:
-        project = deps.read_project()
-        project["scenes"] = [scene for scene in project.get("scenes", []) if str(scene.get("id", "")) not in scene_ids]
-        if generated_title and project.get("title") == generated_title:
-            project["title"] = previous_title
-        deps.write_project(project)
+        with deps.PROJECT_ROOT_LOCK:
+            project = deps.read_project()
+            project["scenes"] = [scene for scene in project.get("scenes", []) if str(scene.get("id", "")) not in scene_ids]
+            if generated_title and project.get("title") == generated_title:
+                project["title"] = previous_title
+            deps.write_project(project)
     with deps.DRAFT_JOBS_LOCK:
         job = deps.DRAFT_JOBS.get(job_id)
         if job is not None:

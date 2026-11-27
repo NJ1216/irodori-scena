@@ -15,6 +15,13 @@ def delete_lines(request: dict[str, Any]) -> dict[str, Any]:
     line_ids = [str(value) for value in request.get("line_ids", []) if str(value)]
     if not line_ids or len(line_ids) != len(set(line_ids)):
         raise HTTPException(status_code=422, detail="削除する発話行を重複なく指定してください。")
+    with deps.PROJECT_ROOT_LOCK:
+        project, cleanup = _delete_lines_locked(line_ids)
+    threading.Thread(target=_discard_staged, args=([cleanup],), daemon=True).start()
+    return project
+
+
+def _delete_lines_locked(line_ids: list[str]) -> tuple[dict[str, Any], Path]:
     project = deps.read_project()
     existing = {str(line.get("id", "")) for scene in project.get("scenes", []) for line in scene.get("lines", [])}
     missing = set(line_ids) - existing
@@ -40,8 +47,7 @@ def delete_lines(request: dict[str, Any]) -> dict[str, Any]:
             path.replace(deps.MEDIA_ROOT / "takes" / path.name)
         shutil.rmtree(cleanup, ignore_errors=True)
         raise
-    threading.Thread(target=_discard_staged, args=([cleanup],), daemon=True).start()
-    return project
+    return project, cleanup
 
 
 deps.register(__name__, ["delete_lines"])

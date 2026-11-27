@@ -1,4 +1,5 @@
 """Hash-based upgrades replace managed runtimes only after successful verification."""
+import scena_test_isolation  # noqa: F401
 import json
 import hashlib
 import tempfile

@@ -1,6 +1,7 @@
 """Background model loading yields the CPU; a generation takes it back at once (Windows)."""
 from __future__ import annotations
 
+import scena_test_isolation  # noqa: F401
 import tempfile
 import threading
 import unittest

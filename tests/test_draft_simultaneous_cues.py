@@ -1,3 +1,4 @@
+import scena_test_isolation  # noqa: F401
 from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch

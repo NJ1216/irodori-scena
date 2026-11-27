@@ -12,16 +12,18 @@ from server.modules.take_restoration import validate_take_execution, validate_ta
 
 @deps.app.delete("/api/scenes/{scene_id}/lines/{line_id}")
 def delete_line(scene_id: str, line_id: str) -> dict[str, Any]:
-    project = deps.read_project()
-    scene = next((item for item in project.get("scenes", []) if item.get("id") == scene_id), None)
-    if scene is None:
-        raise HTTPException(status_code=404, detail="Scene not found.")
-    line = next((item for item in scene.get("lines", []) if item.get("id") == line_id), None)
-    if line is None:
-        raise HTTPException(status_code=404, detail="Dialogue line not found.")
-    scene["lines"] = [item for item in scene.get("lines", []) if item.get("id") != line_id]
-    deps.normalize_scene_cues(scene)
-    deps.write_project(project)
+    with deps.PROJECT_ROOT_LOCK:
+        project = deps.read_project()
+        scene = next((item for item in project.get("scenes", []) if item.get("id") == scene_id), None)
+        if scene is None:
+            raise HTTPException(status_code=404, detail="Scene not found.")
+        line = next((item for item in scene.get("lines", []) if item.get("id") == line_id), None)
+        if line is None:
+            raise HTTPException(status_code=404, detail="Dialogue line not found.")
+        scene["lines"] = [item for item in scene.get("lines", []) if item.get("id") != line_id]
+        deps.normalize_scene_cues(scene)
+        deps.write_project(project)
+    # Delete media after the project lock is released; the JSON no longer references it.
     _discard_take_directory(line_id)
     return project
 
@@ -35,12 +37,13 @@ def _discard_take_directory(line_id: str) -> None:
 
 @deps.app.delete("/api/scenes/{scene_id}")
 def delete_scene(scene_id: str) -> dict[str, Any]:
-    project = deps.read_project()
-    scene = next((item for item in project.get("scenes", []) if item.get("id") == scene_id), None)
-    if scene is None:
-        raise HTTPException(status_code=404, detail="Scene not found.")
-    project["scenes"] = [item for item in project.get("scenes", []) if item.get("id") != scene_id]
-    deps.write_project(project)
+    with deps.PROJECT_ROOT_LOCK:
+        project = deps.read_project()
+        scene = next((item for item in project.get("scenes", []) if item.get("id") == scene_id), None)
+        if scene is None:
+            raise HTTPException(status_code=404, detail="Scene not found.")
+        project["scenes"] = [item for item in project.get("scenes", []) if item.get("id") != scene_id]
+        deps.write_project(project)
     for line in scene.get("lines", []):
         _discard_take_directory(str(line.get("id", "")))
     return project
@@ -90,6 +93,11 @@ def _insert_line_locked(scene_id: str, request: deps.InsertLineRequest) -> dict[
 
 @deps.app.post("/api/scenes/{scene_id}/lines/{line_id}/cue-members")
 def add_cue_member(scene_id: str, line_id: str, request: deps.AddCueMemberRequest) -> dict[str, Any]:
+    with deps.PROJECT_ROOT_LOCK:
+        return _add_cue_member_locked(scene_id, line_id, request)
+
+
+def _add_cue_member_locked(scene_id: str, line_id: str, request: deps.AddCueMemberRequest) -> dict[str, Any]:
     project = deps.read_project()
     scene = next((item for item in project.get("scenes", []) if item.get("id") == scene_id), None)
     if scene is None:
@@ -139,7 +147,12 @@ def mix_adjacent_units(leading_line_id: str) -> dict[str, Any]:
 def clear_all_takes() -> dict[str, Any]:
     """Delete every generated dialogue take while keeping the script intact."""
     deps.require_tts_available()
-    return deps.clear_project_takes(deps.read_project())
+    staged: list[Path] = []
+    with deps.PROJECT_ROOT_LOCK:
+        saved = deps.clear_project_takes(deps.read_project(), deferred=staged)
+    for path in staged:
+        deps.discard_staged_takes(path)
+    return saved
 
 
 @deps.app.post("/api/lines/cleanup-takes")
@@ -148,7 +161,8 @@ def cleanup_selected_takes(request: dict[str, Any]) -> dict[str, Any]:
     line_ids = request.get("line_ids")
     if not isinstance(line_ids, list) or any(not isinstance(value, str) for value in line_ids):
         raise HTTPException(status_code=422, detail="Invalid line IDs.")
-    return deps.cleanup_line_takes(deps.read_project(), line_ids, str(request.get("mode", "")))
+    with deps.PROJECT_ROOT_LOCK:
+        return deps.cleanup_line_takes(deps.read_project(), line_ids, str(request.get("mode", "")))
 
 
 def create_line_take(
@@ -427,6 +441,11 @@ def regenerate_line(line_id: str, request: deps.GenerateLineRequest) -> dict[str
 
 @deps.app.delete("/api/lines/{line_id}/takes/{take_id}")
 def delete_line_take(line_id: str, take_id: str) -> dict[str, Any]:
+    with deps.PROJECT_ROOT_LOCK:
+        return _delete_line_take_locked(line_id, take_id)
+
+
+def _delete_line_take_locked(line_id: str, take_id: str) -> dict[str, Any]:
     project = deps.read_project()
     _, line = deps.find_line(project, line_id)
     takes = line.get("takes", [])

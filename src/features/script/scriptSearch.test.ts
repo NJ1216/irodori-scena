@@ -21,6 +21,26 @@ describe("script search", () => {
     ]);
   });
 
+  it("keeps offsets on the original text when lowercasing changes the length", () => {
+    const project = { scenes: [{ id: "s", lines: [{ id: "a", text: "İab ABか", enabled: true }] }] } as never;
+    const matches = findScriptMatches(project, "ab");
+    expect(matches).toEqual([
+      { lineId: "a", start: 1, end: 3 },
+      { lineId: "a", start: 4, end: 6 },
+    ]);
+    expect(replaceLineMatches("İab ABか", undefined, matches, "X").text).toBe("İX Xか");
+  });
+
+  it("matches Japanese text and regular-expression characters literally", () => {
+    const project = { scenes: [{ id: "s", lines: [{ id: "a", text: "東京と東京。a.b a+b", enabled: true }] }] } as never;
+    expect(findScriptMatches(project, "東京")).toEqual([
+      { lineId: "a", start: 0, end: 2 },
+      { lineId: "a", start: 3, end: 5 },
+    ]);
+    expect(findScriptMatches(project, "a.b")).toEqual([{ lineId: "a", start: 6, end: 9 }]);
+    expect(findScriptMatches(project, "A+B")).toEqual([{ lineId: "a", start: 10, end: 13 }]);
+  });
+
   it("replaces backward, shifts unaffected readings, and removes overlapping readings", () => {
     const result = replaceLineMatches(
       "東京と大阪",

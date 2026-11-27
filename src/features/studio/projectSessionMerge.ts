@@ -46,18 +46,3 @@ export function mergeProjectValue(base: unknown, local: unknown, remote: unknown
   }
   return local;
 }
-
-export function projectMergeConflicts(base: unknown, local: unknown, remote: unknown, path = "project"): string[] {
-  if (same(local, base) || same(remote, base) || same(local, remote)) return [];
-  if (record(base) && record(local) && record(remote)) {
-    return [...new Set([...Object.keys(base), ...Object.keys(local), ...Object.keys(remote)])].flatMap((key) => projectMergeConflicts(base[key], local[key], remote[key], `${path}.${key}`));
-  }
-  if (Array.isArray(base) && Array.isArray(local) && Array.isArray(remote) && identified(base) && identified(local) && identified(remote)) {
-    const byId = (values: typeof base) => new Map(values.map((value) => [value.id, value]));
-    const before = byId(base),
-      current = byId(local),
-      incoming = byId(remote);
-    return [...new Set([...before.keys(), ...current.keys(), ...incoming.keys()])].flatMap((id) => projectMergeConflicts(before.get(id), current.get(id), incoming.get(id), `${path}[${id}]`));
-  }
-  return [path];
-}

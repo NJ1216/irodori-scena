@@ -1,6 +1,5 @@
 import { apiBaseUrl, apiFetch, rewriteApiUrls } from "./api-runtime";
 import { responseFailure, serviceConnectionFailure } from "./api-failure";
-export { apiUrl, chooseDirectory, chooseProjectBackupDestination, chooseProjectFile, chooseProjectSaveDestination, defaultExportDirectory, downloadApiFile, isDesktopRuntime, openExternal, saveLocalApiFile } from "./api-runtime";
 export type HistoryScope = "script" | "characters" | "pronunciation";
 export const HISTORY_CHANGED_EVENT = "scena:history-changed";
 export const HISTORY_APPLIED_EVENT = "scena:history-applied";

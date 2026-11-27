@@ -86,4 +86,20 @@ describe("CustomScrollbar", () => {
     fireEvent.pointerUp(thumb, { pointerId: 1, clientY: 120 });
     expect(thumb.parentElement).not.toHaveClass("is-dragging");
   });
+
+  it.each(["pointerCancel", "lostPointerCapture"] as const)("ends a thumb drag on %s", (eventName) => {
+    const target = setup();
+    const thumb = screen.getByRole("scrollbar");
+    Object.assign(thumb, { setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() });
+    const pointerDown = new Event("pointerdown", { bubbles: true, cancelable: true });
+    Object.assign(pointerDown, { pointerId: 1, clientY: 0 });
+    act(() => {
+      thumb.dispatchEvent(pointerDown);
+    });
+    expect(thumb.parentElement).toHaveClass("is-dragging");
+    fireEvent[eventName](thumb, { pointerId: 1 });
+    expect(thumb.parentElement).not.toHaveClass("is-dragging");
+    fireEvent.pointerMove(thumb, { pointerId: 1, clientY: 120 });
+    expect(target.scrollTop).toBe(0);
+  });
 });

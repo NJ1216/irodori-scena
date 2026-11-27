@@ -111,13 +111,20 @@ def _create_schema(connection: sqlite3.Connection) -> None:
     )
 
 
-def _validate_header(connection: sqlite3.Connection) -> None:
+def _validate_header(connection: sqlite3.Connection, *, deep: bool = True) -> None:
+    """Check identity and version; ``deep`` adds a full integrity scan (opening, validation, backups).
+
+    The scan reads the whole file, so write paths of an already validated container
+    pass ``deep=False`` instead of paying it on every save.
+    """
     app_id = int(connection.execute("PRAGMA application_id").fetchone()[0])
     version = int(connection.execute("PRAGMA user_version").fetchone()[0])
     if app_id != APPLICATION_ID:
         raise HTTPException(status_code=422, detail="irodori SCENAプロジェクトではありません。")
     if version not in (1, FORMAT_VERSION):
         raise HTTPException(status_code=422, detail=f"未対応の.scena形式バージョンです: {version}")
+    if not deep:
+        return
     integrity = connection.execute("PRAGMA integrity_check").fetchone()[0]
     if integrity != "ok":
         raise HTTPException(status_code=422, detail=f".scenaコンテナが破損しています: {integrity}")
@@ -253,7 +260,7 @@ def sync_project_entry(container: Path, root: Path) -> bool:
     with _SYNC_LOCK:
         if container.exists():
             with closing(_connect(container, readonly=True)) as existing:
-                _validate_header(existing)
+                _validate_header(existing, deep=False)
                 if existing.execute("PRAGMA user_version").fetchone()[0] == 1:
                     _sync_container(container, root, include_derived_audio=False)
                     return False
@@ -265,7 +272,7 @@ def sync_project_entry(container: Path, root: Path) -> bool:
         connection: sqlite3.Connection | None = None
         try:
             connection = _connect(container)
-            _validate_header(connection)
+            _validate_header(connection, deep=False)
             compressed, size, digest = _compressed_copy(source)
             try:
                 use_compression = compressed.stat().st_size < size

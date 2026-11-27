@@ -5,7 +5,8 @@ import { projectFixture } from "./mock-api-fixtures";
 export async function openCasts(page: Page, failure = false, onlyOne = false, avatar = false, personality?: string, delayNextAvatar = false) {
   await installMockApi(page);
   const project = structuredClone(projectFixture);
-  if (personality) project.characters[0].profileDetails.personality = personality;
+  const details = project.characters[0].profileDetails;
+  if (personality && details) details.personality = personality;
   if (onlyOne) project.characters = project.characters.slice(0, 1);
   if (avatar) {
     // Distinct saturated regions and pure white detect accidental background removal.

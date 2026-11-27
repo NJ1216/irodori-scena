@@ -1,4 +1,5 @@
 """Ephemeral preview capture, cancellation and authenticated HTTP boundaries."""
+import scena_test_isolation  # noqa: F401
 import copy
 import tempfile
 import threading

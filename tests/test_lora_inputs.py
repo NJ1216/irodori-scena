@@ -1,4 +1,5 @@
 from __future__ import annotations
+import scena_test_isolation  # noqa: F401
 import base64
 import io
 from pathlib import Path

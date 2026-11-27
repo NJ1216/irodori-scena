@@ -1,5 +1,5 @@
 import { act, renderHook } from "@testing-library/react";
-import { beforeEach, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import projectFixture from "../../../tests/fixtures/project-contract.json";
 import { ApiError } from "../../api-error";
 import type { StudioProject } from "../../types";
@@ -151,4 +151,115 @@ it("ignores an acknowledgement after returning to a new visit of the same projec
     owner.recordSaved(operation, { ...project(), title: "obsolete", revision: 9 });
   });
   expect(result.current.project).toMatchObject({ title: "reopened", revision: 0 });
+});
+
+describe("recovering a failed save on an explicit request", () => {
+  function noticeSession() {
+    let shown = "";
+    const setNotice = vi.fn((value: string | ((current: string) => string)) => {
+      shown = typeof value === "function" ? value(shown) : value;
+    });
+    const { result } = renderHook(() => useProjectEditSession(setNotice));
+    act(() => result.current.editSession.replace(project()));
+    return { result, setNotice, shown: () => shown, show: (value: string) => setNotice(value) };
+  }
+
+  it("clears the stale save-failure notice when the silent retry succeeds", async () => {
+    mocks.patchProjectMetadata.mockRejectedValueOnce(new Error("network down"));
+    const { result, shown } = noticeSession();
+    await act(async () => {
+      result.current.editSession.update((p) => ({ ...p, title: "transient" }));
+      expect(await result.current.editSession.save()).toBe(false);
+    });
+    expect(shown()).toBe("保存できませんでした: network down");
+    await act(async () => {
+      expect(await result.current.editSession.retryFailedSave()).toBe(true);
+    });
+    expect(shown()).toBe("");
+  });
+
+  it("keeps an unrelated notice that replaced the failure notice when the silent retry succeeds", async () => {
+    mocks.patchProjectMetadata.mockRejectedValueOnce(new Error("network down"));
+    const { result, shown, show } = noticeSession();
+    await act(async () => {
+      result.current.editSession.update((p) => ({ ...p, title: "transient" }));
+      expect(await result.current.editSession.save()).toBe(false);
+    });
+    show("再生を停止しました。");
+    await act(async () => {
+      expect(await result.current.editSession.retryFailedSave()).toBe(true);
+    });
+    expect(shown()).toBe("再生を停止しました。");
+  });
+
+  it("re-sends the committed project after a transient failure and unblocks server operations", async () => {
+    const notice = vi.fn();
+    const { result } = renderHook(() => useProjectEditSession(notice));
+    act(() => result.current.editSession.replace(project()));
+    mocks.patchProjectMetadata.mockRejectedValueOnce(new Error("network down"));
+    await act(async () => {
+      result.current.editSession.update((p) => ({ ...p, title: "transient" }));
+      expect(await result.current.editSession.save()).toBe(false);
+    });
+    expect(await result.current.editSession.waitForPersistence()).toBe(false);
+    notice.mockClear();
+    const action = vi.fn(async () => "ran");
+    await act(async () => {
+      expect(await result.current.editSession.retryFailedSave()).toBe(true);
+      expect(await result.current.editSession.runServer(action)).toBe("ran");
+    });
+    expect(mocks.patchProjectMetadata).toHaveBeenCalledTimes(2);
+    expect(mocks.patchProjectMetadata).toHaveBeenLastCalledWith(0, { title: "transient" });
+    // The silent retry shows no message of its own; it only clears the earlier failure notice.
+    expect(notice.mock.calls.filter(([value]) => typeof value === "string")).toEqual([]);
+    expect(result.current.project!.title).toBe("transient");
+  });
+
+  it("silently re-saves the on-screen value over a same-field conflict at the server's current revision", async () => {
+    const remote = project();
+    remote.title = "remote title";
+    remote.revision = 5;
+    mocks.patchProjectMetadata.mockRejectedValueOnce(new ApiError("conflict", 409, { currentRevision: 5, currentProject: remote }, "project_revision_conflict", "http"));
+    const { result, shown } = noticeSession();
+    await act(async () => {
+      result.current.editSession.update((p) => ({ ...p, title: "local title" }));
+      expect(await result.current.editSession.save()).toBe(true);
+    });
+    expect(mocks.saveProject).toHaveBeenCalledOnce();
+    expect(mocks.saveProject.mock.calls[0][0]).toMatchObject({ title: "local title", revision: 5 });
+    // Same message as an ordinary save; no conflict notice.
+    expect(shown()).toBe("保存しました");
+    expect(result.current.project).toMatchObject({ title: "local title", revision: 6 });
+    expect(result.current.confirmedProject.current).toMatchObject({ title: "local title", revision: 6 });
+    // Server operations are not blocked afterwards.
+    await act(async () => {
+      expect(await result.current.editSession.retryFailedSave()).toBe(true);
+    });
+    expect(mocks.saveProject).toHaveBeenCalledOnce();
+  });
+
+  it("does not re-send when persistence is healthy", async () => {
+    const result = session();
+    await act(async () => {
+      expect(await result.current.editSession.retryFailedSave()).toBe(true);
+    });
+    expect(mocks.saveProject).not.toHaveBeenCalled();
+    expect(mocks.patchProjectMetadata).not.toHaveBeenCalled();
+  });
+
+  it("keeps blocking server operations when the re-save also fails", async () => {
+    mocks.patchProjectMetadata.mockRejectedValue(new Error("still down"));
+    const result = session();
+    await act(async () => {
+      result.current.editSession.update((p) => ({ ...p, title: "blocked" }));
+      expect(await result.current.editSession.save()).toBe(false);
+    });
+    const action = vi.fn(async () => "ran");
+    await act(async () => {
+      expect(await result.current.editSession.retryFailedSave()).toBe(false);
+      await expect(result.current.editSession.runServer(action)).rejects.toThrow("still down");
+    });
+    expect(mocks.patchProjectMetadata).toHaveBeenCalledTimes(2);
+    expect(action).not.toHaveBeenCalled();
+  });
 });

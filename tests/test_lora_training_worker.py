@@ -1,4 +1,5 @@
 from __future__ import annotations
+import scena_test_isolation  # noqa: F401
 from contextlib import nullcontext
 import importlib
 from unittest.mock import MagicMock, patch

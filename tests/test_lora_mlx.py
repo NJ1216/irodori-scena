@@ -1,4 +1,5 @@
 """Data integrity and request isolation at the actual adapter mutation boundary."""
+import scena_test_isolation  # noqa: F401
 import json
 import tempfile
 import unittest

@@ -1,12 +1,19 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { cancelDestructiveConfirmation } from "../shared/destructiveConfirmation";
 import { DestructiveConfirmationNotice } from "../shared/DestructiveConfirmationNotice";
 import { LoraManagementView } from "./LoraTrainingView";
+
+// Wakes the sequential poller immediately, as when the page becomes visible again.
+const pollNow = () =>
+  act(async () => {
+    document.dispatchEvent(new Event("visibilitychange"));
+    await new Promise((resolve) => setTimeout(resolve, 30));
+  });
 const { api } = vi.hoisted(() => ({ api: { status: vi.fn(), jobs: vi.fn(), inputs: vi.fn(), folderInputs: vi.fn(), start: vi.fn(), cancel: vi.fn(), adapters: vi.fn(), updateAdapter: vi.fn(), adapterUsage: vi.fn(), deleteAdapter: vi.fn() } }));
 vi.mock("../../api-lora", () => ({ loraApi: api }));
-vi.mock("../../api-core", () => ({ chooseDirectory: vi.fn(async () => "/fixtures/materials") }));
+vi.mock("../../api", () => ({ chooseDirectory: vi.fn(async () => "/fixtures/materials") }));
 const rows = ["one", "two"].map((id) => ({ id, wavName: `${id}.wav`, textName: `${id}.txt`, text: `台詞${id}`, caption: "", speakerId: "speaker-1", durationSeconds: 7, issues: [] }));
 beforeEach(() => {
   vi.resetAllMocks();
@@ -76,14 +83,9 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 it("keeps the accepted job selected after completion even when polling returns an older job first", async () => {
-  let poll!: () => void;
-  const originalInterval = window.setInterval.bind(window);
-  vi.spyOn(window, "setInterval").mockImplementation((callback, delay, ...args) => {
-    if (delay !== 1500) return originalInterval(callback, delay, ...args);
-    poll = callback as () => void;
-    return 1;
-  });
   api.start.mockResolvedValue({ id: "accepted", name: "今回の学習", status: "running" });
+  // Like the server, report the accepted job once it has been started.
+  api.jobs.mockImplementation(async () => (api.start.mock.calls.length ? [{ id: "accepted", name: "今回の学習", status: "running" }] : []));
   await review();
   await userEvent.click(screen.getByRole("button", { name: "名前と学習へ" }));
   fireEvent.change(screen.getByLabelText("LoRA名"), { target: { value: "今回の学習" } });
@@ -93,10 +95,7 @@ it("keeps the accepted job selected after completion even when polling returns a
     { id: "old", name: "古い学習", status: "completed" },
     { id: "accepted", name: "今回の学習", status: "completed" },
   ]);
-  const { act } = await import("@testing-library/react");
-  await act(async () => {
-    poll();
-  });
+  await pollNow();
   expect(screen.getByRole("heading", { name: "今回の学習" })).toBeVisible();
   expect(screen.queryByRole("heading", { name: "古い学習" })).not.toBeInTheDocument();
   expect(screen.getByText("保存しました。キャスト編集で選択できます。")).toBeVisible();
@@ -112,19 +111,9 @@ it("omits removed history UI even when many completed jobs exist", async () => {
 });
 
 it("keeps a compact progress route when a running job is discovered during review", async () => {
-  let poll!: () => void;
-  const interval = window.setInterval.bind(window);
-  vi.spyOn(window, "setInterval").mockImplementation((callback, delay, ...args) => {
-    if (delay !== 1500) return interval(callback, delay, ...args);
-    poll = callback as () => void;
-    return 1;
-  });
   await review();
   api.jobs.mockResolvedValue([{ id: "running", name: "別の学習", status: "running" }]);
-  const { act } = await import("@testing-library/react");
-  await act(async () => {
-    poll();
-  });
+  await pollNow();
   expect(screen.queryByRole("heading", { name: "別の学習" })).not.toBeInTheDocument();
   await userEvent.click(screen.getByRole("button", { name: "学習の進み具合を見る" }));
   expect(screen.getByRole("heading", { name: "別の学習" })).toBeVisible();

@@ -4,7 +4,7 @@ import { ProjectEditSession } from "./projectEditSession";
 import { discardPendingProjectSaves, pauseProjectSaves, queueProjectSave, resumeProjectSaves, useProjectPersistenceState, waitForProjectPersistence } from "./projectPersistence";
 import { inferSaveIntent } from "./projectSaveIntent";
 
-export function useProjectEditSession(setNotice: (message: string) => void) {
+export function useProjectEditSession(setNotice: (message: string | ((current: string) => string)) => void) {
   const [project, publish] = useState<StudioProject | null>(null);
   const persistence = useProjectPersistenceState();
   const model = { ...persistence, setNotice };

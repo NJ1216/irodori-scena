@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, openExternal } from "../../api";
-import { ApiConnectionError, ApiError } from "../../api-error";
 import type { RhubarbStatus } from "../../types";
 import { DialogFooter, DialogHeader, ModalBackdrop } from "../shared/overlays";
 import { formatModelBytes } from "./huggingFaceModelUi";
 import { ModelBoardCardFooter } from "./ModelBoardCardFooter";
+import { formatDecimalBytes } from "../shared/formatBytes";
+import { retryableStatusFailure } from "../shared/pollingErrors";
 import { useSequentialPolling } from "../shared/useSequentialPolling";
 
 function formatAddonSize(bytes?: number | null) {
   if (bytes == null) return "容量未取得";
-  if (bytes < 1024 ** 3) return `${Math.max(1, Math.round(bytes / 1024 ** 2))} MB`;
-  return `${(bytes / 1024 ** 3).toFixed(1)} GB`;
+  return formatDecimalBytes(bytes);
 }
 
 function RhubarbDescription({ status }: { status: RhubarbStatus }) {
@@ -94,10 +94,6 @@ function settingLabel(status: RhubarbStatus | null) {
   if (status.updateAvailable) return "更新があります";
   if (status.ready) return "使用可能";
   return status.available ? "未導入" : "配布準備中";
-}
-
-function retryableStatusFailure(error: unknown) {
-  return error instanceof ApiConnectionError || (error instanceof ApiError && ([408, 429].includes(error.status) || (error.status >= 500 && error.status < 600)));
 }
 
 export function RhubarbDialog({ status, exportMode = false, startupMode = false, onClose, onReady, onChanged }: { status: RhubarbStatus; exportMode?: boolean; startupMode?: boolean; onClose: () => void; onReady?: () => void; onChanged: (status: RhubarbStatus) => void }) {

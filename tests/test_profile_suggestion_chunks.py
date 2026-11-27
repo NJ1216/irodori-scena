@@ -1,5 +1,7 @@
+import scena_test_isolation  # noqa: F401
 import json
 from pathlib import Path
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -54,6 +56,20 @@ class ProfileSuggestionChunkTests(unittest.TestCase):
         self.assertEqual(captured["character_name"], "名称未設定のキャスト")
         self.assertEqual(captured["existing_settings"], {})
         self.assertEqual(captured["existing_free_memo"], "（未設定）")
+
+    def test_schema_profile_values_keep_newlines_and_pipes(self) -> None:
+        request = CharacterProfileSuggestionRequest(
+            model="test-model", name="", idea="", profile_details={}, scope="profile",
+        )
+        records = [{"field": "background", "value": "line1\nline2 | x"}, {"field": "age", "value": "19歳"}]
+        result = SimpleNamespace(records=records, mode="schema", manifest=[])
+        with (
+            patch("server.modules.workspace.draft_debug_directory", return_value=Path("/tmp/profile-pipes")),
+            patch("server.modules.llm_completion_service.complete_records", return_value=result),
+        ):
+            details = suggest_character_profile_completion(request)["profileDetails"]
+        self.assertEqual(details["background"], "line1\nline2 | x")
+        self.assertEqual(details["age"], "19歳")
 
     def test_gemma_nine_legacy_relation_variants_recover_both_fields(self) -> None:
         target = {"id": "cast-0", "name": "相手0", "source_cast": {

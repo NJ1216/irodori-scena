@@ -16,6 +16,21 @@ export type JobEventMonitorOptions<T> = {
   streamIdleTimeoutMs?: number;
 };
 
+const terminalJobStatuses = new Set(["completed", "completed_with_warnings", "failed", "cancelled"]);
+
+export function isTerminalJobStatus(status: string) {
+  return terminalJobStatuses.has(status);
+}
+
+export function isTerminalJob(job: { status: string }) {
+  return isTerminalJobStatus(job.status);
+}
+
+/** Progress events carry the job snapshot fields in `metrics`. */
+export function snapshotFromProgressEvent<T>(event: ProgressEvent): T {
+  return { ...event.metrics, id: event.jobId, phase: event.phase } as unknown as T;
+}
+
 export function updatesAfterVersion<T extends { version: number }>(updates: T[] | undefined, version: number): T[] {
   return (updates ?? []).filter((update) => update.version > version);
 }

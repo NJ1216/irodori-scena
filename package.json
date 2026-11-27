@@ -1,7 +1,7 @@
 {
   "name": "irodori-scena",
   "private": true,
-  "version": "26.11.24",
+  "version": "26.11.27",
   "type": "module",
   "scripts": {
     "benchmark:ui": "playwright test -c playwright.bench.config.ts",
@@ -16,7 +16,7 @@
     "tauri:build:windows": "node tools/build-windows-release.mjs",
     "build": "tsc -b && vite build",
     "build:native": "node tools/build-native-extension.mjs",
-    "check": "tsc -b",
+    "check": "tsc -b && tsc -p tsconfig.tests.json",
     "check:structure": "node tools/check-structure.mjs",
     "check:bundle": "node tools/check-bundle-budgets.mjs",
     "check:windows-build": "node --test tools/windows-build-contract.test.mjs tools/windows-native-lock.test.mjs && node tools/check-tauri-config.mjs && node tools/release/version.mjs",
@@ -58,6 +58,7 @@
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.4",
+    "@types/node": "^26.6.11",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import scena_test_isolation  # noqa: F401
 import wave
 from pathlib import Path
 from tempfile import TemporaryDirectory

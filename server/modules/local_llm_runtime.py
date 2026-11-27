@@ -234,6 +234,8 @@ def start_local_llm(memory_guard: str = "safe", *, runtime_id: str | None = None
     except OSError as error:
         RUNTIME_ERROR = str(error)
         raise HTTPException(status_code=503, detail="oMLXランタイムを起動できませんでした。") from error
+    finally:
+        log.close()  # the child keeps its own inherited copy
     deadline = time.monotonic() + 20
     while time.monotonic() < deadline and RUNTIME_PROCESS.poll() is None:
         if _runtime_health(_runtime_endpoint()):

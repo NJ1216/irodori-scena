@@ -97,7 +97,7 @@ it("uses the shared model-card composition for an installed Rhubarb runtime", as
   expect(card).toHaveClass("model-selection-trigger", "model-board-card", "is-default");
   expect(screen.getByText("口パクLAB")).toBeInTheDocument();
   expect(screen.getByText("導入済み")).toBeInTheDocument();
-  expect(screen.getByText("v1.14.0 · 67 MB")).toBeInTheDocument();
+  expect(screen.getByText("v1.14.0 · 70 MB")).toBeInTheDocument();
   expect(screen.queryByText("既定")).not.toBeInTheDocument();
   await userEvent.click(screen.getByRole("button", { name: "Rhubarbの詳細" }));
   expect(screen.getByRole("dialog", { name: "Rhubarb" })).toBeInTheDocument();

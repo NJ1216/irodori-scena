@@ -1,3 +1,4 @@
+import scena_test_isolation  # noqa: F401
 import unittest
 
 from server.modules.draft_stream_progress import draft_stream_progress_reporter, estimate_streamed_text_characters

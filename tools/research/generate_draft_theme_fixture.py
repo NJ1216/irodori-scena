@@ -9,13 +9,13 @@ import sys
 import time
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from server.app import ThemeSuggestionRequest, suggest_theme_completion  # noqa: E402
 from server.registry import deps  # noqa: E402
-from tools.benchmark_production_draft import benchmark_cast  # noqa: E402
+from tools.research.benchmark_production_draft import benchmark_cast  # noqa: E402
 
 
 RANGES = {5: (293, 421), 30: (900, 1300), 60: (1600, 2200)}

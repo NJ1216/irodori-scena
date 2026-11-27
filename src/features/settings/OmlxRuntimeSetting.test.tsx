@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { api } from "../../api";
 import type { OmlxRuntimeStatus } from "../../types";
@@ -57,4 +57,17 @@ it("reports a management read failure", async () => {
   render(<OmlxRuntimeSetting />);
   fireEvent.click(screen.getByRole("button", { name: "oMLX管理" }));
   expect(await screen.findByRole("alert")).toHaveTextContent("読み込み失敗");
+});
+
+it("clears a failed-poll message once a later poll succeeds", async () => {
+  vi.useFakeTimers();
+  vi.spyOn(api, "omlxRuntimes").mockRejectedValueOnce(new Error("読み込み失敗")).mockResolvedValue(status);
+  render(<OmlxRuntimeSetting />);
+  fireEvent.click(screen.getByRole("button", { name: "oMLX管理" }));
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  expect(screen.getByRole("alert")).toHaveTextContent("読み込み失敗");
+  await act(() => vi.advanceTimersByTimeAsync(2100));
+  expect(screen.queryByRole("alert")).toBeNull();
+  expect(screen.getByText("導入済みの実行基盤はありません。")).toBeInTheDocument();
+  vi.useRealTimers();
 });

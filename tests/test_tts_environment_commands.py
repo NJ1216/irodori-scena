@@ -1,3 +1,4 @@
+import scena_test_isolation  # noqa: F401
 import subprocess
 import sys
 import tempfile

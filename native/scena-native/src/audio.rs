@@ -29,8 +29,20 @@ fn invalid(message: &str) -> io::Error {
     io::Error::new(io::ErrorKind::InvalidData, message)
 }
 
-pub(crate) fn decode_pcm(path: &Path) -> io::Result<Audio> {
-    let mut reader = BufReader::new(File::open(path)?);
+/// Location and format of the PCM data chunk of a validated WAV stream.
+pub(crate) struct WavData {
+    pub(crate) channels: usize,
+    pub(crate) rate: u32,
+    pub(crate) bits: u16,
+    pub(crate) start: u64,
+    pub(crate) size: u64,
+}
+
+/// Parses the RIFF header up to the data chunk, validating the format and
+/// bounding the untrusted data size by the bytes actually present.
+pub(crate) fn find_wav_data<R: Read + Seek>(reader: &mut R) -> io::Result<WavData> {
+    let length = reader.seek(SeekFrom::End(0))?;
+    reader.seek(SeekFrom::Start(0))?;
     let mut header = [0_u8; 12];
     reader.read_exact(&mut header)?;
     if &header[..4] != b"RIFF" || &header[8..] != b"WAVE" {
@@ -51,28 +63,46 @@ pub(crate) fn decode_pcm(path: &Path) -> io::Result<Audio> {
             if read_u16(&raw[..]) != 1 {
                 return Err(invalid("Compressed WAV is not supported."));
             }
-            format = Some((
-                read_u16(&raw[2..]) as usize,
-                read_u32(&raw[4..]),
-                read_u16(&raw[14..]),
-            ));
+            let channels = read_u16(&raw[2..]) as usize;
+            let rate = read_u32(&raw[4..]);
+            let bits = read_u16(&raw[14..]);
+            if channels == 0 || rate == 0 || ![8, 16, 24, 32].contains(&bits) {
+                return Err(invalid("Invalid PCM format."));
+            }
+            format = Some((channels, rate, bits));
         } else if &chunk[..4] == b"data" {
             let (channels, rate, bits) =
                 format.ok_or_else(|| invalid("WAV fmt chunk is missing."))?;
-            let mut raw = vec![0_u8; size as usize];
-            reader.read_exact(&mut raw)?;
-            let samples = decode_samples(&raw, bits)?;
-            if channels == 0 || samples.len() % channels != 0 {
-                return Err(invalid("WAV channel data is invalid."));
+            if size > length.saturating_sub(start) {
+                return Err(invalid("WAV data chunk is truncated."));
             }
-            return Ok(Audio {
-                samples,
-                rate,
+            return Ok(WavData {
                 channels,
+                rate,
+                bits,
+                start,
+                size,
             });
         }
         reader.seek(SeekFrom::Start(start + size + size % 2))?;
     }
+}
+
+pub(crate) fn decode_pcm(path: &Path) -> io::Result<Audio> {
+    let mut reader = BufReader::new(File::open(path)?);
+    let data = find_wav_data(&mut reader)?;
+    reader.seek(SeekFrom::Start(data.start))?;
+    let mut raw = vec![0_u8; data.size as usize];
+    reader.read_exact(&mut raw)?;
+    let samples = decode_samples(&raw, data.bits)?;
+    if samples.len() % data.channels != 0 {
+        return Err(invalid("WAV channel data is invalid."));
+    }
+    Ok(Audio {
+        samples,
+        rate: data.rate,
+        channels: data.channels,
+    })
 }
 
 pub(crate) fn decode_samples(raw: &[u8], bits: u16) -> io::Result<Vec<f32>> {
@@ -103,6 +133,13 @@ pub(crate) fn decode_samples(raw: &[u8], bits: u16) -> io::Result<Vec<f32>> {
     }
 }
 
+/// Largest magnitude of the three 4x-oversampled points between two adjacent samples.
+fn interpolated_peak(first: f32, second: f32) -> f32 {
+    (1..4).fold(0.0_f32, |peak, quarter| {
+        peak.max((first + (second - first) * quarter as f32 / 4.0).abs())
+    })
+}
+
 pub(crate) fn true_peak(samples: &[f32], channels: usize) -> f32 {
     let frames = samples.len() / channels;
     if frames == 0 {
@@ -115,9 +152,7 @@ pub(crate) fn true_peak(samples: &[f32], channels: usize) -> f32 {
         for channel in 0..channels {
             let first = samples[frame * channels + channel];
             let second = samples[(frame + 1) * channels + channel];
-            for quarter in 1..4 {
-                peak = peak.max((first + (second - first) * quarter as f32 / 4.0).abs());
-            }
+            peak = peak.max(interpolated_peak(first, second));
         }
     }
     peak
@@ -313,9 +348,7 @@ fn frame_true_peak(samples: &[f32], frame: usize, channels: usize) -> f32 {
         peak = peak.max(first.abs());
         if frame + 1 < frames {
             let second = samples[(frame + 1) * channels + channel];
-            for quarter in 1..4 {
-                peak = peak.max((first + (second - first) * quarter as f32 / 4.0).abs());
-            }
+            peak = peak.max(interpolated_peak(first, second));
         }
     }
     peak
@@ -330,13 +363,11 @@ fn apply_lookahead_limiter(
     let frames = samples.len() / channels;
     let lookahead = ((rate as f32 * LIMITER_LOOKAHEAD_SECONDS).round() as usize).max(1);
     let release = (-4.605_170_2 / (rate as f32 * LIMITER_RELEASE_SECONDS)).exp();
-    let peaks: Vec<f32> = (0..frames)
-        .map(|frame| frame_true_peak(samples, frame, channels))
+    let mut desired: Vec<f32> = (0..frames)
+        .map(|frame| {
+            (TRUE_PEAK_LIMIT / frame_true_peak(samples, frame, channels).max(1e-12)).min(1.0)
+        })
         .collect();
-    let mut desired = vec![1.0_f32; frames];
-    for (frame, peak) in peaks.iter().enumerate() {
-        desired[frame] = (TRUE_PEAK_LIMIT / peak.max(1e-12)).min(1.0);
-    }
     let attack_step = (1.0 - TRUE_PEAK_LIMIT / 2.0) / lookahead as f32;
     for frame in (0..frames.saturating_sub(1)).rev() {
         if frame % 4096 == 0 {

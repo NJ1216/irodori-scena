@@ -1,4 +1,5 @@
 """Capacity fitting keeps fixed author material and reserves unfinished endings."""
+import scena_test_isolation  # noqa: F401
 import copy
 import unittest
 from types import SimpleNamespace

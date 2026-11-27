@@ -460,8 +460,6 @@
 .preset-card .preset-options .chosen:only-child {
   border-radius: calc(var(--scena-radius-control) - 1px);
 }
-.shortcut-hint,
-.empty-rail,
 .empty-state {
   color: var(--scena-meter-border);
 }
@@ -1202,10 +1200,6 @@
   color: var(--scena-text-muted);
   border-color: #e1e0e8;
   background: #efeff3;
-}
-.line-gap-control input.is-effective-gap {
-  color: var(--scena-warning-text);
-  -webkit-text-fill-color: var(--scena-warning-text);
 }
 .line-gap-control input.is-shared::placeholder {
   color: color-mix(in srgb, var(--scena-text-muted) 55%, var(--scena-surface-raised));

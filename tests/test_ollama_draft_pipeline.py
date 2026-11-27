@@ -1,6 +1,7 @@
 """Ollama HTTP -> contract -> job -> atomic project save regression tests."""
 from __future__ import annotations
 
+import scena_test_isolation  # noqa: F401
 import json
 import tempfile
 import unittest

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import type { ParticleDeletionDiagnostic } from "../../src/features/shared/particleDeletionDiagnostics";
 import { installMockApi } from "./mock-api";
 
 test.beforeEach(async ({ page }) => {
@@ -19,7 +20,7 @@ test("deletes all selected lines with Delete", async ({ page }) => {
   const canvases = page.locator(".script-deletion-canvas");
   // One composited canvas now renders both deleted rows.
   await expect(canvases).toHaveCount(1);
-  const renderedRows = await page.evaluate(() => window.__SCENA_PARTICLE_DELETION_DIAGNOSTICS__?.read().find((entry) => entry.target === "line" && entry.phase === "mounted")?.count);
+  const renderedRows = await page.evaluate(() => window.__SCENA_PARTICLE_DELETION_DIAGNOSTICS__?.read().find((entry: ParticleDeletionDiagnostic) => entry.target === "line" && entry.phase === "mounted")?.count);
   expect(renderedRows).toBe(2);
   const firstFrame = await canvases.first().evaluate((element) => (element as HTMLCanvasElement).toDataURL());
   await page.waitForTimeout(350);

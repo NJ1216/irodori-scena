@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["vitest/globals", "@testing-library/jest-dom", "node"],
+    "incremental": false
+  },
+  "include": ["src/vite-env.d.ts", "tests/e2e/**/*.ts", "tests/bench/**/*.ts", "tests/frontend/**/*.ts", "tests/frontend/**/*.tsx", "vite.config.ts", "vitest.config.ts", "playwright.config.ts", "playwright.bench.config.ts"]
+}

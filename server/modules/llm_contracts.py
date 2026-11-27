@@ -134,6 +134,33 @@ def _value_depth(value: Any, depth: int = 0) -> int:
     return depth
 
 
+def _skip_element(content: str, index: int) -> int | None:
+    """Return the index just past the array element at index, or None when it is unfinished."""
+    depth = 0
+    in_string = escaped = False
+    while index < len(content):
+        character = content[index]
+        if in_string:
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == '"':
+                in_string = False
+        elif character == '"':
+            in_string = True
+        elif character in "{[":
+            depth += 1
+        elif character in "}]":
+            if depth == 0:
+                return index if character == "]" else None
+            depth -= 1
+        elif character == "," and depth == 0:
+            return index
+        index += 1
+    return None
+
+
 def extract_complete_records(content: str) -> tuple[list[dict[str, Any]], bool]:
     """Extract every closed root records item, retaining prefix records on truncation."""
     start = _records_array_start(content)
@@ -147,12 +174,15 @@ def extract_complete_records(content: str) -> tuple[list[dict[str, Any]], bool]:
             index += 1
         if index >= len(content) or content[index] == "]":
             return records, index >= len(content)
-        if content[index] != "{":
-            return records, True
         try:
             record, end = decode_at(decoder, content, index)
         except json.JSONDecodeError:
-            return records, True
+            # A malformed or non-object element must not hide later valid siblings.
+            skipped = _skip_element(content, index)
+            if skipped is None:
+                return records, True
+            index = skipped
+            continue
         raw = content[index:end]
         if len(raw.encode("utf-8")) > MAX_RECORD_BYTES:
             raise ValueError("LLM record size limit exceeded")

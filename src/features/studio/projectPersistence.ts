@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { api } from "../../api";
 import type { StudioProject } from "../../types";
 import { ApiError } from "../../api-error";
-import { mergeProjectValue, projectMergeConflicts } from "./projectSessionMerge";
+import { mergeProjectValue } from "./projectSessionMerge";
 import { inferSaveIntent, type SaveIntent } from "./projectSaveIntent";
 
 export function useProjectPersistenceState() {
@@ -13,6 +13,7 @@ export function useProjectPersistenceState() {
   const projectSaveRunning = useRef(false);
   const projectSavePaused = useRef(false);
   const projectSaveFailureReason = useRef<string | null>(null);
+  const projectSaveFailureNotice = useRef<string | null>(null);
   const confirmedProject = useRef<StudioProject | null>(null);
   const projectSavePauseRelease = useRef<(() => void) | null>(null);
   const projectSavePending = useRef<{
@@ -32,6 +33,7 @@ export function useProjectPersistenceState() {
     projectSaveRunning,
     projectSavePaused,
     projectSaveFailureReason,
+    projectSaveFailureNotice,
     confirmedProject,
     projectSavePauseRelease,
     projectSavePending,
@@ -39,7 +41,7 @@ export function useProjectPersistenceState() {
 }
 
 export type ProjectPersistenceState = ReturnType<typeof useProjectPersistenceState>;
-type PersistenceModel = ProjectPersistenceState & { setNotice: (message: string) => void };
+type PersistenceModel = ProjectPersistenceState & { setNotice: (message: string | ((current: string) => string)) => void };
 type PendingSave = NonNullable<ProjectPersistenceState["projectSavePending"]["current"]>;
 
 async function persist(snapshot: StudioProject, intent: SaveIntent) {
@@ -52,25 +54,36 @@ async function persist(snapshot: StudioProject, intent: SaveIntent) {
   return { ...snapshot, revision: result.revision };
 }
 
+/** Shows a save-failure notice and remembers its text, so a later silent recovery can clear exactly that notice. */
+function showSaveFailure(model: Partial<PersistenceModel> & Pick<PersistenceModel, "setNotice">, message: string) {
+  if (model.projectSaveFailureNotice) model.projectSaveFailureNotice.current = message;
+  model.setNotice(message);
+}
+
+/** A save succeeded: drop the remembered failure notice, and clear it from the screen only if it is still the one shown. */
+function clearSaveFailure(model: Partial<PersistenceModel> & Pick<PersistenceModel, "setNotice">, replacedByMessage: boolean) {
+  const shown = model.projectSaveFailureNotice?.current;
+  if (!shown) return;
+  model.projectSaveFailureNotice!.current = null;
+  if (!replacedByMessage) model.setNotice((current) => (current === shown ? "" : current));
+}
+
 async function resolveRevisionConflict(model: PersistenceModel, pending: PendingSave, error: unknown) {
   const detail = error instanceof ApiError && error.code === "project_revision_conflict" ? (error.detail as { currentProject?: StudioProject }) : null;
   const current = detail?.currentProject;
   const base = model.confirmedProject.current;
   if (!current || !base || current.id !== pending.snapshot.id || current.id !== base.id) return null;
-  const conflicts = projectMergeConflicts(base, pending.snapshot, current);
+  // The user's only possible response to a same-field conflict is to save again, so the
+  // merge keeps the on-screen value for such fields and re-saves once, without a notice.
   const merged = { ...(mergeProjectValue(base, pending.snapshot, current) as StudioProject), revision: current.revision };
   model.confirmedProject.current = current;
-  if (conflicts.length > 0) {
-    pending.onSaved?.(merged);
-    model.setNotice("同じ項目が別の変更でも更新されました。入力を保持したため、内容を確認してもう一度保存してください。");
-    return false;
-  }
   const response = await api.saveProject(merged);
   model.confirmedProject.current = response;
   pending.onSaved?.(response);
   model.projectSavedVersion.current = pending.version;
   model.projectSaveFailureReason.current = null;
-  model.setNotice(pending.successMessage);
+  if (pending.successMessage) model.setNotice(pending.successMessage);
+  clearSaveFailure(model, Boolean(pending.successMessage));
   return true;
 }
 
@@ -103,7 +116,8 @@ async function drainProjectSaves(model: PersistenceModel & Partial<ProjectPersis
       model.confirmedProject!.current = response;
       pending.onSaved?.(response);
       model.projectSavedVersion.current = pending.version;
-      model.setNotice(pending.successMessage);
+      if (pending.successMessage) model.setNotice(pending.successMessage);
+      clearSaveFailure(model as PersistenceModel, Boolean(pending.successMessage));
       model.projectSaveFailureReason.current = null;
       saved = true;
     } catch (error) {
@@ -112,13 +126,11 @@ async function drainProjectSaves(model: PersistenceModel & Partial<ProjectPersis
         saved = resolved === true;
         if (resolved === null) {
           model.projectSaveFailureReason.current = (error as Error).message;
-          model.setNotice(`${pending.failurePrefix}: ${(error as Error).message}`);
-        } else if (resolved === false) {
-          model.projectSaveFailureReason.current = "同じ項目が別の変更でも更新されました。内容を確認して保存してください。";
+          showSaveFailure(model as PersistenceModel, `${pending.failurePrefix}: ${(error as Error).message}`);
         }
       } catch (retryError) {
         model.projectSaveFailureReason.current = (retryError as Error).message;
-        model.setNotice(`${pending.failurePrefix}: ${(retryError as Error).message}`);
+        showSaveFailure(model as PersistenceModel, `${pending.failurePrefix}: ${(retryError as Error).message}`);
       }
     } finally {
       model.projectSavePendingCount.current -= pending.waiters.length;

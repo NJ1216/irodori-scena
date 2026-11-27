@@ -95,8 +95,6 @@ def parse_voice_design_response(
             for key, value in parsed.items()
             if isinstance(key, str) and isinstance(value, str)
         }
-        if values and set(values).issubset(LABELS):
-            return _filter_caption(values)
         keywords, sample = parsed.get("voice_keywords"), parsed.get("sample_text")
         if isinstance(keywords, str) and isinstance(sample, str):
             return _filter_caption(
@@ -105,6 +103,8 @@ def parse_voice_design_response(
                     **{label: sample.strip() for label in LABELS if label != "VOICE_KEYWORDS"},
                 }
             )
+        if known := {key: value for key, value in values.items() if key in LABELS}:
+            return _filter_caption(known)
     source_lines = lines(raw)
     if len(source_lines) == 1:
         collapsed = [part.strip() for part in source_lines[0].split("|")]

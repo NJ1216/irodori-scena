@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import scena_test_isolation  # noqa: F401
 import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -37,6 +38,18 @@ class LlmContractTests(unittest.TestCase):
         content = 'thinking\n```json\n{"records":[{"owner":"A","text":"a } \\\" quote","rate":1},{"owner":"B","text":"途中'
         records, partial = extract_complete_records(content)
         self.assertEqual(records, [{"owner": "A", "text": 'a } " quote', "rate": 1}])
+        self.assertTrue(partial)
+
+    def test_malformed_or_non_object_record_does_not_hide_later_valid_siblings(self):
+        for middle in ('{"field":"X","value":}', '"stray"', '42'):
+            with self.subTest(middle=middle):
+                content = '{"records":[{"owner":"A"},' + middle + ',{"owner":"B"}]}'
+                records, _ = extract_complete_records(content)
+                self.assertEqual(records, [{"owner": "A"}, {"owner": "B"}])
+
+    def test_truncated_trailing_record_keeps_preceding_valid_records(self):
+        records, partial = extract_complete_records('{"records":[{"owner":"A"},"stray",{"owner":"B"},{"owner":"C","te')
+        self.assertEqual(records, [{"owner": "A"}, {"owner": "B"}])
         self.assertTrue(partial)
 
     def test_uses_only_root_records_key(self):

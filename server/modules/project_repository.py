@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import os
 import tempfile
+import threading
+from functools import wraps
 
 from server.app_deps import json, shutil, Path, Any, urlsplit, HTTPException
 from server.registry import deps
@@ -102,7 +104,7 @@ def read_global_characters() -> list[dict[str, Any]]:
     return characters
 
 
-def _atomic_write(path: Path, payload: bytes) -> None:
+def atomic_write(path: Path, payload: bytes) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
     temporary = Path(temporary_name)
@@ -125,10 +127,25 @@ def _atomic_write(path: Path, payload: bytes) -> None:
         temporary.unlink(missing_ok=True)
 
 
+# Guards global cast library read-modify-write. Acquire it only after
+# PROJECT_ROOT_LOCK (see docs/architecture.md, project mutation locking).
+GLOBAL_CHARACTERS_LOCK = threading.RLock()
+
+
+def cast_mutation(function):
+    """Hold the project lock, then the global cast lock, across one read-modify-write."""
+    @wraps(function)
+    def locked(*args, **kwargs):
+        with deps.PROJECT_ROOT_LOCK, GLOBAL_CHARACTERS_LOCK:
+            return function(*args, **kwargs)
+    return locked
+
+
 def write_global_characters(characters: list[dict[str, Any]]) -> None:
     deps.GLOBAL_CHARACTERS_ROOT.mkdir(parents=True, exist_ok=True)
     normalized = [deps.normalize_character_profile(item) for item in characters if isinstance(item, dict)]
-    _atomic_write(deps.GLOBAL_CHARACTERS_FILE, (json.dumps(normalized, ensure_ascii=False, indent=2) + "\n").encode())
+    with GLOBAL_CHARACTERS_LOCK:
+        atomic_write(deps.GLOBAL_CHARACTERS_FILE, (json.dumps(normalized, ensure_ascii=False, indent=2) + "\n").encode())
 
 
 def hydrate_project_media(project: dict[str, Any]) -> dict[str, Any]:
@@ -315,7 +332,7 @@ def _write_project_locked(
                     normalize_line_pronunciations(line)
     deps.ACTIVE_PROJECT_ROOT.mkdir(parents=True, exist_ok=True)
     previous_bytes = deps.PROJECT_FILE.read_bytes() if deps.PROJECT_FILE.exists() else None
-    _atomic_write(deps.PROJECT_FILE, (json.dumps(project, ensure_ascii=False, indent=2) + "\n").encode())
+    atomic_write(deps.PROJECT_FILE, (json.dumps(project, ensure_ascii=False, indent=2) + "\n").encode())
     try:
         if deps.ACTIVE_PROJECT_PATH is not None:
             if project_only:
@@ -330,7 +347,7 @@ def _write_project_locked(
         if previous_bytes is None:
             deps.PROJECT_FILE.unlink(missing_ok=True)
         else:
-            _atomic_write(deps.PROJECT_FILE, previous_bytes)
+            atomic_write(deps.PROJECT_FILE, previous_bytes)
         raise
     # Callers commonly return the object they passed to this function.
     source_project["revision"] = project["revision"]
@@ -346,15 +363,17 @@ def _write_project_locked(
 def move_scratch_project_to(destination: Path) -> dict[str, Any]:
     """Publish the scratch workspace as one .scena file, then activate its cache."""
     if deps.ACTIVE_PROJECT_PATH is not None:
-        project = materialize_cast_global_characters(read_project())
-        write_project(project)
+        with deps.PROJECT_ROOT_LOCK:
+            project = materialize_cast_global_characters(read_project())
+            write_project(project)
         return {"project": read_project(), "workspace": deps.workspace_info(), "moved": False}
     destination = destination.expanduser()
     if not destination.is_absolute() or destination.suffix.lower() != ".scena":
         raise HTTPException(status_code=422, detail="保存先には.scenaファイルを指定してください。")
     deps.require_external_project_destination(destination.parent)
-    project = materialize_cast_global_characters(read_project())
-    write_project(project)
+    with deps.PROJECT_ROOT_LOCK:
+        project = materialize_cast_global_characters(read_project())
+        write_project(project)
     if destination.exists():
         raise HTTPException(status_code=409, detail="同名のプロジェクトファイルがすでにあります。")
     prepared_root = deps.working_root(destination).with_name(f"{deps.working_root(destination).name}-first-save-{os.getpid()}")
@@ -379,6 +398,7 @@ def move_scratch_project_to(destination: Path) -> dict[str, Any]:
     return {"project": read_project(), "workspace": deps.workspace_info(), "moved": True}
 
 
+@cast_mutation
 def migrate_legacy_scratch_characters() -> None:
     """Promote existing pre-library scratch voices to the global library once."""
     if deps.ACTIVE_PROJECT_ROOT.resolve() != deps.default_workspace_root() or not deps.PROJECT_FILE.is_file():
@@ -425,7 +445,10 @@ def migrate_legacy_scratch_characters() -> None:
 deps.register(
     __name__,
     [
+        "GLOBAL_CHARACTERS_LOCK",
+        "atomic_write",
         "canonical_project_media_url",
+        "cast_mutation",
         "hydrate_project_media",
         "materialize_cast_global_characters",
         "migrate_legacy_scratch_characters",

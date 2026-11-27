@@ -11,7 +11,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 ORDER = {5: ("baseline", "adaptive"), 30: ("adaptive", "baseline"), 60: ("baseline", "adaptive")}
 
 
@@ -46,12 +46,12 @@ def main() -> None:
     pairs = []
     for minutes, variants in ORDER.items():
         fixture = output / f"{minutes}m-theme.json"
-        _run([sys.executable, str(ROOT / "tools/generate_draft_theme_fixture.py"),
+        _run([sys.executable, str(ROOT / "tools/research/generate_draft_theme_fixture.py"),
               "--minutes", str(minutes), "--seed", str(args.seed), "--output", str(fixture)], ROOT)
         for variant in variants:
             worktree = args.baseline_root if variant == "baseline" else ROOT
             destination = output / f"{minutes}m-{variant}"
-            _run([sys.executable, str(ROOT / "tools/benchmark_production_draft.py"),
+            _run([sys.executable, str(ROOT / "tools/research/benchmark_production_draft.py"),
                   "--variant", variant, "--fixture", str(fixture), "--output", str(destination),
                   "--global-characters", str(ROOT / "scena-data/global-characters/characters.json")],
                  worktree, code_root=worktree)

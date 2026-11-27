@@ -24,7 +24,7 @@ from irodori_acceleration_sampler import note_ui_activity, wait_for_ui_idle
 from irodori_cuda_calibration import CalibrationStore
 from irodori_host import configure_audio_libraries, configure_cpu_threads, inference_device
 from irodori_load_adapter import get_runtime as get_load_adapted_runtime
-from irodori_runtime_layout import RuntimeCheckpoint, prepare_runtime_checkpoint
+from irodori_runtime_layout import RuntimeCheckpoint, install_termination_cleanup, prepare_runtime_checkpoint
 
 
 _AUDIO_DLL_DIRECTORIES = configure_audio_libraries()
@@ -43,6 +43,7 @@ _RUNTIME_CHECKPOINT: RuntimeCheckpoint | None = None
 _REFERENCE_PROBE: Path | None = None
 _PROBE_PLACEHOLDER = "scena-calibration-reference"
 
+install_termination_cleanup()
 if hasattr(signal, "SIGUSR1"):
     signal.signal(signal.SIGUSR1, lambda _signal, _frame: note_ui_activity())
 

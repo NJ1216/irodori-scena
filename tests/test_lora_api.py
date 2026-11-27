@@ -1,4 +1,5 @@
 from __future__ import annotations
+import scena_test_isolation  # noqa: F401
 from pathlib import Path
 import tempfile
 import unittest

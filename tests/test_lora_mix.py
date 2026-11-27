@@ -1,4 +1,5 @@
 """Exact persistence and all-or-nothing runtime composition without real inference."""
+import scena_test_isolation  # noqa: F401
 import io
 import json
 import zipfile

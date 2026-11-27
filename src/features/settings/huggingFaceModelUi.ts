@@ -1,4 +1,5 @@
 import { api } from "../../api";
+import { formatGb } from "../shared/formatBytes";
 
 export type HfModel = Awaited<ReturnType<typeof api.searchHuggingFace>>["models"][number];
 type ModelTag = HfModel["inferredTags"][number];
@@ -35,7 +36,7 @@ export function searchModelTags(model: HfModel): ModelTag[] {
 
 export function formatModelBytes(bytes: number | null | undefined, pending = false): string {
   if (bytes == null) return pending ? "計算中…" : "容量不明";
-  return `${(bytes / 1_000_000_000).toFixed(1)} GB`;
+  return formatGb(bytes);
 }
 
 export function formatDownloadSpeed(bytesPerSecond: number): string {

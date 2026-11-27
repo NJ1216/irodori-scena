@@ -63,6 +63,7 @@ export async function saveWorkspaceAction(model: WorkspaceModel & Pick<StudioSta
   try {
     const selected = isDesktopRuntime ? await chooseProjectSaveDestination(projectBackupDefaultName(null, model.projectRef.current?.title ?? "")) : undefined;
     if (isDesktopRuntime && !selected) return;
+    await model.editSession.retryFailedSave();
     const result = await model.editSession.runServer(
       () => api.saveWorkspace(selected ?? undefined),
       (value, operation) => {

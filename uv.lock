@@ -510,7 +510,7 @@ wheels = [
 
 [[package]]
 name = "irodori-scena-local-api"
-version = "26.11.24"
+version = "26.11.27"
 source = { virtual = "." }
 dependencies = [
     { name = "fastapi" },

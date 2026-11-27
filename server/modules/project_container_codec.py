@@ -34,8 +34,8 @@ def compressed_copy(pc, source: Path, *, level: int = 1) -> tuple[Path, int, str
         raise
 
 
-def requires_upgrade(pc, connection: sqlite3.Connection) -> bool:
-    pc._validate_header(connection)
+def requires_upgrade(pc, connection: sqlite3.Connection, *, deep: bool = True) -> bool:
+    pc._validate_header(connection, deep=deep)
     version = connection.execute("PRAGMA user_version").fetchone()[0]
     entries_sql_row = connection.execute(
         "SELECT sql FROM sqlite_master WHERE type='table' AND name='entries'"
@@ -49,7 +49,7 @@ def requires_upgrade(pc, connection: sqlite3.Connection) -> bool:
 
 def stage_legacy(pc, container: Path) -> Path | None:
     with closing(pc._connect(container, readonly=True)) as source:
-        if not requires_upgrade(pc, source):
+        if not requires_upgrade(pc, source, deep=False):
             return None
         pc.validate_container(container)
         target = container.with_name(f".{container.name}.staging-{os.getpid()}")

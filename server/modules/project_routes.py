@@ -76,8 +76,8 @@ def save_workspace(request: deps.WorkspaceRequest | None = None) -> dict[str, An
     if deps.ACTIVE_PROJECT_PATH is None:
         destination = _selected_project_file(request, "プロジェクトを保存")
         return deps.move_scratch_project_to(destination)
-    project = deps.materialize_cast_global_characters(deps.read_project())
-    deps.write_project(project)
+    with deps.PROJECT_ROOT_LOCK:
+        deps.write_project(deps.materialize_cast_global_characters(deps.read_project()))
     deps.persist_active_container()
     return {"project": deps.read_project(), "workspace": deps.workspace_info(), "moved": False}
 
@@ -112,11 +112,12 @@ def open_workspace(request: deps.WorkspaceRequest | None = None) -> dict[str, An
     deps.clear_script_assistant_summary_cache()
     deps.ensure_data_root()
     deps.begin_history_session()
-    project = deps.read_project()
-    pronunciation_changed = deps.reconcile_script_pronunciations(project, add_only=True)
-    media_changed = deps.reconcile_project_media(project)
-    if media_changed or pronunciation_changed:
-        project = deps.write_project(project, project_only=pronunciation_changed and not media_changed)
+    with deps.PROJECT_ROOT_LOCK:
+        project = deps.read_project()
+        pronunciation_changed = deps.reconcile_script_pronunciations(project, add_only=True)
+        media_changed = deps.reconcile_project_media(project)
+        if media_changed or pronunciation_changed:
+            project = deps.write_project(project, project_only=pronunciation_changed and not media_changed)
     deps.cleanup_loaded_project(project)
     _prepare_tts_when_eager()
     return {
@@ -263,6 +264,11 @@ def import_script(request: deps.ScriptImportRequest) -> dict[str, Any]:
         raise HTTPException(
             status_code=409, detail="進行中の生成またはエクスポートが終わってから台本を読み込んでください。"
         )
+    with deps.PROJECT_ROOT_LOCK:
+        return _import_script_locked(request)
+
+
+def _import_script_locked(request: deps.ScriptImportRequest) -> dict[str, Any]:
     project = deps.read_project()
     character_ids = {str(character.get("id", "")) for character in project.get("characters", [])}
     invalid_ids = {line.character_id for line in request.lines} - character_ids
@@ -328,6 +334,11 @@ def update_project(update: deps.ProjectUpdate) -> dict[str, Any]:
 
 @deps.app.patch("/api/lines/{line_id}/character")
 def change_line_character(line_id: str, request: deps.ChangeLineCharacterRequest) -> dict[str, Any]:
+    with deps.PROJECT_ROOT_LOCK:
+        return _change_line_character_locked(line_id, request)
+
+
+def _change_line_character_locked(line_id: str, request: deps.ChangeLineCharacterRequest) -> dict[str, Any]:
     project = deps.read_project()
     deps.find_character(project, request.character_id)
     scene, line = deps.find_line(project, line_id)
@@ -388,6 +399,11 @@ def _merge_script_cast_contexts(contexts: dict[str, Any], mappings: list[Any]) -
 @deps.app.post("/api/project/switch-characters")
 def switch_characters(request: deps.BulkSwitchCharactersRequest) -> dict[str, Any]:
     """Apply swaps and merges simultaneously from the original speaker IDs."""
+    with deps.PROJECT_ROOT_LOCK:
+        return _switch_characters_locked(request)
+
+
+def _switch_characters_locked(request: deps.BulkSwitchCharactersRequest) -> dict[str, Any]:
     project = deps.read_project()
     mapping_by_source: dict[str, str] = {}
     for mapping in request.mappings:

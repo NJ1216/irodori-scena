@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import scena_test_isolation  # noqa: F401
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from pathlib import Path
@@ -15,7 +16,7 @@ from server.registry import deps
 
 class ExportCommitCancellationTests(unittest.TestCase):
     def test_cancel_while_waiting_for_commit_locks_discards_the_uncommitted_take(self) -> None:
-        for lock in [deps.PROJECT_ROOT_LOCK, pronunciation_dictionary._dictionary_lock]:
+        for lock in [deps.PROJECT_ROOT_LOCK, pronunciation_dictionary.DICTIONARY_LOCK]:
             with self.subTest(lock=lock), TemporaryDirectory() as directory:
                 project = {
                     "settings": {}, "characters": [{"id": "cast"}],

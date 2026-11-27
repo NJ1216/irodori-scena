@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../../api";
 import type { LlmCard } from "../../types";
+import { formatGb } from "../shared/formatBytes";
 import { useSequentialPolling } from "../shared/useSequentialPolling";
 
 function mtpProgressLabel(active: boolean, progress: [number, number]) {
@@ -39,7 +40,7 @@ export function MtpSetting({ card, settings, setSettings }: { card: LlmCard; set
     <div className="llm-mtp-setting">
       <p className="subtle">
         MTP用assistant: {installed ? "取得済み" : jobId ? "ダウンロード中" : "未取得"}
-        {diskBytes > 0 ? `・${(diskBytes / 1024 ** 3).toFixed(2)} GiB` : ""}
+        {diskBytes > 0 ? `・${formatGb(diskBytes, 2)}` : ""}
         {mtpProgressLabel(Boolean(jobId), progress)}
       </p>
       <MtpProgress active={Boolean(jobId)} progress={progress} />

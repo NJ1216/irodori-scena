@@ -122,19 +122,32 @@
         {
           "owner": "A",
           "text": "valid"
+        },
+        {
+          "owner": "B",
+          "text": "later"
         }
       ],
-      "partial": true,
+      "partial": false,
       "accepted": [
         {
           "owner": "A",
           "text": "valid"
+        },
+        {
+          "owner": "B",
+          "text": "later"
         }
       ],
       "manifest": [
         {
           "status": "accepted",
           "owner": "A",
+          "field": "text"
+        },
+        {
+          "status": "accepted",
+          "owner": "B",
           "field": "text"
         }
       ]

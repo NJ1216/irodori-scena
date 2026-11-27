@@ -1,4 +1,5 @@
 """Publisher metadata is bounded, cached, safe, and optional while offline."""
+import scena_test_isolation  # noqa: F401
 import json
 import tempfile
 import unittest

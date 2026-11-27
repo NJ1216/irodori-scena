@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { api } from "../../api";
 import type { OmlxRuntime, OmlxRuntimeStatus } from "../../types";
+import { formatGb } from "../shared/formatBytes";
 import { DialogFooter, DialogHeader, ModalBackdrop } from "../shared/overlays";
 import { confirmDestructiveAction, useDestructiveConfirmation } from "../shared/destructiveConfirmation";
 import { useSequentialPolling } from "../shared/useSequentialPolling";
@@ -24,7 +25,7 @@ function RuntimeRow({ item, onRefresh }: { item: OmlxRuntime; onRefresh: () => v
         {item.displayName} · {item.omlxVersion}
       </h3>
       <p className="subtle">
-        {item.source === "scena" ? "SCENA構成" : item.source === "github-release" ? "公開リリース" : "既存環境"} · {(item.diskBytes / 1024 ** 3).toFixed(1)} GB
+        {item.source === "scena" ? "SCENA構成" : item.source === "github-release" ? "公開リリース" : "既存環境"} · {formatGb(item.diskBytes)}
       </p>
       <p>{item.usedByModels?.map((model) => model.displayName).join("、") || "未使用"}</p>
       <p className="subtle">{item.deletionBlockedReason}</p>
@@ -60,7 +61,17 @@ function RuntimeManager({ onClose }: { onClose: () => void }) {
       .omlxRuntimes()
       .then(setStatus)
       .catch((error: Error) => setMessage(error.message));
-  useSequentialPolling({ enabled: true, intervalMs: 2000, poll: api.omlxRuntimes, onResult: setStatus, onError: (error) => setMessage((error as Error).message), errorPolicy: "retry" });
+  useSequentialPolling({
+    enabled: true,
+    intervalMs: 2000,
+    poll: api.omlxRuntimes,
+    onResult: (next) => {
+      setStatus(next);
+      setMessage("");
+    },
+    onError: (error) => setMessage((error as Error).message),
+    errorPolicy: "retry",
+  });
   return (
     <ModalBackdrop onClose={onClose}>
       <section className="modal llm-setting-dialog" role="dialog" aria-modal="true" aria-labelledby="omlx-management-title">

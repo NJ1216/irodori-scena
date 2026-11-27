@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { chooseProjectBackupDestination, chooseProjectFile, backupWorkspace, optimizeWorkspace, openWorkspace, prepareDerivedAudio } = vi.hoisted(() => ({
+const { chooseProjectBackupDestination, chooseProjectFile, chooseProjectSaveDestination, backupWorkspace, optimizeWorkspace, openWorkspace, prepareDerivedAudio, saveWorkspace } = vi.hoisted(() => ({
+  chooseProjectSaveDestination: vi.fn(),
+  saveWorkspace: vi.fn(),
   chooseProjectBackupDestination: vi.fn(),
   backupWorkspace: vi.fn(),
   optimizeWorkspace: vi.fn(),
@@ -9,14 +11,15 @@ const { chooseProjectBackupDestination, chooseProjectFile, backupWorkspace, opti
   prepareDerivedAudio: vi.fn().mockResolvedValue({ projectKey: "test", boundaries: [] }),
 }));
 vi.mock("../../api", () => ({
-  api: { backupWorkspace, optimizeWorkspace, openWorkspace, prepareDerivedAudio },
+  api: { backupWorkspace, optimizeWorkspace, openWorkspace, prepareDerivedAudio, saveWorkspace },
   chooseDirectory: vi.fn(),
   chooseProjectBackupDestination,
   chooseProjectFile,
+  chooseProjectSaveDestination,
   isDesktopRuntime: true,
 }));
 
-import { backupWorkspaceAction, openWorkspaceAction, optimizeWorkspaceAction, projectBackupDefaultName } from "./workspaceMenuActions";
+import { backupWorkspaceAction, openWorkspaceAction, optimizeWorkspaceAction, projectBackupDefaultName, saveWorkspaceAction } from "./workspaceMenuActions";
 
 describe("project optimization", () => {
   beforeEach(() => vi.clearAllMocks());
@@ -192,5 +195,52 @@ describe("project workspace actions", () => {
     expect(chooseProjectFile).not.toHaveBeenCalled();
     expect(openWorkspace).toHaveBeenCalledWith("/tmp/direct.scena");
     expect(replace).toHaveBeenCalledWith(project);
+  });
+});
+
+describe("explicit project save", () => {
+  beforeEach(() => vi.clearAllMocks());
+  const saveModel = (retryFailedSave: () => Promise<boolean>, order: string[]) => ({
+    projectRef: { current: { title: "作品" } },
+    setBusy: vi.fn(),
+    setNotice: vi.fn(),
+    setWorkspace: vi.fn(),
+    setDraftJob: vi.fn(),
+    setExportJob: vi.fn(),
+    setGlobalCastUpdates: vi.fn(),
+    stop: vi.fn(),
+    editSession: {
+      retryFailedSave: vi.fn(async () => {
+        order.push("retry");
+        return retryFailedSave();
+      }),
+      restore: vi.fn(),
+      runServer: async (request: () => Promise<unknown>, reflect: (value: any, operation: object) => void) => {
+        order.push("runServer");
+        const value = await request();
+        reflect(value, {});
+        return value;
+      },
+    },
+  });
+
+  it("re-sends a failed save once before saving the workspace", async () => {
+    chooseProjectSaveDestination.mockResolvedValue("/tmp/saved.scena");
+    saveWorkspace.mockResolvedValue({ project: { id: "p", revision: 3 }, workspace: { name: "saved.scena" }, moved: false });
+    const order: string[] = [];
+    const model = saveModel(async () => true, order);
+    await saveWorkspaceAction(model as never);
+    expect(order).toEqual(["retry", "runServer"]);
+    expect(model.editSession.retryFailedSave).toHaveBeenCalledOnce();
+    expect(saveWorkspace).toHaveBeenCalledWith("/tmp/saved.scena");
+    expect(model.setNotice).toHaveBeenLastCalledWith("「saved.scena」へ保存しました。");
+  });
+
+  it("does not re-send after the save panel is cancelled", async () => {
+    chooseProjectSaveDestination.mockResolvedValue(null);
+    const order: string[] = [];
+    const model = saveModel(async () => true, order);
+    await saveWorkspaceAction(model as never);
+    expect(order).toEqual([]);
   });
 });

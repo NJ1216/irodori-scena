@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from collections.abc import Iterable
 from typing import Any
 
 
@@ -104,14 +105,16 @@ def coalesce_generation_group(entries: list[dict[str, Any]], cursor: int, scope:
     return True
 
 
-def prune_unreferenced_blobs(blob_root: Path, history: dict[str, list[dict[str, Any]]]) -> None:
-    referenced = {
+def prune_unreferenced_blobs(blob_root: Path, history: dict[str, list[dict[str, Any]]], protected: Iterable[str] = ()) -> None:
+    """Delete blobs no entry references, sparing digests held by in-flight captures."""
+    referenced = set(protected)
+    referenced.update(
         digest
         for scope_entries in history.values()
         for entry in scope_entries
         for snapshot in (entry["before"], entry["after"])
         for digest in snapshot["files"].values()
-    }
+    )
     for blob in blob_root.iterdir():
         if blob.is_file() and blob.name not in referenced:
             blob.unlink(missing_ok=True)

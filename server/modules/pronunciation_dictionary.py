@@ -10,14 +10,15 @@ from server.app_deps import json, re, Path, Any, HTTPException
 from server.registry import deps
 
 
-_dictionary_lock = RLock()
+# Lock order: history ``_LOCK``, then this, then ``PROJECT_ROOT_LOCK`` (docs/architecture.md).
+DICTIONARY_LOCK = RLock()
 
 
 def dictionary_transaction(function):
     """Keep a SCENA dictionary read, mutation and replacement together."""
     @wraps(function)
     def locked(*args, **kwargs):
-        with _dictionary_lock:
+        with DICTIONARY_LOCK:
             return function(*args, **kwargs)
     return locked
 

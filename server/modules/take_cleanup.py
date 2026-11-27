@@ -1,11 +1,24 @@
 from __future__ import annotations
 
-from server.app_deps import shutil, Any, HTTPException
+from server.app_deps import shutil, Path, Any, HTTPException
 from server.registry import deps
 
 
-def clear_project_takes(project: dict[str, Any]) -> dict[str, Any]:
-    """Remove all Take media atomically; reclaim SQLite pages on the next load."""
+def discard_staged_takes(staged: Path) -> None:
+    """Delete a staged Take tree after the project JSON no longer references it."""
+    shutil.rmtree(staged, ignore_errors=True)
+    try:
+        staged.parent.rmdir()
+    except OSError:
+        pass
+
+
+def clear_project_takes(project: dict[str, Any], *, deferred: list[Path] | None = None) -> dict[str, Any]:
+    """Remove all Take media atomically; reclaim SQLite pages on the next load.
+
+    With ``deferred``, the staged tree is appended to it instead of being deleted, so a
+    caller holding a lock can delete it with ``discard_staged_takes`` after releasing it.
+    """
     takes_root = (deps.MEDIA_ROOT / "takes").resolve()
     staged = deps.MEDIA_ROOT / ".cleanup" / deps.new_id("takes")
     moved = False
@@ -25,15 +38,14 @@ def clear_project_takes(project: dict[str, Any]) -> dict[str, Any]:
             takes_root.parent.mkdir(parents=True, exist_ok=True)
             staged.replace(takes_root)
         raise
-    shutil.rmtree(staged, ignore_errors=True)
-    try:
-        staged.parent.rmdir()
-    except OSError:
-        pass
+    if deferred is not None and moved:
+        deferred.append(staged)
+    else:
+        discard_staged_takes(staged)
     return saved
 
 
-deps.register(__name__, ["clear_project_takes"])
+deps.register(__name__, ["clear_project_takes", "discard_staged_takes"])
 
 
 def cleanup_line_takes(project: dict[str, Any], line_ids: list[str], mode: str) -> dict[str, Any]:

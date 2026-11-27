@@ -21,17 +21,22 @@ function IncomingMedia({ sessionId, item, asset }: { sessionId: string; item: Ca
   const [url, setUrl] = useState("");
   useEffect(() => {
     let owned = "";
+    let cancelled = false;
     void apiFetch(`/api/casts/import/${encodeURIComponent(sessionId)}/media/${encodeURIComponent(item.key)}/${asset}`, { cache: "no-store" })
       .then((response) => {
         if (!response.ok) throw new Error();
         return response.blob();
       })
       .then((blob) => {
+        if (cancelled) return;
         owned = URL.createObjectURL(blob);
         setUrl(owned);
       })
-      .catch(() => setUrl(""));
+      .catch(() => {
+        if (!cancelled) setUrl("");
+      });
     return () => {
+      cancelled = true;
       if (owned) URL.revokeObjectURL(owned);
     };
   }, [asset, item.key, sessionId]);

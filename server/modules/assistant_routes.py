@@ -154,6 +154,11 @@ def _generate_line_insert(request: deps.LineAssistantRequest) -> dict[str, Any]:
         raw = line_assistant_completion(request, refine_only=False)
     except RuntimeError as error:
         raise HTTPException(status_code=502, detail=str(error)) from error
+    with deps.PROJECT_ROOT_LOCK:
+        return _insert_generated_lines(request, raw)
+
+
+def _insert_generated_lines(request: deps.LineAssistantRequest, raw: dict[str, Any]) -> dict[str, Any]:
     project = deps.read_project()
     scene, insert_index, _ = line_assistant_context(project, request)
     raw_lines = raw.get("lines", [])

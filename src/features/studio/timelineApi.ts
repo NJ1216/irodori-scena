@@ -34,7 +34,7 @@ export const timelineApi = {
     }),
 };
 
-export function placeTimelineUnits(units: Array<{ gap: number; members: Array<{ id: string; offset?: number; duration: number | null }> }>) {
+export function placeTimelineUnits<Unit extends { gap: number; members: Array<{ id: string; offset?: number; duration: number | null }> }>(units: Unit[]) {
   let start = 0;
   let dependencies: string[] = [];
   return units.map((unit) => {

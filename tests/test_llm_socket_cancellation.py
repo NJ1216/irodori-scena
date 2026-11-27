@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import scena_test_isolation  # noqa: F401
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import threading
 import unittest

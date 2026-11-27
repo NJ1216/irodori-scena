@@ -32,11 +32,12 @@ def backup_project(destination_path: str) -> dict:
     if source is None:
         raise HTTPException(status_code=409, detail="先にプロジェクトを保存してください。")
     destination = _validate_destination(Path(destination_path).expanduser())
-    project = deps.read_project()
-    if deps.reconcile_project_media(project):
-        deps.write_project(project)
-    else:
-        deps.sync_container(source, deps.ACTIVE_PROJECT_ROOT)
+    with deps.PROJECT_ROOT_LOCK:
+        project = deps.read_project()
+        if deps.reconcile_project_media(project):
+            deps.write_project(project)
+        else:
+            deps.sync_container(source, deps.ACTIVE_PROJECT_ROOT)
     staging = destination.parent / f".{destination.stem}.staging-{uuid4().hex}.scena"
     previous = destination.parent / f".{destination.stem}.previous-{uuid4().hex}.scena"
     replaced = False

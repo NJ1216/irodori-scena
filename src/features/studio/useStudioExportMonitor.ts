@@ -1,11 +1,8 @@
 import { useEffect, useRef } from "react";
 import { api } from "../../api";
-import type { DialogueLine, ExportJob, ProgressEvent } from "../../types";
-import { monitorJobEvents, updatesAfterVersion } from "./jobEventMonitor";
+import type { DialogueLine, ExportJob } from "../../types";
+import { isTerminalJob, monitorJobEvents, snapshotFromProgressEvent, updatesAfterVersion } from "./jobEventMonitor";
 import type { StudioEffectModel } from "./studioEffectTypes";
-
-const terminal = (job: { status: string }) => ["completed", "completed_with_warnings", "failed", "cancelled"].includes(job.status);
-const fromEvent = (event: ProgressEvent) => ({ ...event.metrics, id: event.jobId, phase: event.phase }) as unknown as ExportJob;
 
 function applyLineUpdates(model: StudioEffectModel, operation: ReturnType<StudioEffectModel["editSession"]["capture"]>, updates: NonNullable<ExportJob["lineUpdates"]>) {
   model.editSession.applyServerUpdate(operation, (current) => {
@@ -47,7 +44,7 @@ export function useStudioExportMonitor(model: StudioEffectModel) {
       const updates = updatesAfterVersion(next.lineUpdates, exportUpdateVersion.current);
       if (updates.length) applyLineUpdates(modelRef.current, operation, updates);
       exportUpdateVersion.current = Math.max(exportUpdateVersion.current, next.updateVersion ?? 0);
-      if (terminal(next)) {
+      if (isTerminalJob(next)) {
         const latest = await api.project();
         if (!controller.signal.aborted) editSession.applyServer(operation, latest);
       }
@@ -71,8 +68,8 @@ export function useStudioExportMonitor(model: StudioEffectModel) {
         return api.exportJob(monitoredJob.id, exportUpdateVersion.current);
       },
       onSnapshot: applySnapshot,
-      isTerminal: terminal,
-      snapshotFromEvent: fromEvent,
+      isTerminal: isTerminalJob,
+      snapshotFromEvent: snapshotFromProgressEvent<ExportJob>,
       pollIntervalMs: 1500,
       maxStreamAttempts: 2,
     }).catch((error) => {

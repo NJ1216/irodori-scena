@@ -17,6 +17,7 @@ from pydantic import BaseModel, Field
 from server.modules.request_model import StrictRequestModel
 from server.modules.lora_reference import LoraReference, lora_portability_warnings
 from server.modules.lora_mix import LoraMix
+from server.modules.project_repository import cast_mutation
 
 from server.registry import deps
 
@@ -320,6 +321,7 @@ def _install_character(incoming: dict[str, Any], character_id: str, relations: d
 
 
 @deps.app.post("/api/casts/import/commit")
+@cast_mutation
 def commit_cast_import(request: CastImportCommitRequest) -> dict[str, Any]:
     with _sessions_lock:
         session = _sessions.pop(request.session_id, None)

@@ -1,4 +1,5 @@
 """Dialogue acceptance is independent of enclosing JSON completion."""
+import scena_test_isolation  # noqa: F401
 import json
 import unittest
 

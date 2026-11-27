@@ -1,4 +1,5 @@
 import type { Route } from "@playwright/test";
+import type { Take } from "../../src/types/project";
 
 import { projectFixture } from "./mock-api-fixtures";
 import { fulfillLineInsertion } from "./mock-line-insertion";
@@ -24,8 +25,9 @@ export async function fulfillLineOperations(route: Route, project: typeof projec
     const body = request.postDataJSON();
     const line = project.scenes.flatMap((scene) => scene.lines).find((item) => item.id === lineId);
     if (!line) return json(route, {});
-    const take = {
-      id: mode === "regenerate" ? line.selectedTakeId : `take-${lineId}-${line.takes.length + 1}`,
+    const newTakeId = `take-${lineId}-${line.takes.length + 1}`;
+    const take: Take = {
+      id: mode === "regenerate" ? (line.selectedTakeId ?? newTakeId) : newTakeId,
       characterId: line.characterId,
       audioUrl: `/api/media/takes/${lineId}.wav`,
       seed: body.seed ?? 1,

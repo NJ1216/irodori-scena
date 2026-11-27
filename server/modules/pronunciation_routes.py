@@ -11,6 +11,14 @@ from server.modules.pronunciation_dictionary import dictionary_transaction
 @deps.app.post("/api/pronunciation-dictionary/change")
 @dictionary_transaction
 def change_pronunciation_dictionary(request: deps.PronunciationChangeRequest) -> dict[str, Any]:
+    if request.operation in {"suggest-manual", "suggest-cast"}:
+        # LLM suggestions never hold the project lock; they do not rewrite project.json.
+        return _change_pronunciation_dictionary(request)
+    with deps.PROJECT_ROOT_LOCK:
+        return _change_pronunciation_dictionary(request)
+
+
+def _change_pronunciation_dictionary(request: deps.PronunciationChangeRequest) -> dict[str, Any]:
     project = deps.read_project()
     before = deps.combined_pronunciation_entries(project)
     operation = request.operation

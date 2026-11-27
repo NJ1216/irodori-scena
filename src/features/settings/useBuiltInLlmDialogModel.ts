@@ -3,6 +3,9 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { api } from "../../api";
 import { chooseDirectory } from "../../api-runtime";
 import { isWindows } from "../shared/platform";
+import { ApiError } from "../../api-error";
+import { retryableStatusFailure } from "../shared/pollingErrors";
+import { useSequentialPolling } from "../shared/useSequentialPolling";
 import { availableHfTagValues, type HfFilterKind, type HfModel, searchOrderOptions, type HfSearchOrder } from "./huggingFaceModelUi";
 import { modelMatches, needsModelMetadata, mergeModelMetadata } from "./hfGgufCatalog";
 import { additionError, additionFinished, additionState } from "./modelAddition";
@@ -10,7 +13,10 @@ import { useHfGgufSelection } from "./useHfGgufSelection";
 
 export type Download = Awaited<ReturnType<typeof api.huggingFaceDownload>>;
 export type LocalModel = Awaited<ReturnType<typeof api.scanExternalLlmModels>>["models"][number];
-const wait = () => new Promise((resolve) => window.setTimeout(resolve, 700));
+const POLL_MS = 700;
+
+/** The server no longer knows the download job, so nothing is left to cancel. */
+const jobGone = (error: unknown) => error instanceof ApiError && (error.status === 404 || error.status === 410);
 
 function useHfSearch(blocked: React.RefObject<boolean>) {
   const [query, setQuery] = useState("");
@@ -86,6 +92,8 @@ function useHfDownload(search: ReturnType<typeof useHfSearch>, route: string, on
   const [token, setToken] = useState("");
   const [hasToken, setHasToken] = useState(false);
   const [needsToken, setNeedsToken] = useState(false);
+  const [tracked, setTracked] = useState<{ jobId: string; displayName: string } | null>(null);
+  const pollFailed = useRef(false);
   const samples = useRef<number[]>([]);
   const previous = useRef<{ bytes: number; at: number } | null>(null);
   const selection = useHfGgufSelection(search.selected, route === "hf", search.maxSizeGb ?? 0, search.tags);
@@ -102,6 +110,52 @@ function useHfDownload(search: ReturnType<typeof useHfSearch>, route: string, on
       setNeedsToken(false);
     }
   }, [route, search]);
+  const stopTracking = () => {
+    setTracked(null);
+    setSpeed(0);
+    samples.current = [];
+    previous.current = null;
+  };
+  const measureSpeed = (next: Download) => {
+    const now = performance.now();
+    const prior = previous.current;
+    if (prior) {
+      const sample = Math.max(0, next.downloadedBytes - prior.bytes) / Math.max(0.001, (now - prior.at) / 1000);
+      samples.current = [...samples.current.slice(-3), sample];
+      setSpeed(samples.current.reduce((sum, value) => sum + value, 0) / samples.current.length);
+    }
+    previous.current = { bytes: next.downloadedBytes, at: now };
+  };
+  useSequentialPolling({
+    enabled: tracked != null,
+    intervalMs: POLL_MS,
+    initialDelayMs: POLL_MS,
+    poll: () => api.huggingFaceDownload(tracked!.jobId),
+    terminal: additionFinished,
+    onResult: async (next) => {
+      if (pollFailed.current) search.setMessage("");
+      pollFailed.current = false;
+      measureSpeed(next);
+      setStatus(next);
+      if (!additionFinished(next)) return;
+      stopTracking();
+      if (additionState(next) !== "complete") return search.setMessage(additionError(next));
+      try {
+        await onAdded(tracked!.displayName);
+      } catch (error) {
+        search.setMessage((error as Error).message);
+      }
+    },
+    errorPolicy: (reason) => (retryableStatusFailure(reason) ? "retry" : "stop"),
+    onError: (reason) => {
+      pollFailed.current = true;
+      search.setMessage((reason as Error).message);
+      if (retryableStatusFailure(reason)) return;
+      // Keep the last status unless the job is gone: the server job may still run, so Cancel must stay available.
+      if (jobGone(reason)) setStatus(null);
+      stopTracking();
+    },
+  });
   async function download() {
     const model = search.models.find((item) => item.repoId === search.selected);
     if (!model || starting || (isWindows() && !selection.selectedVariant)) return;
@@ -117,40 +171,24 @@ function useHfDownload(search: ReturnType<typeof useHfSearch>, route: string, on
         setHasToken(true);
       }
       const job = await api.downloadHuggingFace(model.repoId, selection.selectedVariant || undefined);
-      let next = await api.huggingFaceDownload(job.id);
+      const next = await api.huggingFaceDownload(job.id);
       setStatus(next);
-      setStarting(false);
       previous.current = { bytes: next.downloadedBytes, at: performance.now() };
-      while (!additionFinished(next)) {
-        await wait();
-        next = await api.huggingFaceDownload(job.id);
-        const now = performance.now();
-        const prior = previous.current;
-        if (prior) {
-          const sample = Math.max(0, next.downloadedBytes - prior.bytes) / Math.max(0.001, (now - prior.at) / 1000);
-          samples.current = [...samples.current.slice(-3), sample];
-          setSpeed(samples.current.reduce((sum, value) => sum + value, 0) / samples.current.length);
-        }
-        previous.current = { bytes: next.downloadedBytes, at: now };
-        setStatus(next);
-      }
-      if (additionState(next) === "complete") await onAdded(model.displayName);
-      else search.setMessage(additionError(next));
+      setTracked({ jobId: job.id, displayName: model.displayName });
     } catch (error) {
       search.setMessage((error as Error).message);
     } finally {
       setStarting(false);
-      setSpeed(0);
-      samples.current = [];
-      previous.current = null;
     }
   }
   async function cancel() {
     if (!status) return;
+    const before = status;
     setStatus({ ...status, state: "cancelling" });
     try {
       setStatus((await api.cancelHuggingFaceDownload(status.id)) as Download);
     } catch (error) {
+      setStatus(jobGone(error) ? null : before);
       search.setMessage(`取消を要求できませんでした: ${(error as Error).message}`);
     }
   }

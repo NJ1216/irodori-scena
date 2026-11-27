@@ -1,4 +1,5 @@
 //! Windows owns a private control listener; Python owns the API socket from bind to shutdown.
+use crate::api_supervisor_common::{generate_token, health_response_ok};
 use std::io::{self, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::os::windows::process::CommandExt;
@@ -71,9 +72,7 @@ pub fn validate_production_artifact(path: &Path) -> Result<(), SupervisorError> 
 fn start(mut command: Command, cancelled: &AtomicBool) -> Result<ApiProcess, SupervisorError> {
     let listener = TcpListener::bind("127.0.0.1:0")?;
     listener.set_nonblocking(true)?;
-    let mut bytes = [0_u8; 32];
-    getrandom::fill(&mut bytes).map_err(|error| io::Error::other(error.to_string()))?;
-    let token: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
+    let token = generate_token()?;
     command
         .env("SCENA_DESKTOP", "1")
         .env("SCENA_API_TOKEN", &token)
@@ -197,10 +196,11 @@ fn healthy(address: &str, token: &str) -> bool {
     if stream.write_all(request.as_bytes()).is_err() {
         return false;
     }
-    let mut response = [0_u8; 128];
-    stream
-        .read(&mut response)
-        .is_ok_and(|count| response[..count].starts_with(b"HTTP/1.1 200 "))
+    let mut response = Vec::new();
+    if stream.read_to_end(&mut response).is_err() && response.is_empty() {
+        return false;
+    }
+    health_response_ok(&String::from_utf8_lossy(&response))
 }
 
 impl ApiProcess {

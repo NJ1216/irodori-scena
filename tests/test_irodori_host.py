@@ -1,3 +1,4 @@
+import scena_test_isolation  # noqa: F401
 import unittest
 from types import SimpleNamespace
 from unittest.mock import Mock, patch

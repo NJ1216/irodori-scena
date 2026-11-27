@@ -1,3 +1,4 @@
+import scena_test_isolation  # noqa: F401
 import unittest
 
 from server.modules.progress_events import ProgressEventStore

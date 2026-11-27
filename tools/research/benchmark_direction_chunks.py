@@ -8,7 +8,7 @@ import platform
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from tools.direction_benchmark_core import (  # noqa: E402
@@ -28,7 +28,7 @@ from tools.direction_benchmark_runtime import (  # noqa: E402
     execute_call,
     wait_for_clean_thermal,
 )
-from tools.benchmark_gemma4 import _build_thermal_probe  # noqa: E402
+from tools.research.benchmark_gemma4 import _build_thermal_probe  # noqa: E402
 
 MODEL = "mlx-community--gemma-4-31b-it-nvfp4"
 

@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { chooseDirectory } from "../../api-core";
+import { chooseDirectory } from "../../api";
 import { loraApi } from "../../api-lora";
 import type { LoraDataset, LoraInputRow, LoraJob, LoraStart, LoraStatus } from "../../types/lora";
 import { useLoraJobMonitor } from "./useLoraJobMonitor";

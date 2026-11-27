@@ -4,6 +4,7 @@ import json
 from dataclasses import replace
 
 from server.app_deps import Any, HTTPException
+from server.modules.llm_profile_formatter import profile_record_value
 from server.registry import deps
 
 PROFILE_FIELDS = {
@@ -159,8 +160,11 @@ def _complete_profile(request, details: dict[str, Any], blank: list[str], debug_
         temperature=0.55, debug_response_path=debug_directory / "profile-1.txt",
         should_cancel=should_cancel,
     )
-    projected = "\n".join(f"FIELD|{row['field']}|{row['value']}" for row in result.records)
-    proposed = _parse_profile(projected, set(blank))
+    proposed: dict[str, Any] = {}
+    for row in result.records:
+        value = profile_record_value(row.get("field"), row.get("value"))
+        if row.get("field") in blank and value is not None:
+            proposed.setdefault(row["field"], value)
     return deps.normalize_character_profile_details(_without_duplicate_identities(request, proposed))
 
 

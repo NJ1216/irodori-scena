@@ -1,11 +1,8 @@
 import { useEffect, useRef } from "react";
 import { api } from "../../api";
-import type { DraftJob, ProgressEvent } from "../../types";
-import { monitorJobEvents } from "./jobEventMonitor";
+import type { DraftJob } from "../../types";
+import { isTerminalJob, monitorJobEvents, snapshotFromProgressEvent } from "./jobEventMonitor";
 import type { StudioEffectModel } from "./studioEffectTypes";
-
-const terminal = (job: { status: string }) => ["completed", "completed_with_warnings", "failed", "cancelled"].includes(job.status);
-const fromEvent = (event: ProgressEvent) => ({ ...event.metrics, id: event.jobId, phase: event.phase }) as unknown as DraftJob;
 
 function disableAutoGeneration(model: StudioEffectModel) {
   model.autoGenerationRequestRef.current += 1;
@@ -43,7 +40,7 @@ export function useStudioDraftMonitor(model: StudioEffectModel) {
     let completedChunks = monitoredJob.completedChunks;
     const applySnapshot = async (next: DraftJob) => {
       if (!active()) return;
-      const refresh = next.completedChunks > completedChunks || terminal(next);
+      const refresh = next.completedChunks > completedChunks || isTerminalJob(next);
       if (refresh) {
         const latest = await api.project();
         if (!controller.signal.aborted) editSession.applyServer(operation, latest);
@@ -70,8 +67,8 @@ export function useStudioDraftMonitor(model: StudioEffectModel) {
         return api.aiJob(monitoredJob.id);
       },
       onSnapshot: applySnapshot,
-      isTerminal: terminal,
-      snapshotFromEvent: fromEvent,
+      isTerminal: isTerminalJob,
+      snapshotFromEvent: snapshotFromProgressEvent<DraftJob>,
       pollIntervalMs: 1500,
       maxStreamAttempts: 2,
     }).catch((error) => {

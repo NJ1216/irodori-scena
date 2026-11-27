@@ -23,6 +23,7 @@ export class DecodedAudioPlayer implements DecodedAudioPlaybackControl {
   private buffer: AudioBuffer | null = null;
   private loadPromise: Promise<boolean> = Promise.resolve(false);
   private loadToken = 0;
+  private playGeneration = 0;
   private frame: number | undefined;
   private offset = 0;
   private startOffset = 0;
@@ -41,6 +42,7 @@ export class DecodedAudioPlayer implements DecodedAudioPlaybackControl {
 
   setSource(url: string) {
     this.stop();
+    this.playGeneration += 1;
     const token = ++this.loadToken;
     this.buffer = null;
     this.context = null;
@@ -54,10 +56,11 @@ export class DecodedAudioPlayer implements DecodedAudioPlaybackControl {
   async play() {
     this.desiredPlaying = true;
     const token = this.loadToken;
-    if (!(await this.loadPromise) || !this.desiredPlaying || token !== this.loadToken || !this.buffer) return;
+    const generation = ++this.playGeneration;
+    if (!(await this.loadPromise) || this.isStalePlay(generation, token)) return;
     try {
       const { context, source } = await audioEngine.createBufferSource();
-      if (!this.desiredPlaying || token !== this.loadToken || !this.buffer) {
+      if (this.isStalePlay(generation, token) || !this.buffer) {
         source.disconnect();
         return;
       }
@@ -77,8 +80,12 @@ export class DecodedAudioPlayer implements DecodedAudioPlaybackControl {
       source.start(this.scheduledStart, this.startOffset);
       this.updateTime();
     } catch (error) {
-      if (token === this.loadToken) this.fail(error);
+      if (token === this.loadToken && generation === this.playGeneration) this.fail(error);
     }
+  }
+
+  private isStalePlay(generation: number, token: number) {
+    return generation !== this.playGeneration || !this.desiredPlaying || token !== this.loadToken || !this.buffer;
   }
 
   toggle() {
@@ -88,6 +95,7 @@ export class DecodedAudioPlayer implements DecodedAudioPlaybackControl {
 
   pause() {
     const wasActive = this.desiredPlaying || this.playing;
+    this.playGeneration += 1;
     this.desiredPlaying = false;
     this.captureOffset();
     this.haltSource();
@@ -96,6 +104,7 @@ export class DecodedAudioPlayer implements DecodedAudioPlaybackControl {
 
   stop() {
     const wasActive = this.desiredPlaying || this.playing;
+    this.playGeneration += 1;
     this.desiredPlaying = false;
     this.haltSource();
     this.offset = 0;
@@ -107,6 +116,7 @@ export class DecodedAudioPlayer implements DecodedAudioPlaybackControl {
     const duration = this.buffer?.duration ?? 0;
     const next = Math.max(0, Math.min(duration, seconds));
     const resume = this.desiredPlaying || this.playing;
+    this.playGeneration += 1;
     this.desiredPlaying = false;
     this.haltSource();
     this.offset = next;
@@ -116,6 +126,7 @@ export class DecodedAudioPlayer implements DecodedAudioPlaybackControl {
 
   dispose() {
     this.loadToken += 1;
+    this.playGeneration += 1;
     this.callbacks = {};
     this.stop();
     this.buffer = null;

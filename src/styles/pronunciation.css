@@ -421,8 +421,7 @@
   color: #28675e;
   border-bottom-color: var(--scena-ai);
 }
-.pronunciation-title-heading .pronunciation-llm-toggle,
-.pronunciation-llm-toggle.is-inline {
+.pronunciation-title-heading .pronunciation-llm-toggle {
   display: inline-flex;
   width: auto;
   flex: 0 0 auto;
@@ -438,18 +437,15 @@
   font-weight: 800;
   cursor: pointer;
 }
-.pronunciation-title-heading .pronunciation-llm-toggle:hover,
-.pronunciation-llm-toggle.is-inline:hover {
+.pronunciation-title-heading .pronunciation-llm-toggle:hover {
   color: var(--scena-text-strong);
   background: var(--scena-brand-soft);
 }
-.pronunciation-title-heading .pronunciation-llm-toggle:focus-within,
-.pronunciation-llm-toggle.is-inline:focus-within {
+.pronunciation-title-heading .pronunciation-llm-toggle:focus-within {
   outline: 2px solid var(--scena-brand);
   outline-offset: 2px;
 }
-.pronunciation-title-heading .pronunciation-llm-toggle input,
-.pronunciation-llm-toggle.is-inline input {
+.pronunciation-title-heading .pronunciation-llm-toggle input {
   width: 16px;
   height: 16px;
   margin: 0;
@@ -461,8 +457,7 @@
     background-color 0.16s ease,
     border-color 0.16s ease;
 }
-.pronunciation-title-heading .pronunciation-llm-toggle input:checked,
-.pronunciation-llm-toggle.is-inline input:checked {
+.pronunciation-title-heading .pronunciation-llm-toggle input:checked {
   background: var(--scena-ai);
   border-color: var(--scena-ai);
 }

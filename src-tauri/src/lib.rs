@@ -4,6 +4,7 @@ mod api_supervisor;
 #[cfg(windows)]
 #[path = "api_supervisor_windows.rs"]
 mod api_supervisor;
+mod api_supervisor_common;
 mod open_files;
 
 use std::path::PathBuf;
@@ -301,14 +302,18 @@ fn validated_wav_source(path: &str) -> Result<PathBuf, String> {
 }
 
 #[tauri::command]
-fn copy_local_file(local_path: String, destination: String) -> Result<(), String> {
-    let source = validated_wav_source(&local_path)?;
-    let destination = PathBuf::from(destination);
-    if !destination.is_absolute() {
-        return Err("保存先が正しくありません。".to_owned());
-    }
-    std::fs::copy(source, destination).map_err(|error| error.to_string())?;
-    Ok(())
+async fn copy_local_file(local_path: String, destination: String) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let source = validated_wav_source(&local_path)?;
+        let destination = PathBuf::from(destination);
+        if !destination.is_absolute() {
+            return Err("保存先が正しくありません。".to_owned());
+        }
+        std::fs::copy(source, destination).map_err(|error| error.to_string())?;
+        Ok(())
+    })
+    .await
+    .map_err(|error| error.to_string())?
 }
 
 pub fn run() {
@@ -415,8 +420,33 @@ pub fn run() {
 mod tests {
     #[cfg(not(windows))]
     use super::api_supervisor::SupervisorError;
-    use super::{download_file_name, release_data_root, ApiProcessState};
+    use super::{copy_local_file, download_file_name, release_data_root, ApiProcessState};
     use std::path::PathBuf;
+
+    fn assert_future<F: std::future::Future>(future: F) -> F {
+        future
+    }
+
+    #[test]
+    fn copy_local_file_is_async_so_it_runs_off_the_main_thread() {
+        let dir = std::env::temp_dir().join(format!("scena-copy-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let source = dir.join("in.wav");
+        let target = dir.join("out.wav");
+        std::fs::write(&source, b"RIFF").unwrap();
+        let future = assert_future(copy_local_file(
+            source.to_string_lossy().into_owned(),
+            target.to_string_lossy().into_owned(),
+        ));
+        tauri::async_runtime::block_on(future).unwrap();
+        assert_eq!(std::fs::read(&target).unwrap(), b"RIFF");
+        let relative = tauri::async_runtime::block_on(copy_local_file(
+            source.to_string_lossy().into_owned(),
+            "relative.wav".to_owned(),
+        ));
+        assert_eq!(relative.unwrap_err(), "保存先が正しくありません。");
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
 
     #[test]
     fn release_data_directory_does_not_depend_on_the_bundle_identifier() {

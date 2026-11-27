@@ -133,6 +133,15 @@ export class ProjectEditSession {
   };
   waitForPersistence = () => this.persistence?.wait() ?? Promise.resolve(true);
 
+  // Explicit user actions (Save, continuous playback) recover a failed save by re-queueing the
+  // committed on-screen project once, silently; no background retry is scheduled. The queue
+  // rebases on the server project from a revision conflict, so the re-send overwrites it.
+  retryFailedSave = async () => {
+    if (await this.waitForPersistence()) return true;
+    if (!this.committed || !this.persistence) return false;
+    return this.persistence.save(this.committed, "");
+  };
+
   runServer = async <T>(action: (operation: ProjectOperation) => Promise<T>, reflect?: (result: T, operation: ProjectOperation) => void): Promise<T | undefined> => {
     const requested = this.capture();
     const preceding = this.serverTail;

@@ -1265,7 +1265,6 @@
 .modal textarea {
   min-height: 82px;
 }
-.sample-copy,
 .subtle {
   color: var(--scena-meter-border);
 }
@@ -1827,7 +1826,6 @@
     width: auto;
   }
   .avatar-setting,
-  .character-profile-grid,
   .cast-relations-list {
     grid-template-columns: 1fr;
   }

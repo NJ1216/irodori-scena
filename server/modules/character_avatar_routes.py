@@ -3,6 +3,7 @@ from __future__ import annotations
 from binascii import Error as BinasciiError
 
 from server.app_deps import shutil, time, b64decode, Any, HTTPException
+from server.modules.project_repository import cast_mutation
 from server.registry import deps
 
 
@@ -38,6 +39,7 @@ def avatar_files(directory):
 
 
 @deps.app.put("/api/characters/{character_id}/avatar")
+@cast_mutation
 def update_character_avatar(character_id: str, request: deps.UpdateCharacterAvatarRequest) -> dict[str, Any]:
     original, extension = decode_avatar_image(request.original_image_base64, label="avatar image", max_bytes=8 * 1024 * 1024)
     thumbnail, _ = decode_avatar_image(request.thumbnail_image_base64, label="avatar thumbnail", max_bytes=1024 * 1024, thumbnail=True)
@@ -93,6 +95,7 @@ def update_character_avatar(character_id: str, request: deps.UpdateCharacterAvat
 
 
 @deps.app.delete("/api/characters/{character_id}/avatar")
+@cast_mutation
 def delete_character_avatar(character_id: str) -> dict[str, Any]:
     project = deps.read_project()
     character = deps.find_character(project, character_id)

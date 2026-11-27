@@ -1,4 +1,5 @@
 """A job-owned worker shares startup, preserves replies and stops on every exit."""
+import scena_test_isolation  # noqa: F401
 import json
 import sys
 import tempfile

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import scena_test_isolation  # noqa: F401
 import unittest
 import asyncio
 from pathlib import Path
@@ -55,6 +56,25 @@ class TakeCleanupTests(unittest.TestCase):
             self.assertNotIn("archivedTakes", line)
             self.assertFalse(audio.exists())
 
+    def test_deferred_cleanup_keeps_staged_media_until_discarded(self) -> None:
+        with TemporaryDirectory() as raw:
+            media = Path(raw) / "media"
+            audio = media / "takes/line/take.wav"
+            audio.parent.mkdir(parents=True)
+            audio.write_bytes(b"wav")
+            deferred: list[Path] = []
+            with (
+                patch.object(constants, "MEDIA_ROOT", media),
+                patch("server.modules.common.new_id", return_value="cleanup"),
+                patch("server.modules.project_repository.write_project", side_effect=lambda value, **_: value),
+            ):
+                take_cleanup.clear_project_takes(self._project(), deferred=deferred)
+            self.assertFalse((media / "takes").exists())
+            self.assertEqual(len(deferred), 1)
+            self.assertTrue((deferred[0] / "line/take.wav").exists())
+            take_cleanup.discard_staged_takes(deferred[0])
+            self.assertFalse(deferred[0].exists())
+
     def test_restores_take_media_when_compact_save_fails(self) -> None:
         with TemporaryDirectory() as raw:
             media = Path(raw) / "media"
@@ -83,7 +103,7 @@ class TakeCleanupTests(unittest.TestCase):
             result = script_routes.clear_all_takes()
 
         require_tts.assert_called_once_with()
-        clear.assert_called_once_with(project)
+        clear.assert_called_once_with(project, deferred=[])
         self.assertIs(result, saved)
 
     def test_selected_cleanup_keeps_adopted_and_other_lines(self) -> None:

@@ -5,20 +5,10 @@ export type ScriptMatch = { lineId: string; start: number; end: number };
 
 export function findScriptMatches(project: Pick<StudioProject, "scenes">, query: string): ScriptMatch[] {
   if (!query) return [];
-  const needle = query.toLocaleLowerCase();
-  return project.scenes.flatMap((scene) =>
-    scene.lines.flatMap((line) => {
-      const text = line.text.toLocaleLowerCase();
-      const matches: ScriptMatch[] = [];
-      for (let start = 0; start <= text.length - needle.length;) {
-        const found = text.indexOf(needle, start);
-        if (found < 0) break;
-        matches.push({ lineId: line.id, start: found, end: found + needle.length });
-        start = found + Math.max(1, needle.length);
-      }
-      return matches;
-    }),
-  );
+  // Match on the original text so offsets stay valid for replaceLineMatches; lowercasing
+  // the text first can change its length (for example "İ").
+  const pattern = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "giu");
+  return project.scenes.flatMap((scene) => scene.lines.flatMap((line) => Array.from(line.text.matchAll(pattern), (found) => ({ lineId: line.id, start: found.index, end: found.index + found[0].length }))));
 }
 
 function utf16ToPoint(text: string, offset: number) {

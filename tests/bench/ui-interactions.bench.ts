@@ -164,7 +164,10 @@ for (const lineCount of [30, 300]) {
         page,
         cdp,
         "search-open" + tag,
-        () => page.evaluate(() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "f", code: "KeyF", metaKey: true, bubbles: true }))),
+        () =>
+          page.evaluate(() => {
+            window.dispatchEvent(new KeyboardEvent("keydown", { key: "f", code: "KeyF", metaKey: true, bubbles: true }));
+          }),
         () => expect(page.getByRole("search")).toBeVisible(),
       );
       await page.keyboard.press("Escape");

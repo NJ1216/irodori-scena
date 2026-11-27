@@ -3,6 +3,7 @@ from __future__ import annotations
 from server.app_deps import shutil, Path, Any, HTTPException
 from server.registry import deps
 from server.modules.cast_identity import matches_global_candidates
+from server.modules.project_repository import cast_mutation
 
 
 def _avatar_digest(character: dict[str, Any], key: str, *, prefix: str, root: Path) -> str | None:
@@ -120,6 +121,7 @@ def project_snapshot_from_global(character: dict[str, Any]) -> dict[str, Any]:
     return snapshot
 
 
+@cast_mutation
 def apply_global_cast_updates(character_ids: list[str]) -> dict[str, Any]:
     project = deps.read_project()
     global_characters = {str(character.get("id", "")): character for character in deps.read_global_characters()}

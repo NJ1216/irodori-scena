@@ -5,7 +5,7 @@ import { useLoraTraining } from "./useLoraTraining";
 import type { LoraInputRow } from "../../types/lora";
 const { api, player } = vi.hoisted(() => ({ api: { status: vi.fn(async () => ({ supported: true })), jobs: vi.fn(async () => []), folderInputs: vi.fn() }, player: { setSource: vi.fn(), play: vi.fn(), stop: vi.fn(), dispose: vi.fn(), setCallbacks: vi.fn(), created: vi.fn() } }));
 vi.mock("../../api-lora", () => ({ loraApi: api }));
-vi.mock("../../api-core", () => ({ chooseDirectory: vi.fn(async () => "/fixture/100-pairs") }));
+vi.mock("../../api", () => ({ chooseDirectory: vi.fn(async () => "/fixture/100-pairs") }));
 vi.mock("../shared/decodedAudioPlayer", () => ({
   DecodedAudioPlayer: class {
     callbacks: { onPlay?: () => void } = {};

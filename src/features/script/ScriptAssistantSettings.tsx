@@ -3,6 +3,7 @@ import type { Character, StudioProject } from "../../types";
 import { CastSettingsTable } from "../draft/DraftComposerForm";
 import { PerformanceSettingsFields } from "../draft/DraftPerformanceSettings";
 import type { DraftCastSettings, DraftPerformanceSettings, LineAssistantTarget } from "../studio/types";
+import { StepHeading as SharedStepHeading } from "../shared/StepHeading";
 import { ScriptAssistantCastPicker } from "./ScriptAssistantCastPicker";
 import { type AssistantTargetLine, ScriptAssistantTargetLines } from "./ScriptAssistantTargetLines";
 
@@ -48,12 +49,9 @@ type SettingsProps = {
 
 function StepHeading({ number, children }: { number: number; children: string }) {
   return (
-    <h3 className="draft-step-heading script-assistant-step-heading">
-      <span aria-hidden="true">
-        <span className="circle-number-glyph">{number}</span>
-      </span>
+    <SharedStepHeading number={number} level="h3" className="draft-step-heading script-assistant-step-heading">
       {children}
-    </h3>
+    </SharedStepHeading>
   );
 }
 

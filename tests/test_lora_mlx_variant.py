@@ -1,4 +1,5 @@
 """A local composition must never become an implicit fallback or own base files."""
+import scena_test_isolation  # noqa: F401
 import tempfile
 import unittest
 from pathlib import Path

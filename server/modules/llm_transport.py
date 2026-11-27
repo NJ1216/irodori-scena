@@ -133,9 +133,12 @@ def openai_nonstream_payload(request, endpoint: str, payload: dict, should_cance
             finally:
                 deps.close_openai_http_post(connection)
             if response.status < 400:
-                parsed = json.loads(response_body.decode("utf-8"))
+                try:
+                    parsed = json.loads(response_body.decode("utf-8"))
+                except ValueError as error:
+                    raise TransportFailure("invalid_response", "response", status=response.status) from error
                 if not isinstance(parsed, dict):
-                    raise ValueError("The endpoint returned a non-object response.")
+                    raise TransportFailure("invalid_response", "response", status=response.status)
                 parsed["_transport_headers"] = {
                     str(key).lower(): str(value) for key, value in response.headers.items()
                 }

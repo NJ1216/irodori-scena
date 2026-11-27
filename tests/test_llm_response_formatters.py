@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import scena_test_isolation  # noqa: F401
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -7,11 +8,8 @@ from unittest.mock import patch
 from server.app import parse_generated_lines, parse_profile_suggestion
 from server.modules.llm_response_formatters import parse_voice_design
 from server.modules.models import CharacterProfileSuggestionRequest, VoiceDesignSuggestionRequest
-from server.modules.suggestions import (
-    is_japanese_voice_design_caption,
-    suggest_character_profile_completion,
-    suggest_voice_design_completion,
-)
+from server.modules.profile_suggestions import suggest_character_profile_completion
+from server.modules.suggestions import is_japanese_voice_design_caption, suggest_voice_design_completion
 
 
 class LlmResponseFormatterTests(unittest.TestCase):
@@ -25,6 +23,10 @@ class LlmResponseFormatterTests(unittest.TestCase):
         self.assertEqual(lines[0]["stage_direction"], "")
         self.assertEqual(lines[0]["text"], "大丈夫だよ。")
         self.assertEqual(lines[1]["stage_direction"], "切ない声で")
+
+    def test_voice_design_json_drops_unknown_keys_and_keeps_known_ones(self) -> None:
+        parsed = parse_voice_design('{"VOICE_KEYWORDS":"柔らかい声。","BASELINE_TEXT":"今日は歩こう。","extra":"z"}')
+        self.assertEqual(parsed, {"VOICE_KEYWORDS": "柔らかい声。", "BASELINE_TEXT": "今日は歩こう。"})
 
     def test_voice_design_caption_allows_common_latin_terms_but_rejects_english_led_text(self) -> None:
         self.assertTrue(is_japanese_voice_design_caption("ASMR向けの近距離で柔らかなVTuber風の声。"))
@@ -460,7 +462,7 @@ class LlmResponseFormatterTests(unittest.TestCase):
             ],
         )
 
-    def test_profile_suggestion_resolves_a_unique_full_name_relation_alias(self) -> None:
+    def test_profile_suggestion_resolves_relation_by_target_id(self) -> None:
         request = CharacterProfileSuggestionRequest(
             base_url="http://127.0.0.1:11434/v1",
             model="test-model",
@@ -474,22 +476,23 @@ class LlmResponseFormatterTests(unittest.TestCase):
                 }
             ],
         )
-        response = "FIELD|年齢|19歳\nRELATION|如月 紗良|知己"
-
         captured: dict[str, object] = {}
 
         def completion(*_args, **kwargs):
-            captured.update(kwargs)
-            return response
+            if "requested_fields" in kwargs["user"]:
+                return "FIELD|age|19歳"
+            captured.update(kwargs["user"])
+            return "RELATION|sara|関係性|知己"
 
         with (
             patch("server.modules.workspace.draft_debug_directory", return_value=Path("/tmp/profile-suggestion")),
             patch("server.modules.llm_client.openai_text_completion", side_effect=completion),
+            patch("server.modules.draft_capability.select_call_context", return_value={}),
         ):
             result = suggest_character_profile_completion(request)
 
         self.assertEqual(result["profileDetails"]["age"], "19歳")
         self.assertEqual(result["profileDetails"]["castRelations"], {"sara": {"relationship": "知己"}})
-        other_cast = captured["user"]["other_casts"][0]
+        other_cast = captured["relation_targets"][0]
         self.assertNotIn("setting_summary", other_cast)
         self.assertEqual(other_cast["relationship_reference"], {"概要": "（設定なし）"})

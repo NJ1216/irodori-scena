@@ -1,5 +1,8 @@
-export const projectFixture = {
+import type { StudioProject } from "../../src/types/project";
+
+export const projectFixture: StudioProject = {
   version: 1,
+  revision: 1,
   id: "project-e2e",
   title: "雨上がりの約束",
   characters: [

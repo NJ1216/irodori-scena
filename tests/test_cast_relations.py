@@ -1,3 +1,5 @@
+import scena_test_isolation  # noqa: F401
+import server.app  # noqa: F401  (registers the backend dependencies these modules read)
 import unittest
 
 from server.modules.character_profiles import normalized_cast_relations

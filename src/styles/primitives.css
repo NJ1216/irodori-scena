@@ -164,7 +164,6 @@
   border-radius: var(--scena-radius-control);
   font-weight: 800;
 }
-.button-quiet,
 .quiet-button {
   color: var(--scena-brand-strong);
   background: transparent;
@@ -229,7 +228,6 @@
   background: var(--scena-ai-strong);
   border-color: var(--scena-ai-strong);
 }
-.button-quiet:not(:disabled):hover,
 .quiet-button:not(:disabled):hover {
   color: var(--scena-brand-strong);
   background: var(--scena-brand-soft);

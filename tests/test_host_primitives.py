@@ -1,4 +1,5 @@
 """Small host checks runnable without the API environment or an inference model."""
+import scena_test_isolation  # noqa: F401
 import os
 import subprocess
 import sys

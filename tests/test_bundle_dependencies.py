@@ -1,5 +1,6 @@
 """The packaged API must not need development-only libraries."""
 
+import scena_test_isolation  # noqa: F401
 import subprocess
 import sys
 import unittest

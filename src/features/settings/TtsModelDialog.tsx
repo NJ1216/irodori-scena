@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { api, openExternal } from "../../api";
 import type { TtsAssetCard, TtsCatalogItem, TtsInstalledVariant, TtsProjectSelection, TtsRegistry } from "../../types";
+import { formatGb } from "../shared/formatBytes";
 import { DialogFooter, DialogHeader, ModalBackdrop } from "../shared/overlays";
 import { TtsModelOperationNotice } from "./TtsModelOperationNotice";
 
 // eslint-disable-next-line react-refresh/only-export-components -- shared text formatter for the paired registry view.
-export const formatSize = (bytes?: number | null) => (bytes == null ? "容量未取得" : `${(bytes / 1024 ** 3).toFixed(1)} GB`);
+export const formatSize = (bytes?: number | null) => (bytes == null ? "容量未取得" : formatGb(bytes));
 const MODEL_PREPARATION_POLL_MS = 500;
 const MODEL_PREPARATION_WAIT_MS = 5 * 60 * 1000;
 

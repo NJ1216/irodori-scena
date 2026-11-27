@@ -1,4 +1,5 @@
 """The new profile is closed, pinned and never shares the previous cache identity."""
+import scena_test_isolation  # noqa: F401
 import tempfile
 import unittest
 from pathlib import Path

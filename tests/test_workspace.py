@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import scena_test_isolation  # noqa: F401
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -18,7 +19,9 @@ class WorkspaceTests(unittest.TestCase):
     def test_default_workspace_uses_scena_data_label(self) -> None:
         root = workspace.default_workspace_root()
 
-        self.assertEqual(root.name, "scena-data")
+        # Tests run on an isolated data root, so compare with the configured root
+        # rather than the development folder name.
+        self.assertEqual(root, constants.DATA_ROOT.resolve())
         self.assertEqual(workspace.workspace_root_label(root), "scena-data（未保存）")
 
     def test_workspace_switch_is_rejected_while_synthesis_is_active(self) -> None:
@@ -202,6 +205,64 @@ class WorkspaceTests(unittest.TestCase):
                 self.assertIsNone(constants.ACTIVE_PROJECT_PATH)
                 self.assertFalse(project_container.working_root(container).exists())
             project_container.release_container_lock()
+
+    def _active_container(self, base: Path):
+        source, prepared, data_root = base / "source", base / "prepared", base / "app-support"
+        source.mkdir()
+        prepared.mkdir()
+        (source / "project.json").write_text('{"live":true}')
+        (prepared / "project.json").write_text('{"prepared":true}')
+        container = base / "作品.scena"
+        project_container.sync_container(container, source)
+        return container, prepared, data_root
+
+    def test_failed_reopen_of_active_container_keeps_the_live_working_copy(self) -> None:
+        with TemporaryDirectory() as directory:
+            container, prepared, data_root = self._active_container(Path(directory))
+            with (
+                patch.object(constants, "DATA_ROOT", data_root),
+                patch.object(constants, "APP_STATE_FILE", data_root / "app-state.json"),
+                patch.object(constants, "ACTIVE_PROJECT_ROOT", data_root),
+                patch.object(constants, "ACTIVE_PROJECT_PATH", None),
+            ):
+                try:
+                    workspace.activate_project_container(container)
+                    live_root = constants.ACTIVE_PROJECT_ROOT
+                    (live_root / "unsaved.txt").write_text("edit")
+                    with self.assertRaises(HTTPException) as raised:
+                        workspace.activate_project_container(container, prepared_root=prepared, expected_signature=(0, 0, 0))
+                    self.assertEqual(raised.exception.status_code, 409)
+                    self.assertEqual(constants.ACTIVE_PROJECT_ROOT, live_root)
+                    self.assertEqual((live_root / "unsaved.txt").read_text(), "edit")
+                    self.assertEqual((live_root / "project.json").read_text(), '{"live":true}')
+                finally:
+                    project_container.release_container_lock()
+
+    def test_failure_while_placing_prepared_root_restores_the_previous_working_copy(self) -> None:
+        with TemporaryDirectory() as directory:
+            container, prepared, data_root = self._active_container(Path(directory))
+            original_replace = Path.replace
+
+            def failing_replace(source: Path, target: Path):
+                if source == prepared:
+                    raise OSError("place failed")
+                return original_replace(source, target)
+
+            with (
+                patch.object(constants, "DATA_ROOT", data_root),
+                patch.object(constants, "APP_STATE_FILE", data_root / "app-state.json"),
+                patch.object(constants, "ACTIVE_PROJECT_ROOT", data_root),
+                patch.object(constants, "ACTIVE_PROJECT_PATH", None),
+            ):
+                try:
+                    workspace.activate_project_container(container)
+                    live_root = constants.ACTIVE_PROJECT_ROOT
+                    with patch.object(Path, "replace", failing_replace), self.assertRaises(OSError):
+                        workspace.activate_project_container(container, prepared_root=prepared)
+                    self.assertEqual((live_root / "project.json").read_text(), '{"live":true}')
+                    self.assertFalse(live_root.with_name(f".{live_root.name}.previous").exists())
+                finally:
+                    project_container.release_container_lock()
 
     def test_preflight_workspace_is_activated_without_a_second_extraction(self) -> None:
         with TemporaryDirectory() as directory:

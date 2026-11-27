@@ -3,6 +3,7 @@ import { LlamaCppRuntimeSetting } from "./LlamaCppRuntimeSetting";
 import { useState } from "react";
 import { api } from "../../api";
 import type { LlmCard, LlmEndpoint, LlmRegistry } from "../../types";
+import { formatGb } from "../shared/formatBytes";
 import { DialogFooter, DialogHeader, ModalBackdrop } from "../shared/overlays";
 import { confirmDestructiveAction, useDestructiveConfirmation } from "../shared/destructiveConfirmation";
 import { BuiltInLlmDialog } from "./BuiltInLlmDialog";
@@ -113,7 +114,7 @@ function RuntimeBadge({ card }: { card: LlmCard }) {
 
 function LlmCardContent({ card, endpoint, isDefault }: { card: LlmCard; endpoint?: LlmEndpoint; isDefault: boolean }) {
   const revision = card.localMetadata?.revision ? card.localMetadata.revision.slice(0, 12) : "version未取得";
-  const size = card.localMetadata?.diskBytes == null ? "容量未取得" : `${(card.localMetadata.diskBytes / 1024 ** 3).toFixed(1)} GB`;
+  const size = card.localMetadata?.diskBytes == null ? "容量未取得" : formatGb(card.localMetadata.diskBytes);
   return (
     <>
       <span className="model-card-heading">

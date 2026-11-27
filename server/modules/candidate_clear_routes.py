@@ -18,7 +18,7 @@ def remove_candidate_files(candidates: list[dict[str, Any]]) -> None:
 
 @deps.app.post("/api/characters/candidates/clear-scope")
 def clear_candidate_scope(kind: str, emotion: str | None = None, reference_candidate_id: str | None = None) -> dict[str, Any]:
-    with deps.VOICE_CANDIDATE_GENERATION_LOCK:
+    with deps.VOICE_CANDIDATE_GENERATION_LOCK, deps.PROJECT_ROOT_LOCK:
         project = deps.read_project()
         candidates = project.get("candidates", [])
         if kind == "baseline":

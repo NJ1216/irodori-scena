@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import scena_test_isolation  # noqa: F401
 import io
 import json
 import os
@@ -109,7 +110,39 @@ class WorkerExchangeFailureTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "timeout"):
                 inference._exchange_response(worker, {"operation": "prepare"})
             self.assertIsNone(runtime_state.INFERENCE_WORKER)
-            worker.terminate.assert_called_once()
+            worker.kill.assert_called_once()
+            worker.terminate.assert_not_called()
+            worker.stdin.close.assert_not_called()
+
+    def test_non_graceful_stop_kills_without_waiting_for_sigterm(self):
+        worker = Mock()
+        worker.poll.return_value = None
+        # A worker inside a long native call would ignore SIGTERM until the wait expired.
+        worker.wait.side_effect = [0]
+        with patch.object(runtime_state, "INFERENCE_WORKER", worker):
+            inference.stop_inference_worker_locked(graceful=False)
+        worker.kill.assert_called_once()
+        worker.terminate.assert_not_called()
+        worker.stdin.close.assert_not_called()
+        worker.wait.assert_called_once_with(timeout=5)
+
+    def test_explicit_stop_closes_stdin_first_and_skips_terminate_when_worker_exits(self):
+        worker = Mock()
+        worker.poll.side_effect = [None, 0]
+        with patch.object(runtime_state, "INFERENCE_WORKER", worker):
+            inference.stop_inference_worker_locked()
+        worker.stdin.close.assert_called_once()
+        worker.wait.assert_called_once_with(timeout=inference.WORKER_GRACEFUL_EXIT_SECONDS)
+        worker.terminate.assert_not_called()
+        worker.kill.assert_not_called()
+
+    def test_explicit_stop_terminates_when_stdin_close_fails(self):
+        worker = Mock()
+        worker.poll.return_value = None
+        worker.stdin.close.side_effect = BrokenPipeError()
+        with patch.object(runtime_state, "INFERENCE_WORKER", worker):
+            inference.stop_inference_worker_locked()
+        worker.terminate.assert_called_once()
 
     def test_worker_cleanup_failure_does_not_mask_generation_cancellation(self):
         worker = Mock()

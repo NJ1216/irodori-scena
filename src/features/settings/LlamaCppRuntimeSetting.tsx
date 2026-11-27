@@ -57,6 +57,7 @@ function RuntimeManager({ onClose }: { onClose: () => void }) {
       .then(([selected, ...values]) => {
         setBackend(selected.backend);
         setItems(values.filter((item) => item.ready));
+        setMessage("");
       })
       .catch((error: Error) => setMessage(error.message));
   const select = async (next: "cuda" | "cpu") => {

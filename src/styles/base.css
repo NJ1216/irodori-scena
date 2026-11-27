@@ -366,7 +366,6 @@ button {
   margin-top: 0;
   font-size: 17px;
 }
-.character-layout,
 .draft-grid {
   display: grid;
   grid-template-columns: 1fr 1.2fr;
@@ -461,7 +460,6 @@ button {
   .line-main textarea {
     grid-column: 2;
   }
-  .character-layout,
   .draft-grid {
     grid-template-columns: 1fr;
   }

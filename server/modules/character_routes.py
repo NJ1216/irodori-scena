@@ -5,6 +5,7 @@ from server.app_deps import secrets, shutil, b64decode, Path, Any, HTTPException
 from server.registry import deps
 from server.modules.character_deletion_routes import delete_character  # noqa: F401
 from server.modules.pronunciation_dictionary import dictionary_transaction
+from server.modules.project_repository import cast_mutation
 from server.modules.voice_design import VOICE_DESIGN_AUDIO_QUALITY_SUFFIX, inference_caption  # noqa: F401
 from server.modules.voice_design import selected_voice_design_candidates, voice_design_keywords
 from server.modules.voice_design_generation import generate_candidate_clips
@@ -111,7 +112,7 @@ def create_candidates(request: deps.CandidateRequest) -> dict[str, Any]:
         if supports_runtime_cfg:
             candidate.update(cfg_settings)
         candidates.append(candidate)
-    with deps.VOICE_CANDIDATE_GENERATION_LOCK:
+    with deps.VOICE_CANDIDATE_GENERATION_LOCK, deps.PROJECT_ROOT_LOCK:
         if generation_epoch != deps.VOICE_CANDIDATE_GENERATION_EPOCH:
             deps.clear_voice_candidates({"candidates": [{"file": str(path)} for path in generated]})
             return {"candidates": []}
@@ -122,6 +123,7 @@ def create_candidates(request: deps.CandidateRequest) -> dict[str, Any]:
 
 
 @deps.app.post("/api/characters/voice-design/save")
+@cast_mutation
 def save_voice_design(request: deps.SaveVoiceDesignRequest) -> dict[str, Any]:
     project = deps.read_project()
     keywords = (
@@ -171,7 +173,7 @@ def save_voice_design(request: deps.SaveVoiceDesignRequest) -> dict[str, Any]:
 
 @deps.app.post("/api/characters/candidates/clear")
 def clear_candidates() -> dict[str, Any]:
-    with deps.VOICE_CANDIDATE_GENERATION_LOCK:
+    with deps.VOICE_CANDIDATE_GENERATION_LOCK, deps.PROJECT_ROOT_LOCK:
         deps.VOICE_CANDIDATE_GENERATION_EPOCH += 1
         project = deps.read_project()
         deps.clear_voice_candidates(project)
@@ -180,6 +182,7 @@ def clear_candidates() -> dict[str, Any]:
 
 
 @deps.app.post("/api/characters/accept")
+@cast_mutation
 def accept_candidate(request: deps.AcceptCandidateRequest) -> dict[str, Any]:
     project = deps.read_project()
     candidate = next((item for item in project.get("candidates", []) if item.get("id") == request.candidate_id), None)
@@ -232,6 +235,7 @@ def accept_candidate(request: deps.AcceptCandidateRequest) -> dict[str, Any]:
 
 
 @deps.app.post("/api/characters/import")
+@cast_mutation
 def import_reference_wav(request: deps.ImportReferenceRequest) -> dict[str, Any]:
     try:
         audio = b64decode(request.audio_base64, validate=True)
@@ -274,6 +278,11 @@ def _decode_reference_audio(value: str) -> bytes:
 @deps.app.post("/api/characters/candidates/import-reference")
 def import_voice_design_reference(request: deps.ImportVoiceDesignReferenceRequest) -> dict[str, Any]:
     audio = _decode_reference_audio(request.audio_base64)
+    with deps.PROJECT_ROOT_LOCK:
+        return _import_voice_design_reference_locked(request, audio)
+
+
+def _import_voice_design_reference_locked(request: deps.ImportVoiceDesignReferenceRequest, audio: bytes) -> dict[str, Any]:
     project = deps.read_project()
     if request.kind == "emotion" and not any(
         item.get("id") == request.reference_candidate_id and item.get("kind", "baseline") == "baseline"
@@ -307,6 +316,7 @@ def import_voice_design_reference(request: deps.ImportVoiceDesignReferenceReques
     return {"candidate": candidate}
 
 
+@cast_mutation
 def _apply_reference_audio(
     character_id: str, audio: bytes, *, voice_keywords: str | None = None, voice_design: dict[str, Any] | None = None, sample_text: str | None = None
 ) -> dict[str, Any]:
@@ -396,6 +406,7 @@ def apply_candidate_reference(character_id: str, request: deps.ApplyCandidateRef
 
 @deps.app.patch("/api/characters/{character_id}")
 @dictionary_transaction
+@cast_mutation
 def update_character(character_id: str, request: deps.UpdateCharacterRequest) -> dict[str, Any]:
     name = request.name.strip()
     if not name:

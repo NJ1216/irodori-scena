@@ -1,6 +1,7 @@
 """Exercise persisted settings and request validation without replacing the resolver."""
 from __future__ import annotations
 
+import scena_test_isolation  # noqa: F401
 import tempfile
 import unittest
 from pathlib import Path

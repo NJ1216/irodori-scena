@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import scena_test_isolation  # noqa: F401
 import unittest
 from unittest.mock import Mock, patch
 
@@ -42,6 +43,23 @@ class LlmTransportTests(unittest.TestCase):
         self.assertTrue(llm_transport.is_retryable(overloaded))
         self.assertFalse(llm_transport.is_retryable(overloaded, received_body=True))
         self.assertFalse(llm_transport.is_retryable(llm_transport.deps.GenerationCancelled("cancel")))
+
+    def test_non_json_success_body_is_an_invalid_response_and_is_not_retried(self) -> None:
+        for body in (b"not json", b"[1, 2]", b"\xff\xfe"):
+            with self.subTest(body=body):
+                response = Mock(status=200, headers={})
+                response.read.return_value = body
+                request = Mock(provider="openai", api_key="", model="m")
+                with (
+                    patch("server.modules.common.openai_http_post", return_value=(object(), response)) as post,
+                    patch("server.modules.common.close_openai_http_post"),
+                    patch.object(llm_transport, "before_attempt"),
+                    patch.object(llm_transport, "prepare_gemini_payload", side_effect=lambda _r, p: p),
+                ):
+                    with self.assertRaises(llm_transport.TransportFailure) as raised:
+                        llm_transport.openai_nonstream_payload(request, "http://127.0.0.1:1/v1", {}, None)
+                self.assertEqual(raised.exception.category, "invalid_response")
+                self.assertEqual(post.call_count, 1)
 
     def test_retry_after_is_respected_and_backoff_has_jitter(self) -> None:
         self.assertEqual(llm_transport.retry_after_seconds("90"), 90)

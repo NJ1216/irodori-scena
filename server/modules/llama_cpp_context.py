@@ -122,8 +122,8 @@ def select_context_size(metadata: dict[str, Any], backend: str, manual_limit: in
         if usable >= tier * KV_BYTES_PER_TOKEN:
             return tier
     raise MemoryError(
-        f"{backend.upper()}メモリが不足しています。モデル {model_bytes / 1024**3:.1f} GiB と"
-        f"安全余白 2.0 GiBを除くと、Context 8,192 を確保できません。"
+        f"{backend.upper()}メモリが不足しています。モデル {model_bytes / 1e9:.1f} GB と"
+        f"安全余白 {SAFETY_BYTES / 1e9:.1f} GBを除くと、Context 8,192 を確保できません。"
     )
 
 

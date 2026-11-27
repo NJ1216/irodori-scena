@@ -34,7 +34,7 @@ export type PlaybackModel = Pick<
 > &
   Pick<StudioProjectEditingActions, "isProjectPersistencePending" | "waitForProjectPersistence">;
 
-export function useStudioPlayback(model: PlaybackModel) {
+export function useStudioPlayback(model: PlaybackModel & Pick<StudioState, "editSession">) {
   const {
     setStatusNotice,
     busy,
@@ -121,8 +121,12 @@ export function useStudioPlayback(model: PlaybackModel) {
     if (model.isProjectPersistencePending()) {
       setStatusNotice("変更を保存しています。完了後に連続再生を開始します。");
     }
-    const ready = await model.waitForProjectPersistence();
-    if (!ready || playbackRun.current !== waitingRun) return;
+    const ready = await model.editSession.retryFailedSave();
+    if (playbackRun.current !== waitingRun) return;
+    if (!ready) {
+      setStatusNotice(model.editSession.persistence?.failureReason?.() ?? "保存できませんでした");
+      return;
+    }
     await startContinuousPlayback();
   }
 

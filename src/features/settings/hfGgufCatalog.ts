@@ -1,5 +1,6 @@
 import type { HfGgufVariant } from "../../api-llm";
 import type { HfModel } from "./huggingFaceModelUi";
+import { formatGb } from "../shared/formatBytes";
 import { withinModelSize, formatSearchModelSize, formatModelBytes } from "./huggingFaceModelUi";
 
 export function formatCatalogSize(model: HfModel, maxGb: number | null, selected: Set<string>): string {
@@ -8,7 +9,7 @@ export function formatCatalogSize(model: HfModel, maxGb: number | null, selected
   if (!sizes.length || sizes.some((size) => size <= 0)) return formatModelBytes(null);
   const min = Math.min(...sizes),
     max = Math.max(...sizes);
-  return min === max ? formatModelBytes(min) : `${(min / 1e9).toFixed(1)}–${formatModelBytes(max)}`;
+  return min === max ? formatModelBytes(min) : `${formatGb(min).replace(" GB", "")}–${formatModelBytes(max)}`;
 }
 
 export function variantMatches(variant: HfGgufVariant, maxGb: number, selected: Set<string>): boolean {

@@ -1,4 +1,5 @@
 """Patched Runtime declarations cannot hide changed CPU binaries or reuse cache identity."""
+import scena_test_isolation  # noqa: F401
 import json
 import tempfile
 import unittest

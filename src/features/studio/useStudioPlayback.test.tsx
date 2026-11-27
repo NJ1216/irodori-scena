@@ -61,7 +61,7 @@ describe("useStudioPlayback", () => {
 
   it("starts continuous playback only after pending project persistence finishes", async () => {
     let finishPersistence: ((saved: boolean) => void) | undefined;
-    const waitForProjectPersistence = vi.fn(
+    const retryFailedSave = vi.fn(
       () =>
         new Promise<boolean>((resolve) => {
           finishPersistence = resolve;
@@ -71,7 +71,7 @@ describe("useStudioPlayback", () => {
     const model = {
       continuousPlayback: false,
       isProjectPersistencePending: () => true,
-      waitForProjectPersistence,
+      editSession: { retryFailedSave },
       setStatusNotice,
       busy: null,
       stopPlayback: { current: false },
@@ -113,7 +113,7 @@ describe("useStudioPlayback", () => {
     const model = {
       continuousPlayback: false,
       isProjectPersistencePending: () => false,
-      waitForProjectPersistence: vi.fn().mockResolvedValue(true),
+      editSession: { retryFailedSave: vi.fn().mockResolvedValue(true) },
       setStatusNotice: vi.fn(),
       busy: "generate-selected-lines",
       stopPlayback: { current: false },
@@ -192,4 +192,53 @@ it("toggles a cast reference and clears its state when playback ends", async () 
   expect(model.setPlayingReferenceCharacterId).toHaveBeenLastCalledWith(expect.any(Function));
   const clear = model.setPlayingReferenceCharacterId.mock.lastCall?.[0];
   expect(clear("cast-a")).toBeNull();
+});
+
+describe("continuous playback after a failed save", () => {
+  const playbackModel = (retryFailedSave: () => Promise<boolean>, setStatusNotice = vi.fn()) =>
+    ({
+      continuousPlayback: false,
+      isProjectPersistencePending: () => false,
+      editSession: { retryFailedSave, persistence: { failureReason: () => "network down" } },
+      setStatusNotice,
+      busy: null,
+      stopPlayback: { current: false },
+      activeAudio: { current: null },
+      resolveActivePlayback: { current: null },
+      playbackRun: { current: 0 },
+      continuousPlaybackWaiters: { current: new Set() },
+      setContinuousPlayback: vi.fn(),
+      setFocusedLineId: vi.fn(),
+      playingLineId: null,
+      setPlayingLineId: vi.fn(),
+      playingReferenceCharacterId: null,
+      setPlayingReferenceCharacterId: vi.fn(),
+      selectedLinePlaybackStopRun: { current: 0 },
+      selectedLinePlaybackPending: { current: false },
+      stopRef: { current: vi.fn() },
+    }) as never;
+  beforeEach(() => mocks.startContinuousPlayback.mockReset());
+
+  it("re-saves silently and then starts playback", async () => {
+    const retryFailedSave = vi.fn().mockResolvedValue(true);
+    const setStatusNotice = vi.fn();
+    const { result } = renderHook(() => useStudioPlayback(playbackModel(retryFailedSave, setStatusNotice)));
+    await act(async () => {
+      await result.current.playContinuous();
+    });
+    expect(retryFailedSave).toHaveBeenCalledOnce();
+    expect(mocks.startContinuousPlayback).toHaveBeenCalledOnce();
+    expect(setStatusNotice).not.toHaveBeenCalled();
+  });
+
+  it("keeps playback blocked and shows the failure reason when the re-save fails", async () => {
+    const retryFailedSave = vi.fn().mockResolvedValue(false);
+    const setStatusNotice = vi.fn();
+    const { result } = renderHook(() => useStudioPlayback(playbackModel(retryFailedSave, setStatusNotice)));
+    await act(async () => {
+      await result.current.playContinuous();
+    });
+    expect(mocks.startContinuousPlayback).not.toHaveBeenCalled();
+    expect(setStatusNotice).toHaveBeenLastCalledWith("network down");
+  });
 });

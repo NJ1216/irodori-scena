@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import scena_test_isolation  # noqa: F401
 import subprocess
 import threading
 import unittest
@@ -109,7 +110,7 @@ class ResourceOwnershipTests(unittest.TestCase):
                 worker = None if state == "absent" else Mock()
                 if worker is not None:
                     worker.poll.return_value = 0 if state == "exited" else None
-                    worker.wait.side_effect = [subprocess.TimeoutExpired("worker", 5), 0]
+                    worker.wait.side_effect = [subprocess.TimeoutExpired("worker", 3), subprocess.TimeoutExpired("worker", 5), 0]
                 runtime_state.INFERENCE_WORKER = worker
                 resources.MEMORY_OWNER = "tts"
                 inference.shutdown_inference_worker()
@@ -117,7 +118,7 @@ class ResourceOwnershipTests(unittest.TestCase):
                 self.assertIsNone(resources.MEMORY_OWNER)
                 if state == "kill":
                     worker.kill.assert_called_once()
-                    self.assertEqual(worker.wait.call_count, 2)
+                    self.assertEqual(worker.wait.call_count, 3)
 
     def test_failed_stop_preserves_process_and_prevents_reuse(self):
         worker = Mock()

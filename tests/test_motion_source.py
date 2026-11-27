@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import scena_test_isolation  # noqa: F401
 from copy import deepcopy
 from dataclasses import replace
 import hashlib

@@ -263,8 +263,8 @@ it("shows the selected variant revision and disk usage", async () => {
     verification: "verified",
     activeVariantId: "pytorch-fp32",
     installedVariants: [
-      { id: "pytorch-fp32", precision: "FP32", backend: "pytorch", repo: "base", revision: "fp32-revision", diskBytes: 2 * 1024 ** 3, optimizationProfile: "pytorch-fp32" },
-      { id: "mlx-fp16", precision: "FP16", backend: "mlx", repo: "mlx", revision: "fp16-revision", diskBytes: 1 * 1024 ** 3, optimizationProfile: "mlx-audio-0.5.0-fp16" },
+      { id: "pytorch-fp32", precision: "FP32", backend: "pytorch", repo: "base", revision: "fp32-revision", diskBytes: 2 * 1_000_000_000, optimizationProfile: "pytorch-fp32" },
+      { id: "mlx-fp16", precision: "FP16", backend: "mlx", repo: "mlx", revision: "fp16-revision", diskBytes: 1 * 1_000_000_000, optimizationProfile: "mlx-audio-0.5.0-fp16" },
     ],
   } as TtsAssetCard;
   const registry = { version: 3, defaultEngineId: null, defaultModelId: card.id, engines: [], models: [card], libraries: [], projectSelection: null } as TtsRegistry;
@@ -289,8 +289,8 @@ it("shows the active variant and its own size on the settings card", () => {
     verification: "verified",
     activeVariantId: "mlx-fp16",
     installedVariants: [
-      { id: "pytorch-fp32", precision: "FP32", backend: "pytorch", repo: "base", revision: "fp32", diskBytes: 2 * 1024 ** 3, optimizationProfile: "pytorch-fp32" },
-      { id: "mlx-fp16", precision: "FP16", backend: "mlx", repo: "mlx", revision: "fp16", diskBytes: 1 * 1024 ** 3, optimizationProfile: "mlx-fp16" },
+      { id: "pytorch-fp32", precision: "FP32", backend: "pytorch", repo: "base", revision: "fp32", diskBytes: 2 * 1_000_000_000, optimizationProfile: "pytorch-fp32" },
+      { id: "mlx-fp16", precision: "FP16", backend: "mlx", repo: "mlx", revision: "fp16", diskBytes: 1 * 1_000_000_000, optimizationProfile: "mlx-fp16" },
     ],
   } as TtsAssetCard;
   const registry = { libraries: [] } as unknown as TtsRegistry;

@@ -1,4 +1,5 @@
 """Composed preparation/retained artifact checks, owned fixture data only."""
+import scena_test_isolation  # noqa: F401
 from dataclasses import replace
 from io import BytesIO
 import hashlib

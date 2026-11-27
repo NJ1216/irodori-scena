@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import scena_test_isolation  # noqa: F401
 import struct
 import json
 import tempfile
@@ -57,6 +58,14 @@ class LlamaCppContextTests(unittest.TestCase):
             self.assertEqual(select_context_size({}, "cpu", available_bytes=None), 8192)
             with self.assertRaisesRegex(MemoryError, "Context 8,192"):
                 select_context_size({"diskBytes": 8 * 1024**3}, "cpu", available_bytes=10 * 1024**3)
+
+    def test_insufficient_memory_message_uses_decimal_gb(self):
+        with patch("server.modules.llama_cpp_context.read_gguf_context_limit", return_value=32768):
+            with self.assertRaises(MemoryError) as raised:
+                select_context_size({"diskBytes": 8_000_000_000}, "cpu", available_bytes=10 * 1024**3)
+        message = str(raised.exception)
+        self.assertIn("8.0 GB", message)
+        self.assertNotIn("GiB", message)
 
     def test_registry_migration_backfills_existing_gguf_without_redownload(self):
         with tempfile.TemporaryDirectory() as directory:

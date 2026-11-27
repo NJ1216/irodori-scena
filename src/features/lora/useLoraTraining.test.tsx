@@ -1,11 +1,18 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { chooseDirectory } from "../../api-core";
+import { chooseDirectory } from "../../api";
 import { loraApi } from "../../api-lora";
 import { useLoraTraining } from "./useLoraTraining";
+
+// Wakes the sequential poller immediately, as when the page becomes visible again.
+const pollNow = () =>
+  act(async () => {
+    document.dispatchEvent(new Event("visibilitychange"));
+    await new Promise((resolve) => setTimeout(resolve, 30));
+  });
 const { api } = vi.hoisted(() => ({ api: { status: vi.fn(), jobs: vi.fn(), inputs: vi.fn(), folderInputs: vi.fn(), start: vi.fn(), cancel: vi.fn() } }));
 vi.mock("../../api-lora", () => ({ loraApi: api }));
-vi.mock("../../api-core", () => ({ chooseDirectory: vi.fn() }));
+vi.mock("../../api", () => ({ chooseDirectory: vi.fn() }));
 const rows = ["one", "two", "orphan"].map((id) => ({ id, wavName: id === "orphan" ? null : `${id}.wav`, textName: `${id}.txt`, text: "台詞", caption: "", speakerId: "one", durationSeconds: 2, issues: [] }));
 beforeEach(() => {
   vi.resetAllMocks();
@@ -84,29 +91,18 @@ it("keeps a running job when detached and reconnects after reopen; cancellation 
   expect(next.result.current.jobs[0].status).toBe("cancelling");
 });
 it("does not let a stale poll erase a job accepted during the request", async () => {
-  let poll!: () => void;
-  const originalInterval = window.setInterval.bind(window);
-  vi.spyOn(window, "setInterval").mockImplementation((callback, delay, ...args) => {
-    if (delay !== 1500) return originalInterval(callback, delay, ...args);
-    poll = callback as () => void;
-    return 1;
-  });
   const hook = await prepared();
-  let release!: (value: unknown[]) => void;
-  api.jobs.mockImplementation(
-    () =>
-      new Promise((resolve) => {
-        release = resolve;
-      }),
-  );
-  await act(async () => {
-    poll();
-  });
+  const pending: Array<(value: unknown[]) => void> = [];
+  api.jobs.mockImplementation(() => new Promise((resolve) => pending.push(resolve)));
+  await pollNow();
+  await waitFor(() => expect(pending.length).toBeGreaterThan(0));
+  const stalePoll = pending[0];
   await act(async () => {
     await hook.result.current.start();
   });
+  // Only the poll that began before the start is stale; later polls are not released.
   await act(async () => {
-    release([]);
+    stalePoll([]);
   });
   expect(hook.result.current.jobs[0].id).toBe("job");
 });

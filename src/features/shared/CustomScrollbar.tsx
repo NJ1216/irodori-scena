@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/refs, react-refresh/only-export-components -- Imperative scroll ownership is synchronized at explicit DOM event boundaries. */
-import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type RefObject } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type PointerEvent, type RefObject } from "react";
 import { observeResizeAfterLayout } from "./observeResizeAfterLayout";
 
 export type ScrollbarPlacement = "inset-end" | "outside-end" | "flush-outside-end" | "viewport-end";
@@ -57,13 +57,19 @@ export function CustomScrollbar({ targetRef, label, placement, boundary }: { tar
   const hideTimer = useRef<number | null>(null);
   const dragging = useRef<{ pointerId: number; startY: number; startScrollTop: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-
   const reveal = useCallback((persistent = false) => {
     setVisible(true);
     if (hideTimer.current !== null) window.clearTimeout(hideTimer.current);
     if (!persistent) hideTimer.current = window.setTimeout(() => setVisible(false), numericToken("--scena-scrollbar-fade-delay", 900));
   }, []);
-
+  const endDrag = (event: PointerEvent<HTMLElement>) => {
+    if (dragging.current?.pointerId !== event.pointerId) return;
+    dragging.current = null;
+    setIsDragging(false);
+    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+    reveal();
+  };
+  const dragEndHandlers = { onPointerUp: endDrag, onPointerCancel: endDrag, onLostPointerCapture: endDrag };
   const update = useCallback(() => {
     const target = targetRef.current;
     if (!target) return;
@@ -160,13 +166,7 @@ export function CustomScrollbar({ targetRef, label, placement, boundary }: { tar
           const travel = bounds.height - thumb.length;
           if (travel > 0) target.scrollTop = dragging.current.startScrollTop + ((event.clientY - dragging.current.startY) / travel) * maximum;
         }}
-        onPointerUp={(event) => {
-          if (dragging.current?.pointerId !== event.pointerId) return;
-          dragging.current = null;
-          setIsDragging(false);
-          event.currentTarget.releasePointerCapture(event.pointerId);
-          reveal();
-        }}
+        {...dragEndHandlers}
       />
     </div>
   );

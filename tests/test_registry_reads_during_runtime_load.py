@@ -1,6 +1,7 @@
 """Reading registries must not wait for a model load that holds the runtime lock (Windows startup preload)."""
 from __future__ import annotations
 
+import scena_test_isolation  # noqa: F401
 import json
 import os
 import tempfile

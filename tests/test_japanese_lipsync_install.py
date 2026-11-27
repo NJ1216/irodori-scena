@@ -1,4 +1,5 @@
 """Package installation fails closed without damaging an existing runtime."""
+import scena_test_isolation  # noqa: F401
 import hashlib
 import json
 import tempfile

@@ -1,3 +1,4 @@
+import scena_test_isolation  # noqa: F401
 import contextlib
 import unittest
 from types import SimpleNamespace

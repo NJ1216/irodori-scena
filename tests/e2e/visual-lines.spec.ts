@@ -324,7 +324,7 @@ test("enter moves text input to the next line and the final line hides its gap",
   await editor.press("End");
   await editor.press("Shift+Enter");
   await editor.pressSequentially("二行目");
-  await expect.poll(() => editor.evaluate((element) => element.innerText)).toBe("雨、やっと上がったね。\n二行目");
+  await expect.poll(() => editor.evaluate((element: HTMLElement) => element.innerText)).toBe("雨、やっと上がったね。\n二行目");
 });
 
 test("simultaneous cast switches between linked rate and fixed seconds", async ({ page }) => {

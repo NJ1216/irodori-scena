@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import scena_test_isolation  # noqa: F401
 import json
 import unittest
 from pathlib import Path
@@ -9,20 +10,9 @@ from fastapi import HTTPException
 from pydantic import ValidationError
 
 from server.app import (
-    DRAFT_JOBS,
-    DRAFT_JOBS_LOCK,
-    DraftRequest,
-    LineAssistantRequest,
-    ThemeSuggestionRequest,
-    GenerationCancelled,
-    draft_cast_alias,
-    draft_cast_context,
-    cancel_draft_job,
-    ensure_draft_not_cancelled,
-    openai_text_completion,
-    openai_stream_text_completion,
-    parse_generated_lines,
-    suggest_theme_completion,
+    DRAFT_JOBS, DRAFT_JOBS_LOCK, DraftRequest, LineAssistantRequest, ThemeSuggestionRequest, GenerationCancelled,
+    draft_cast_alias, draft_cast_context, cancel_draft_job, ensure_draft_not_cancelled, openai_text_completion,
+    openai_stream_text_completion, parse_generated_lines, suggest_theme_completion,
 )
 from server.modules.assistant_routes import line_assistant_completion
 class DraftSuggestionsAndStreamTests(unittest.TestCase):

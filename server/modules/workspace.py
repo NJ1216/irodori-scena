@@ -56,10 +56,8 @@ def workspace_info() -> dict[str, Any]:
 
 def save_active_workspace_state() -> None:
     deps.DATA_ROOT.mkdir(parents=True, exist_ok=True)
-    deps.APP_STATE_FILE.write_text(
-        json.dumps({"activeProjectPath": str(deps.ACTIVE_PROJECT_PATH.resolve()) if deps.ACTIVE_PROJECT_PATH else ""}, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    state = {"activeProjectPath": str(deps.ACTIVE_PROJECT_PATH.resolve()) if deps.ACTIVE_PROJECT_PATH else ""}
+    deps.atomic_write(deps.APP_STATE_FILE, (json.dumps(state, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
 
 
 def activate_project_root(root: Path, *, persist: bool = True) -> None:
@@ -88,6 +86,9 @@ def activate_project_container(path: Path, *, persist: bool = True, prepared_roo
     deps.acquire_container_lock(resolved)
     root = deps.working_root(resolved)
     previous_root = root.with_name(f".{root.name}.previous")
+    # Roll back only the steps that actually happened: root may be the live
+    # working copy of the currently open container.
+    moved_previous = placed = False
     try:
         if expected_signature is not None and deps.container_signature(resolved) != expected_signature:
             raise HTTPException(status_code=409, detail="確認中に.scenaプロジェクトが変更されました。もう一度開いてください。")
@@ -99,7 +100,9 @@ def activate_project_container(path: Path, *, persist: bool = True, prepared_roo
                 shutil.rmtree(previous_root)
             if root.exists():
                 root.replace(previous_root)
+                moved_previous = True
             prepared_root.replace(root)
+            placed = True
         with deps.PROJECT_ROOT_LOCK:
             deps.ACTIVE_PROJECT_PATH = resolved
             deps.ACTIVE_PROJECT_ROOT = root
@@ -112,9 +115,9 @@ def activate_project_container(path: Path, *, persist: bool = True, prepared_roo
     except Exception:
         with deps.PROJECT_ROOT_LOCK:
             deps.ACTIVE_PROJECT_PATH, deps.ACTIVE_PROJECT_ROOT, deps.PROJECT_FILE, deps.MEDIA_ROOT = old_state
-        if prepared_root is not None and root.exists():
-            shutil.rmtree(root)
-        if prepared_root is not None and previous_root.exists():
+        if placed:
+            shutil.rmtree(root, ignore_errors=True)
+        if moved_previous and previous_root.exists() and not root.exists():
             previous_root.replace(root)
         deps.release_container_lock()
         if previous is not None:
@@ -124,11 +127,12 @@ def activate_project_container(path: Path, *, persist: bool = True, prepared_roo
 
 def discard_restored_voice_candidates() -> None:
     """Remove audition-only VoiceDesign state when a new API process starts."""
-    project = deps.read_project()
-    if not project.get("candidates"):
-        return
-    deps.clear_voice_candidates(project)
-    deps.write_project(project)
+    with deps.PROJECT_ROOT_LOCK:
+        project = deps.read_project()
+        if not project.get("candidates"):
+            return
+        deps.clear_voice_candidates(project)
+        deps.write_project(project)
 
 
 def choose_directory(prompt: str) -> Path:
@@ -321,9 +325,7 @@ def record_draft_yield(request: deps.DraftRequest, *, requested: int, accepted: 
             "schemaVersion": 4, "history": history, "samples": len(history), "updatedAt": deps.now_ms(),
         }
         deps.LLM_YIELD_PROFILES_FILE.parent.mkdir(parents=True, exist_ok=True)
-        temporary = deps.LLM_YIELD_PROFILES_FILE.with_suffix(".json.tmp")
-        temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        temporary.replace(deps.LLM_YIELD_PROFILES_FILE)
+        deps.atomic_write(deps.LLM_YIELD_PROFILES_FILE, (json.dumps(payload, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
     return draft_yield_ratio(request)[0]
 
 

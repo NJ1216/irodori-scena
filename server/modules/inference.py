@@ -75,14 +75,29 @@ def engine_dir() -> Path:
     return resolved
 
 
-def stop_inference_worker_locked() -> None:
-    """Stop the worker while ``INFERENCE_WORKER_LOCK`` is held."""
+WORKER_GRACEFUL_EXIT_SECONDS = 3
+
+
+def stop_inference_worker_locked(*, graceful: bool = True) -> None:
+    """Stop the worker while ``INFERENCE_WORKER_LOCK`` is held.
+
+    An idle worker leaves its loop when stdin closes and removes its runtime
+    directories on the way out. Callers that stop a busy or broken worker pass
+    ``graceful=False``: waiting for stdin would only delay the interruption.
+    """
     global INFERENCE_METAL_BYTES, INFERENCE_WORKER_FAILED
     worker = deps.INFERENCE_WORKER
     generation = deps.memory_generation("tts")
     INFERENCE_WORKER_FAILED = worker is not None
+    if graceful and worker is not None and worker.poll() is None:
+        try:
+            worker.stdin.close()
+            worker.wait(timeout=WORKER_GRACEFUL_EXIT_SECONDS)
+        except (OSError, ValueError, AttributeError, subprocess.TimeoutExpired):
+            pass
     if worker is not None and worker.poll() is None:
-        worker.terminate()
+        # SIGTERM can stall in a native call; ungraceful stops kill at once (startup sweep cleans up).
+        worker.terminate() if graceful else worker.kill()
         try:
             worker.wait(timeout=5)
         except subprocess.TimeoutExpired:
@@ -221,7 +236,7 @@ def _exchange_response(worker, request, should_cancel=None):
     except Exception:
         INFERENCE_WORKER_FAILED = True
         try:
-            stop_inference_worker_locked()
+            stop_inference_worker_locked(graceful=False)
         except Exception:
             # Worker cleanup is best effort. Preserve the exchange failure—most
             # importantly GenerationCancelled—so the route can return its

@@ -1,4 +1,5 @@
 """Optional refinement identity, failure fallback, cancellation and cache contracts."""
+import scena_test_isolation  # noqa: F401
 import hashlib
 import json
 import tempfile
