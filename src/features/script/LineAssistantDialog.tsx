@@ -1,4 +1,5 @@
 import { api } from "../../api";
+import { useInlineValidation } from "../shared/useInlineValidation";
 import { useLineAssistantRequests } from "./useLineAssistantRequests";
 import type { LlmConnection, StudioProject } from "../../types";
 import { type LineAssistantTarget } from "../studio/types";
@@ -39,9 +40,11 @@ export function LineAssistantDialog({
   const payload = () => buildLineAssistantPayload(project, target, form);
   const running = useScriptAssistantPolling({ job, setJob, setAcceptedRows: form.setAcceptedRows, setAcceptedGroups: form.setAcceptedGroups, onBusy, onNotice });
 
+  const validation = useInlineValidation();
   const validate = () => {
     const message = lineAssistantValidationMessage(form, connection, connectionReady);
-    if (message) onNotice(message);
+    if (message) validation.report(message);
+    else validation.clear();
     return !message;
   };
 
@@ -108,7 +111,18 @@ export function LineAssistantDialog({
             onGenerate={() => void startGeneration()}
           />
         )}
-        <LineAssistantFooter preview={Boolean(preview)} running={running} insert={insert} busy={busy} canApply={acceptedRows.size > 0 || acceptedGroups.size > 0} onClose={() => void close()} onBackToSettings={() => setJob(null)} onApply={() => void applyProposal()} onGenerate={() => void startGeneration()} />
+        <LineAssistantFooter
+          error={preview ? "" : validation.formError}
+          preview={Boolean(preview)}
+          running={running}
+          insert={insert}
+          busy={busy}
+          canApply={acceptedRows.size > 0 || acceptedGroups.size > 0}
+          onClose={() => void close()}
+          onBackToSettings={() => setJob(null)}
+          onApply={() => void applyProposal()}
+          onGenerate={() => void startGeneration()}
+        />
       </section>
     </div>
   );

@@ -3,6 +3,7 @@ from __future__ import annotations
 from server.app_deps import Any, Callable, json, time, Path
 from server.registry import deps
 from server.modules.llm_gemini_options import google_gemini_endpoint, prepare_gemini_payload
+from server.modules.llm_official_endpoints import adapt_rejected_parameter, prepare_official_payload
 from server.modules.llm_retry_budget import before_attempt, current_budget, http_failure, reserve_retry
 
 
@@ -57,7 +58,7 @@ def openai_stream_response(request: Any, *, endpoint: str, payload: dict[str, An
                            on_progress: Callable[[str], None] | None, loop_detector: Callable[[str], str | None] | None,
                            should_cancel: Callable[[], bool] | None, read_response: Callable[..., tuple[str, int | None]]) -> tuple[str, int | None]:
     """Apply bounded transport retries only until response text starts."""
-    payload = prepare_gemini_payload(request, payload)
+    payload = prepare_official_payload(request, prepare_gemini_payload(request, payload))
     request_usage = request.provider in {"openai", "ollama"}
     budget = current_budget()
     fallback_nonstream = bool(budget and request.base_url in budget.nonstream)
@@ -65,7 +66,7 @@ def openai_stream_response(request: Any, *, endpoint: str, payload: dict[str, An
         before_attempt(request, should_cancel)
         started_at = time.monotonic()
         write_llm_stream_diagnostic(debug_response_path, "request_started", details={
-            "attempt": attempt, "provider": request.provider, "model": request.model, "maxTokens": payload["max_tokens"],
+            "attempt": attempt, "provider": request.provider, "model": request.model, "maxTokens": payload.get("max_tokens", payload.get("max_completion_tokens")),
         })
         stream_payload = dict(payload)
         if fallback_nonstream:
@@ -88,6 +89,8 @@ def openai_stream_response(request: Any, *, endpoint: str, payload: dict[str, An
             })
             if response.status in {400, 422}:
                 detail = response.read().decode("utf-8", errors="replace")
+                if adapt_rejected_parameter(request, payload, response.status, detail):
+                    continue
                 if request_usage and any(marker in detail.casefold() for marker in ("stream_options", "include_usage")):
                     reserve_retry(deps.classify_http_failure(response.status, detail))
                     request_usage = False

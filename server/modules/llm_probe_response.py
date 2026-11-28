@@ -1,7 +1,9 @@
 """Bounded probe options and diagnostic parsing; never retries a probe."""
 from typing import Any
 
+from server.modules.anthropic_messages import is_anthropic_base_url
 from server.modules.llm_gemini_options import gemini_reasoning_options, gemini_thinking_model
+from server.modules.llm_official_endpoints import is_openai_base_url
 
 
 class ProbeResponseError(RuntimeError):
@@ -15,6 +17,10 @@ def probe_options(selected: dict[str, Any], default_tokens: int) -> dict[str, An
         # Gemini thinking shares the generation budget with the visible answer.
         # https://ai.google.dev/gemini-api/docs/openai#thinking
         return {"max_tokens": 4096, **gemini_reasoning_options(selected["provider"], selected["model"])}
+    base_url = str(selected.get("baseUrl") or "")
+    if selected["provider"] == "openai" and (is_openai_base_url(base_url) or is_anthropic_base_url(base_url)):
+        # Reasoning models spend part of the same budget before the short answer.
+        return {"max_tokens": 4096}
     return {"max_tokens": default_tokens}
 
 

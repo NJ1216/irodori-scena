@@ -23,6 +23,7 @@ export function useCharactersViewModel(props: CharactersViewModelProps) {
     setEditFirstPerson: editor.setEditFirstPerson,
     setEditSecondPerson: editor.setEditSecondPerson,
     onNotice: props.onNotice,
+    onStatusNotice: props.onStatusNotice,
     onBusy: props.onBusy,
   });
   const imagePrompt = useCharacterImagePromptSuggestion({
@@ -41,7 +42,7 @@ export function useCharactersViewModel(props: CharactersViewModelProps) {
   const voice = useCharacterVoiceDesignController(props);
   const capabilityReasons = useTtsCapabilityReasons(props.project.ttsSelection);
   const playback = useCharacterAudioPlayback();
-  const importForm = useCharacterImportForm(props.onImport, props.onNotice);
+  const importForm = useCharacterImportForm(props.onImport);
   const beginEdit = (character: Parameters<typeof editor.beginEdit>[0]) =>
     editor.beginEdit(character, () => {
       suggestion.resetProfileSuggestion();

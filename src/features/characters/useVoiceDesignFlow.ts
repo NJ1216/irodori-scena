@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { VoiceDesignEmotion } from "../../types";
 import type { VoiceDesign } from "./voiceDesign";
-import { notifyCharacterMemoLimit } from "./characterMemo";
+import { reportCharacterMemoLimit } from "./characterMemo";
 
 const initialEmotionTexts: Record<VoiceDesignEmotion, string> = {
   normal: "今日は穏やかに話せて、うれしいです。",
@@ -15,7 +15,7 @@ const emotionKeys: VoiceDesignEmotion[] = ["normal", "joy", "anger", "sorrow", "
 export function useVoiceDesignFlow({
   onGenerateCandidates,
   onSaveVoiceDesign,
-  onNotice,
+  onInvalid,
 }: {
   onGenerateCandidates: (
     keywords: string,
@@ -33,7 +33,8 @@ export function useVoiceDesignFlow({
     },
   ) => Promise<boolean>;
   onSaveVoiceDesign: (payload: { baselineCandidateId: string; emotionCandidateIds: Partial<Record<VoiceDesignEmotion, string>>; name: string; profile: string; voiceKeywords: string; voiceDesign: VoiceDesign; characterId?: string }) => Promise<boolean>;
-  onNotice: (text: string) => void;
+  /** Reports a failed input check inline in the dialog; a field names the control at fault. */
+  onInvalid: (message: string, field?: string) => void;
 }) {
   const [emotionTexts, setEmotionTexts] = useState(initialEmotionTexts);
   const [suggestedEmotionTexts, setSuggestedEmotionTexts] = useState<Set<VoiceDesignEmotion>>(new Set());
@@ -47,8 +48,8 @@ export function useVoiceDesignFlow({
     setSuggestedEmotionTexts(new Set());
   }
   async function generateEmotion(emotion: VoiceDesignEmotion, keywords: string, voiceDesign: VoiceDesign, count: number, settings: { speechRate: number; textCfg?: number; voiceCfg?: number; captionCfg?: number }) {
-    if (!baselineCandidateId) return onNotice("先に基準ボイスを選んでください。");
-    if (!emotionTexts[emotion].trim()) return onNotice("感情用の台詞を入力してください。");
+    if (!baselineCandidateId) return onInvalid("先に基準ボイスを選んでください。");
+    if (!emotionTexts[emotion].trim()) return onInvalid("感情用の台詞を入力してください。", `emotion-${emotion}`);
     await onGenerateCandidates(keywords, count, emotionTexts[emotion], {
       kind: "emotion",
       emotion,
@@ -62,13 +63,13 @@ export function useVoiceDesignFlow({
   const canReplaceVoiceDesign = Boolean(baselineCandidateId) && (!includeEmotions || hasSelectedEmotion);
   async function saveDesignedVoice(values: { name: string; profile: string; voiceKeywords: string; voiceDesign: VoiceDesign; characterId?: string }) {
     if (!values.characterId && !values.name.trim()) {
-      onNotice("キャスト名は必須です。");
+      onInvalid("キャスト名は必須です。", "castName");
       return false;
     }
-    if (notifyCharacterMemoLimit(values.profile, onNotice)) return false;
+    if (reportCharacterMemoLimit(values.profile, onInvalid, "profile")) return false;
     const canCommit = values.characterId ? canReplaceVoiceDesign : canSaveVoiceDesign;
     if (!baselineCandidateId || !canCommit) {
-      onNotice(values.characterId ? "感情参照を追加する場合は、感情クリップを1つ以上選んでください。" : "感情を追加する場合は、5種類すべての感情クリップを選んでください。");
+      onInvalid(values.characterId ? "感情参照を追加する場合は、感情クリップを1つ以上選んでください。" : "感情を追加する場合は、5種類すべての感情クリップを選んでください。");
       return false;
     }
     return onSaveVoiceDesign({

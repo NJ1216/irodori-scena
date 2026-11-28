@@ -3,11 +3,11 @@
   "applicationLicense": "MIT License\n\nCopyright (c) 2026 NJ\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n",
   "inputs": {
     "pnpm-lock.yaml": "47e41f922a26d2f74a87918f0c74c0deeb9a1d389ae00946f8bec1456b398f51",
-    "uv.lock": "a820868f6ef947cd10c654702c54bf5eee2c5f326a011ddb60a9b38f504c892b",
-    "src-tauri/Cargo.lock": "3093cd9d43d61d07761bb2b54d62aadd45d48720f5c73dd02c801f58318ae9c7",
+    "uv.lock": "b8552595bad3b4ad0ba67526bca2a1cbdb0bc3a00b9b8f0ae400bd1911541aa9",
+    "src-tauri/Cargo.lock": "6937a6aa6f7656b9d286a60f32f7aab31dd428dbb8d26173a2d71ef36c0d96f2",
     "native/scena-native/Cargo.lock": "8d224ae3e7cc7c846ed41de3bfc157e7c3bbff2b976eba3c0d053f340441bb94",
     "tools/omlx-runtime-requirements.txt": "5ad37b1a43f3821169420aafb98e7bb794f73f1889368f3196d5cee59b1c820e",
-    "release-license-supplements.json": "44c812848d1ed47ebc3e6e7c8f071a2776f535842b43d1a624a6b04d74a66a16",
+    "release-license-supplements.json": "c0ebdc0e0884cd56c9ab28bd6a35de7b8bfe1283326a3b230dd39cfea65134aa",
     "server/modules/tts_catalog.py": "0e6ea608d0313c9cf9a97194e05fa68fc5d6ab6e9524451bf7074625b815812b",
     "LICENSE": "e864b1d8e30b9eb18a773ea788512170bf1796aca96fa426cd260fca0ef80dfc"
   },

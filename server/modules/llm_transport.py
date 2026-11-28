@@ -10,7 +10,9 @@ from typing import Callable
 
 from server.app_deps import urllib
 from server.registry import deps
+from server.modules.anthropic_messages import MessagesResponse, outgoing_request
 from server.modules.llm_gemini_options import prepare_gemini_payload
+from server.modules.llm_official_endpoints import adapt_rejected_parameter, prepare_official_payload
 from server.modules.llm_retry_budget import before_attempt, http_failure, reserve_retry
 
 RETRYABLE_STATUS = {408, 429, 500, 502, 503, 504}
@@ -119,7 +121,7 @@ def retry_or_raise(error: BaseException, attempt: int, should_cancel: Callable[[
 
 def openai_nonstream_payload(request, endpoint: str, payload: dict, should_cancel) -> dict:
     """Send one non-stream completion with the shared four-attempt policy."""
-    payload = prepare_gemini_payload(request, payload)
+    payload = prepare_official_payload(request, prepare_gemini_payload(request, payload))
     for attempt in range(1, 5):
         before_attempt(request, should_cancel)
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
@@ -144,6 +146,8 @@ def openai_nonstream_payload(request, endpoint: str, payload: dict, should_cance
                 }
                 return parsed
             detail = response_body.decode("utf-8", errors="replace")
+            if adapt_rejected_parameter(request, payload, response.status, detail):
+                continue
             if response.status in {400, 422} and deps.reduce_ollama_context(
                 deps.active_draft_capability_profile(), detail
             ):
@@ -162,14 +166,29 @@ def openai_nonstream_payload(request, endpoint: str, payload: dict, should_cance
     raise RuntimeError("The LLM endpoint failed after four attempts.")
 
 
+def probe_post(request, endpoint: str, payload: dict, *, timeout: int = 120) -> tuple[str, str]:
+    """Send one probe; only a named unsupported parameter is adapted, never a failure."""
+    payload = prepare_official_payload(request, prepare_gemini_payload(request, payload))
+    while True:
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        target, body, headers, anthropic_stream = outgoing_request(
+            endpoint, body, deps.request_headers(request.api_key))
+        call = urllib.request.Request(target, data=body, headers=headers, method="POST")
+        try:
+            with urllib.request.urlopen(call, timeout=timeout) as raw:
+                response = raw if anthropic_stream is None else MessagesResponse(raw, stream=anthropic_stream)
+                warning = str(response.headers.get("Warning") or "") if hasattr(response, "headers") else ""
+                return response.read().decode("utf-8"), warning
+        except urllib.error.HTTPError as error:
+            detail = error.read().decode("utf-8", errors="replace")
+            if not adapt_rejected_parameter(request, payload, error.code, detail):
+                raise
+
+
 def openai_probe_payload(request, endpoint: str, payload: dict, *, timeout: int = 120) -> dict:
     """Shared non-stream transport for the deliberately single-attempt model probe."""
-    body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-    call = urllib.request.Request(
-        endpoint, data=body, headers=deps.request_headers(request.api_key), method="POST",
-    )
-    with urllib.request.urlopen(call, timeout=timeout) as response:
-        parsed = json.loads(response.read().decode("utf-8"))
+    raw, _ = probe_post(request, endpoint, payload, timeout=timeout)
+    parsed = json.loads(raw)
     if not isinstance(parsed, dict):
         raise ValueError("The endpoint returned a non-object response.")
     return parsed
@@ -177,6 +196,6 @@ def openai_probe_payload(request, endpoint: str, payload: dict, *, timeout: int 
 
 deps.register(__name__, [
     "TransportFailure", "cancellable_wait", "classify_http_failure", "is_retryable", "openai_nonstream_payload",
-    "openai_probe_payload", "retry_after_seconds",
+    "openai_probe_payload", "probe_post", "retry_after_seconds",
     "publish_transport_retry", "retry_delay", "retry_or_raise",
 ])

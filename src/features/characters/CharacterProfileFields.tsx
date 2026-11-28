@@ -1,5 +1,6 @@
 import type { CharacterProfile } from "../../types";
 import type { CharactersViewModel } from "./useCharactersViewModel";
+import { FieldError } from "../shared/InlineValidation";
 
 type TextField = { key: keyof CharacterProfile; label: string; placeholder?: string };
 
@@ -32,7 +33,8 @@ export function CharacterProfileFields({ model }: { model: CharactersViewModel }
         <div className="character-settings-grid">
           <label className="type-field-label">
             表示名
-            <input value={model.editName} onChange={(event) => model.setEditName(event.target.value)} required />
+            <input value={model.editName} data-validation-field="editName" aria-invalid={Boolean(model.editValidation.fieldError("editName")) || undefined} onChange={(event) => model.setEditName(event.target.value)} required />
+            <FieldError message={model.editValidation.fieldError("editName")} />
           </label>
           <label className="type-field-label">
             愛称

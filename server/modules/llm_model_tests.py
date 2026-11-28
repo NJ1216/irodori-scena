@@ -132,12 +132,10 @@ def _schema_probe(selected: dict[str, Any], cancel: threading.Event, *, stream: 
         endpoint = f"{endpoint[:-3] if endpoint.endswith('/v1') else endpoint}/api/chat"
     else:
         endpoint = endpoint if endpoint.endswith("/chat/completions") else f"{endpoint}/chat/completions"
-    body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-    request = urllib.request.Request(endpoint, data=body, headers=deps.request_headers(selected["apiKey"]), method="POST")
+    request = SimpleNamespace(provider=selected["provider"], base_url=selected["baseUrl"],
+                              model=selected["model"], api_key=selected["apiKey"])
     try:
-        with urllib.request.urlopen(request, timeout=120) as response:
-            warning = str(response.headers.get("Warning") or "") if hasattr(response, "headers") else ""
-            raw = response.read().decode("utf-8")
+        raw, warning = deps.probe_post(request, endpoint, payload)
         if "not enforced" in warning.casefold():
             return {"state": "unsupported", "reasonCode": "response_format_unenforced"}
         if selected["provider"] == "ollama":

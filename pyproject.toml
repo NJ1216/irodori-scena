@@ -1,6 +1,6 @@
 [project]
 name = "irodori-scena-local-api"
-version = "26.11.27"
+version = "26.11.28"
 description = "Local API for irodori SCENA"
 requires-python = ">=3.11"
 dependencies = [

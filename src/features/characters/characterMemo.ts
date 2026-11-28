@@ -9,8 +9,9 @@ export function characterMemoLimitError(value: string) {
   return length > CHARACTER_MEMO_MAX_LENGTH ? `自由メモは2,000文字以内で入力してください。現在${length.toLocaleString("ja-JP")}文字です。` : "";
 }
 
-export function notifyCharacterMemoLimit(value: string, notify: (message: string) => void) {
+/** Reports the memo limit inline; the memo field already shows the message, so this only marks and focuses it. */
+export function reportCharacterMemoLimit(value: string, report: (message: string, field?: string) => void, field: string) {
   const error = characterMemoLimitError(value);
-  if (error) notify(error);
+  if (error) report(error, field);
   return Boolean(error);
 }

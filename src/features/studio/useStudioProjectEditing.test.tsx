@@ -70,6 +70,7 @@ it("does not mark a failed pending save as persisted when an older save succeeds
 
 function renderEditing(autoGenerate = false) {
   const setNotice = vi.fn();
+  const setStatusNotice = vi.fn();
   const autoRenderQueue = { current: [] as import("./renderJobQueue").RenderJob[] };
   const autoRenderInProgress = { current: false };
   const autoRenderActiveLineId = { current: null as string | null };
@@ -78,6 +79,7 @@ function renderEditing(autoGenerate = false) {
     const editing = useStudioProjectEditing({
       ...session,
       setNotice,
+      setStatusNotice,
       tabRef: { current: "script" },
       focusedTextInput: { current: null },
       autoGenerateEnabledRef: { current: autoGenerate },
@@ -97,7 +99,7 @@ function renderEditing(autoGenerate = false) {
     return { ...session, ...editing, autoRenderQueue, autoRenderInProgress, autoRenderActiveLineId };
   });
   act(() => result.current.editSession.replace(project()));
-  return { result, setNotice };
+  return { result, setNotice, setStatusNotice };
 }
 
 async function testBatchRenderHistoryLink() {
@@ -125,11 +127,13 @@ describe("useStudioProjectEditing", () => {
   });
 
   it("replaces the generation notice after clearing baseline candidates", async () => {
-    const { result, setNotice } = renderEditing();
+    const { result, setNotice, setStatusNotice } = renderEditing();
 
     await act(() => result.current.clearCandidateScope("baseline"));
 
-    expect(setNotice).toHaveBeenLastCalledWith("基準ボイス候補を消去しました。");
+    // The candidate list inside the open dialog already shows the result, so it must not raise the overlay.
+    expect(setStatusNotice).toHaveBeenLastCalledWith("基準ボイス候補を消去しました。");
+    expect(setNotice).not.toHaveBeenCalledWith("基準ボイス候補を消去しました。");
   });
 
   it("persists stage-direction typing only when the line content is committed", async () => {

@@ -17,6 +17,7 @@ type Params = {
   setEditFirstPerson: (value: string) => void;
   setEditSecondPerson: (value: string) => void;
   onNotice: (value: string) => void;
+  onStatusNotice: (value: string) => void;
   onBusy: (value: string | null) => void;
 };
 
@@ -82,9 +83,9 @@ export function useCharacterProfileSuggestion(params: Params) {
       setProfileSuggestionOpen(false);
       setProfileSuggestionIdea("");
       setProfileSuggestionProgress("");
-      params.onNotice(
-        result.incompleteFields.length ? `AIの提案を反映しました。返せなかった${result.incompleteFields.length}項目は現在値を保持しています。` : profileSuggestionMode === "replace_details" ? "選択した範囲をAIの提案で更新しました。" : "選択した範囲の空欄へAIの提案を反映しました。既存の入力内容は変更していません。",
-      );
+      // The filled fields are visible in the open dialog; only a partial result needs the overlay.
+      if (result.incompleteFields.length) params.onNotice(`AIの提案を反映しました。返せなかった${result.incompleteFields.length}項目は現在値を保持しています。`);
+      else params.onStatusNotice(profileSuggestionMode === "replace_details" ? "選択した範囲をAIの提案で更新しました。" : "選択した範囲の空欄へAIの提案を反映しました。既存の入力内容は変更していません。");
     } catch (error) {
       setProfileSuggestionError(failure(error, session));
     } finally {

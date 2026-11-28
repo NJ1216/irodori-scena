@@ -8,20 +8,36 @@ const submitEvent = { preventDefault: vi.fn() } as unknown as React.FormEvent<HT
 
 it("keeps WAV import drafts until valid and clears them only after import", async () => {
   const onImport = vi.fn().mockResolvedValue(undefined);
-  const onNotice = vi.fn();
-  const { result } = renderHook(() => useCharacterImportForm(onImport, onNotice));
+  const { result } = renderHook(() => useCharacterImportForm(onImport));
   await act(() => result.current.importWav(submitEvent));
-  expect(onNotice).toHaveBeenCalledWith("登録するWAVファイルを選んでください。");
+  expect(result.current.importValidation.fieldError("referenceFile")).toBe("登録するWAVファイルを選んでください。");
+  act(() => result.current.setImportName("春"));
+  expect(result.current.importValidation.fieldError("referenceFile")).toBe("登録するWAVファイルを選んでください。");
   const file = new File(["wav"], "voice.wav", { type: "audio/wav" });
   act(() => {
     result.current.setReferenceFile(file);
     result.current.setImportName("春");
     result.current.setImportProfile("主人公");
   });
+  expect(result.current.importValidation.fieldError("referenceFile")).toBe("");
   await act(() => result.current.importWav(submitEvent));
   expect(onImport).toHaveBeenCalledWith(file, "春", "主人公");
   expect(result.current.referenceFile).toBeNull();
   expect(result.current.importName).toBe("");
+});
+
+it("keeps a missing cast name next to its field and clears it when the name is edited", async () => {
+  const onNotice = vi.fn();
+  const onUpdate = vi.fn();
+  const { result } = renderHook(() => useCharacterEditor(onNotice));
+  act(() => result.current.beginEdit({ id: "cast-1", name: "春", profile: "", voiceKeywords: "" } as Character, () => {}));
+  act(() => result.current.setEditName(" "));
+  await act(() => result.current.saveEdit(submitEvent, { imagePrompt: "", preferences: {} as never, onUpdate, onRemoveAvatar: vi.fn(), onUpdateAvatar: vi.fn() }));
+  expect(result.current.editValidation.fieldError("editName")).toBe("キャラクター名を入力してください。");
+  expect(onNotice).not.toHaveBeenCalled();
+  expect(onUpdate).not.toHaveBeenCalled();
+  act(() => result.current.setEditName("春"));
+  expect(result.current.editValidation.fieldError("editName")).toBe("");
 });
 
 it("saves profile before applying an avatar change and closes only after both succeed", async () => {

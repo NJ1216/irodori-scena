@@ -10,6 +10,9 @@ import { CharacterMemoField } from "./CharacterMemoField";
 import { VoiceDesignForm, VoiceDesignTip } from "./VoiceDesignForm";
 import { VoiceDesignGenerationControls } from "./VoiceDesignGenerationControls";
 import { ReferenceLengthNotice } from "./ReferenceLengthNotice";
+import { VoiceSuggestionDialog, WavImportDialog } from "./CharacterVoiceSubDialogs";
+import { FieldError, FormError } from "../shared/InlineValidation";
+import { baselineInputError } from "./voiceDesignFormState";
 const emotions: Array<[VoiceDesignEmotion, string]> = [
   ["normal", "普通"],
   ["joy", "喜"],
@@ -121,6 +124,7 @@ function EmotionStep({ model }: { model: CharactersViewModel }) {
     supportsRuntimeCfg,
     beginCandidatePlayback,
     endCandidatePlayback,
+    voiceDesignValidation,
   } = model;
   if (!baselineCandidateId) return null;
   return (
@@ -153,8 +157,11 @@ function EmotionStep({ model }: { model: CharactersViewModel }) {
             <textarea
               className={suggestedEmotionTexts.has(emotion) ? "is-ai-suggested" : ""}
               id={textareaId}
+              data-validation-field={`emotion-${emotion}`}
+              aria-invalid={Boolean(voiceDesignValidation.fieldError(`emotion-${emotion}`)) || undefined}
               value={emotionTexts[emotion]}
               onChange={(event) => {
+                voiceDesignValidation.clear(`emotion-${emotion}`);
                 setEmotionTexts({ ...emotionTexts, [emotion]: event.target.value });
                 setSuggestedEmotionTexts((current) => {
                   const next = new Set(current);
@@ -163,7 +170,16 @@ function EmotionStep({ model }: { model: CharactersViewModel }) {
                 });
               }}
             />
-            <CandidateChoices candidates={clips} label={label} selectedId={emotionCandidateIds[emotion]} onSelect={(candidateId) => setEmotionCandidateIds({ ...emotionCandidateIds, [emotion]: candidateId })} onPlay={beginCandidatePlayback} onPause={endCandidatePlayback} onEnded={endCandidatePlayback} />
+            <FieldError message={voiceDesignValidation.fieldError(`emotion-${emotion}`)} />
+            <CandidateChoices
+              candidates={clips}
+              label={label}
+              selectedId={emotionCandidateIds[emotion]}
+              onSelect={(candidateId) => (setEmotionCandidateIds({ ...emotionCandidateIds, [emotion]: candidateId }), voiceDesignValidation.clearForm())}
+              onPlay={beginCandidatePlayback}
+              onPause={endCandidatePlayback}
+              onEnded={endCandidatePlayback}
+            />
           </div>
         );
       })}
@@ -191,12 +207,12 @@ function ReplaceReferenceAction({ model, onSaved }: { model: CharactersViewModel
 }
 
 function EmotionOption({ model }: { model: CharactersViewModel }) {
-  const { baselineCandidateId, includeEmotions, setIncludeEmotions } = model;
+  const { baselineCandidateId, includeEmotions, setIncludeEmotions, voiceDesignValidation } = model;
   if (!baselineCandidateId) return null;
   return (
     <section className="voice-design-emotion-option">
       <label className="voice-design-emotion-toggle">
-        <input type="checkbox" checked={includeEmotions} onChange={(event) => setIncludeEmotions(event.target.checked)} />
+        <input type="checkbox" checked={includeEmotions} onChange={(event) => (setIncludeEmotions(event.target.checked), voiceDesignValidation.clearForm())} />
         <span>感情参照を追加する（任意）</span>
       </label>
     </section>
@@ -204,7 +220,7 @@ function EmotionOption({ model }: { model: CharactersViewModel }) {
 }
 
 function VoiceDesignSaveStep({ model }: { model: CharactersViewModel }) {
-  const { baselineCandidateId, includeEmotions, name, setName, profile, setProfile, referenceVoiceTarget } = model;
+  const { baselineCandidateId, includeEmotions, name, setName, profile, setProfile, referenceVoiceTarget, voiceDesignValidation } = model;
   if (!baselineCandidateId || referenceVoiceTarget) return null;
   return (
     <section className="audition-list voice-design-step">
@@ -213,9 +229,10 @@ function VoiceDesignSaveStep({ model }: { model: CharactersViewModel }) {
       </h3>
       <label>
         キャスト名
-        <input value={name} aria-invalid={!name.trim()} onChange={(event) => setName(event.target.value)} required />
+        <input value={name} data-validation-field="castName" aria-invalid={!name.trim()} onChange={(event) => (setName(event.target.value), voiceDesignValidation.clear("castName"))} required />
+        <FieldError message={voiceDesignValidation.fieldError("castName")} />
       </label>
-      <CharacterMemoField value={profile} onChange={setProfile} />
+      <CharacterMemoField value={profile} validationField="profile" onChange={(value) => (setProfile(value), voiceDesignValidation.clear("profile"))} />
     </section>
   );
 }
@@ -240,7 +257,7 @@ function SaveVoiceDesignAction({ model, onSaved }: { model: CharactersViewModel;
 }
 
 function BaselineSetupStep({ model, collapsed, hasGenerated, onToggle }: { model: CharactersViewModel; collapsed: boolean; hasGenerated: boolean; onToggle: () => void }) {
-  const { busy, suggestingVoice, setVoiceSuggestionOpen, voiceDesignValue, setVoiceDesignValue, voiceDesignSuggestedFields, sampleText, setSampleText, sampleTextSuggested, setSampleTextSuggested, sampleTextInput, insertSampleTextEmoji } = model;
+  const { busy, suggestingVoice, setVoiceSuggestionOpen, voiceDesignValue, setVoiceDesignValue, voiceDesignSuggestedFields, sampleText, setSampleText, sampleTextSuggested, setSampleTextSuggested, sampleTextInput, insertSampleTextEmoji, voiceDesignValidation } = model;
   return (
     <section className={`voice-design-step voice-design-setup-step${collapsed ? " is-collapsed" : ""}`}>
       <div className="voice-design-step-heading">
@@ -261,7 +278,7 @@ function BaselineSetupStep({ model, collapsed, hasGenerated, onToggle }: { model
       </div>
       <div className="voice-design-setup-content" aria-hidden={collapsed} inert={collapsed}>
         <div className="voice-design-setup-content-body">
-          <VoiceDesignForm value={voiceDesignValue} suggested={voiceDesignSuggestedFields} onChange={setVoiceDesignValue} />
+          <VoiceDesignForm value={voiceDesignValue} suggested={voiceDesignSuggestedFields} notesError={voiceDesignValidation.fieldError("notes")} onChange={setVoiceDesignValue} />
           <div className={`voice-design-field${sampleTextSuggested ? " is-ai-suggested" : ""}`}>
             <span className="voice-design-field-label">
               <label htmlFor="voice-design-audition-text">基準用の試聴台詞</label>
@@ -270,6 +287,8 @@ function BaselineSetupStep({ model, collapsed, hasGenerated, onToggle }: { model
             <textarea
               id="voice-design-audition-text"
               ref={sampleTextInput}
+              data-validation-field="sampleText"
+              aria-invalid={Boolean(voiceDesignValidation.fieldError("sampleText")) || undefined}
               value={sampleText}
               onChange={(event) => {
                 setSampleText(event.target.value);
@@ -277,6 +296,7 @@ function BaselineSetupStep({ model, collapsed, hasGenerated, onToggle }: { model
               }}
               placeholder="誰にでも自然な短い一〜二文"
             />
+            <FieldError message={voiceDesignValidation.fieldError("sampleText")} />
           </div>
           <details className="voice-sample-emoji-inserter" onToggle={(event) => revealVoiceSampleEmojis(event.currentTarget)}>
             <summary>表情EMOJIを挿入</summary>
@@ -337,6 +357,7 @@ function BaselineAuditionStep({ model, sectionRef, generating, onGenerate, onCle
           selectedId={baselineCandidateId ?? undefined}
           generatingCount={generating ? count : 0}
           onSelect={(candidateId) => {
+            model.voiceDesignValidation.clearForm();
             setBaselineCandidateId(candidateId);
             setEmotionCandidateIds({});
           }}
@@ -350,43 +371,12 @@ function BaselineAuditionStep({ model, sectionRef, generating, onGenerate, onCle
   );
 }
 
-function WavImportDialog({ model }: { model: CharactersViewModel }) {
-  const { busy, fileInput, importName, importProfile, referenceFile, setImportName, setImportProfile, setReferenceFile, setWavImportOpen, importWav } = model;
-  return (
-    <div className="modal-backdrop">
-      <form className="modal wav-import-modal" onSubmit={(event) => void importWav(event)}>
-        <DialogHeader eyebrow="REFERENCE WAV" title="手元のWAVを登録" description="参照に使う音声とキャストの基本情報を登録します。" />
-        <div className="wav-import-fields">
-          <label className="file-picker">
-            <input ref={fileInput} type="file" accept="audio/wav,.wav" onChange={(event) => setReferenceFile(event.target.files?.[0] ?? null)} />
-            <span>{referenceFile ? referenceFile.name : "WAVファイルを選択"}</span>
-            <small>標準WAV・25 MBまで</small>
-          </label>
-          <label className="wav-import-field">
-            キャラクター名
-            <input value={importName} onChange={(event) => setImportName(event.target.value)} required />
-          </label>
-          <CharacterMemoField className="wav-import-field" value={importProfile} onChange={setImportProfile} placeholder="性格や話し方など、声と一緒に残したい設定" />
-        </div>
-        <DialogFooter>
-          <button type="button" onClick={() => setWavImportOpen(false)}>
-            キャンセル
-          </button>
-          <button className="primary" disabled={busy === "import-reference"}>
-            {busy === "import-reference" ? "登録中…" : "この声をキャストに登録"}
-          </button>
-        </DialogFooter>
-      </form>
-    </div>
-  );
-}
-
 export function CharacterVoiceDialogs({ model }: { model: CharactersViewModel }) {
   const [baselineSetupCollapsed, setBaselineSetupCollapsed] = useState(false);
   const [baselineSetupCollapsible, setBaselineSetupCollapsible] = useState(false);
   const [baselineGenerating, setBaselineGenerating] = useState(false);
   const auditionStep = useRef<HTMLElement>(null);
-  const { connection, onClearCandidateScope, resetVoiceDesignSession, voiceSuggestionOpen, setVoiceSuggestionOpen, voiceDesignOpen, wavImportOpen, sourceKeywords, setSourceKeywords, suggestingVoice, generate, suggestVoiceDesign, closeVoiceDesign } = model;
+  const { onClearCandidateScope, resetVoiceDesignSession, voiceSuggestionOpen, voiceDesignOpen, wavImportOpen, generate, closeVoiceDesign } = model;
   const finishVoiceDesign = () => {
     setBaselineSetupCollapsed(false);
     setBaselineSetupCollapsible(false);
@@ -402,6 +392,8 @@ export function CharacterVoiceDialogs({ model }: { model: CharactersViewModel })
     setBaselineGenerating(true);
     try {
       const generated = await generate();
+      // A failed check on a setup field must stay reachable, so the folded setup opens again.
+      if (!generated && baselineInputError(model.voiceDesignValue, model.sampleText)?.field) setBaselineSetupCollapsed(false);
       if (!generated) return;
       setBaselineSetupCollapsible(true);
       setBaselineSetupCollapsed(true);
@@ -439,7 +431,7 @@ export function CharacterVoiceDialogs({ model }: { model: CharactersViewModel })
               {model.includeEmotions && !model.combinedVoiceDesignUnavailableReason && <EmotionStep model={model} />}
               {model.includeEmotions && <ReferenceLengthNotice candidates={model.project.candidates} baselineCandidateId={model.baselineCandidateId} emotionCandidateIds={model.emotionCandidateIds} />}
             </div>
-            <DialogFooter>
+            <DialogFooter leading={model.voiceDesignValidation.formError ? <FormError message={model.voiceDesignValidation.formError} /> : undefined}>
               <button type="button" onClick={dismissVoiceDesign}>
                 キャンセル
               </button>
@@ -450,26 +442,7 @@ export function CharacterVoiceDialogs({ model }: { model: CharactersViewModel })
         </div>
       )}
       {wavImportOpen && <WavImportDialog model={model} />}
-      {voiceSuggestionOpen && (
-        <div className="modal-backdrop">
-          <form className="modal voice-suggestion-modal" onSubmit={(event) => void suggestVoiceDesign(event)}>
-            <DialogHeader eyebrow="VOICE DESIGN ASSIST" title="AIに声の設計を相談" description="声の指定、基準用台詞、普通・喜・怒・哀・楽の短い台詞を提案します。生成後も編集できます。" />
-            <label>
-              声のアイデア
-              <textarea value={sourceKeywords} onChange={(event) => setSourceKeywords(event.target.value)} autoFocus />
-            </label>
-            <p className="connection-hint">接続先：{connection.model || "設定ページで選択してください"}</p>
-            <DialogFooter>
-              <button type="button" disabled={suggestingVoice} onClick={() => setVoiceSuggestionOpen(false)}>
-                キャンセル
-              </button>
-              <button className="primary ai-action-button" disabled={suggestingVoice}>
-                {suggestingVoice ? "声を設計中…" : "声の設計を提案"}
-              </button>
-            </DialogFooter>
-          </form>
-        </div>
-      )}
+      {voiceSuggestionOpen && <VoiceSuggestionDialog model={model} />}
     </>
   );
 }

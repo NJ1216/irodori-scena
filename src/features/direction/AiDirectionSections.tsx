@@ -1,4 +1,5 @@
 import { avatarImageUrl, IRODORI_EMOJI_PALETTE } from "../shared/studio-utils";
+import { FieldError } from "../shared/InlineValidation";
 import { useEmojiTooltip } from "../shared/EmojiTooltip";
 import { LineStatusIcon } from "../script/LineStatusIcon";
 import type { StudioProject } from "../../types";
@@ -135,7 +136,7 @@ export function EmojiSection({
   );
 }
 
-export function NumberRangesSection({ step, selected, ranges, onChange }: { step: number; selected: Record<Setting, boolean>; ranges: Record<RangeKey, string>; onChange: (key: RangeKey, value: string) => void }) {
+export function NumberRangesSection({ step, selected, ranges, error = "", errorField = null, onChange }: { step: number; selected: Record<Setting, boolean>; ranges: Record<RangeKey, string>; error?: string; errorField?: "rate" | "gap" | null; onChange: (key: RangeKey, value: string) => void }) {
   return (
     <section className="ai-direction-section">
       <h3 className="ai-direction-step">
@@ -149,9 +150,9 @@ export function NumberRangesSection({ step, selected, ranges, onChange }: { step
               話速
             </span>
             <span className="ai-direction-number-inputs">
-              <input type="number" step="0.05" value={ranges.rateMin} aria-label="話速の最小値" onChange={(e) => onChange("rateMin", e.currentTarget.value)} />
+              <input type="number" step="0.05" value={ranges.rateMin} aria-label="話速の最小値" data-validation-field="rate" aria-invalid={errorField === "rate" || undefined} onChange={(e) => onChange("rateMin", e.currentTarget.value)} />
               <b>〜</b>
-              <input type="number" step="0.05" value={ranges.rateMax} aria-label="話速の最大値" onChange={(e) => onChange("rateMax", e.currentTarget.value)} />
+              <input type="number" step="0.05" value={ranges.rateMax} aria-label="話速の最大値" aria-invalid={errorField === "rate" || undefined} onChange={(e) => onChange("rateMax", e.currentTarget.value)} />
             </span>
           </label>
         )}
@@ -162,14 +163,15 @@ export function NumberRangesSection({ step, selected, ranges, onChange }: { step
               発話間隔
             </span>
             <span className="ai-direction-number-inputs">
-              <input type="number" step="0.1" value={ranges.gapMin} aria-label="発話間隔の最小値" onChange={(e) => onChange("gapMin", e.currentTarget.value)} />
+              <input type="number" step="0.1" value={ranges.gapMin} aria-label="発話間隔の最小値" data-validation-field="gap" aria-invalid={errorField === "gap" || undefined} onChange={(e) => onChange("gapMin", e.currentTarget.value)} />
               <b>〜</b>
-              <input type="number" step="0.1" value={ranges.gapMax} aria-label="発話間隔の最大値" onChange={(e) => onChange("gapMax", e.currentTarget.value)} />
+              <input type="number" step="0.1" value={ranges.gapMax} aria-label="発話間隔の最大値" aria-invalid={errorField === "gap" || undefined} onChange={(e) => onChange("gapMax", e.currentTarget.value)} />
               <em>秒</em>
             </span>
           </label>
         )}
       </div>
+      <FieldError message={error} />
     </section>
   );
 }

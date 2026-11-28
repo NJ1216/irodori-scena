@@ -2,7 +2,8 @@ import { effectiveMix, editableMix } from "../lora/loraMix";
 import { useRef, useState } from "react";
 import type { Character, CharacterProfile, ImagePromptPreferences } from "../../types";
 import { emptyCharacterProfile, listText, listValues } from "../shared/studio-utils";
-import { notifyCharacterMemoLimit } from "./characterMemo";
+import { reportCharacterMemoLimit } from "./characterMemo";
+import { useInlineValidation } from "../shared/useInlineValidation";
 
 type SaveCallbacks = {
   imagePrompt: string;
@@ -24,6 +25,7 @@ export function useCharacterEditor(onNotice: (message: string) => void) {
   const [editAvatarChange, setEditAvatarChange] = useState<{ original: string; thumbnail: string } | null | undefined>(undefined);
   const avatarInput = useRef<HTMLInputElement>(null);
   const referenceInput = useRef<HTMLInputElement>(null);
+  const editValidation = useInlineValidation();
   const editableProfileDetails = (): CharacterProfile => ({ ...editDetails, aliases: listValues(editAliases), firstPerson: listValues(editFirstPerson), secondPerson: listValues(editSecondPerson) });
   function beginEdit(character: Character, prepare: () => void) {
     setEditing({ ...character, loraMix: editableMix(effectiveMix(character)) });
@@ -35,11 +37,13 @@ export function useCharacterEditor(onNotice: (message: string) => void) {
     setEditSecondPerson(listText(character.profileDetails?.secondPerson));
     setAvatarSource(null);
     setEditAvatarChange(undefined);
+    editValidation.clear();
     prepare();
   }
   function chooseAvatar(file: File | null) {
     if (!file) return;
-    if (!file.type.startsWith("image/")) return void onNotice("画像ファイルを選択してください。");
+    if (!file.type.startsWith("image/")) return void editValidation.report("画像ファイルを選択してください。", "avatar");
+    editValidation.clear("avatar");
     const reader = new FileReader();
     reader.onload = () => setAvatarSource(typeof reader.result === "string" ? reader.result : null);
     reader.onerror = () => onNotice("画像を読み込めませんでした。");
@@ -48,8 +52,8 @@ export function useCharacterEditor(onNotice: (message: string) => void) {
   async function saveEdit(event: React.FormEvent<HTMLFormElement>, callbacks: SaveCallbacks) {
     event.preventDefault();
     if (!editing) return;
-    if (!editName.trim()) return void onNotice("キャラクター名を入力してください。");
-    if (notifyCharacterMemoLimit(editProfile, onNotice)) return;
+    if (!editName.trim()) return void editValidation.report("キャラクター名を入力してください。", "editName");
+    if (reportCharacterMemoLimit(editProfile, editValidation.report, "editProfile")) return;
     const saved = await callbacks.onUpdate({ ...editing, lora: editing.lora?.enabled === false ? null : editing.lora, loraMix: editableMix(effectiveMix(editing)) }, editName, editProfile, editing.voiceKeywords, editableProfileDetails(), callbacks.imagePrompt, callbacks.preferences);
     if (!saved) return;
     if (editAvatarChange === null && !(await callbacks.onRemoveAvatar(editing))) return;
@@ -62,9 +66,10 @@ export function useCharacterEditor(onNotice: (message: string) => void) {
     editing,
     setEditing,
     editName,
-    setEditName,
+    setEditName: (value: React.SetStateAction<string>) => (setEditName(value), editValidation.clear("editName")),
     editProfile,
-    setEditProfile,
+    setEditProfile: (value: React.SetStateAction<string>) => (setEditProfile(value), editValidation.clear("editProfile")),
+    editValidation,
     editDetails,
     setEditDetails,
     editAliases,

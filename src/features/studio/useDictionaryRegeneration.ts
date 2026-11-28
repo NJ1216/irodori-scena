@@ -67,6 +67,7 @@ export function useDictionaryRegeneration(model: DictionaryRegenerationActions) 
       setBusy(null);
       setBatchGeneratingLineId(null);
     }
-    setNotice(failure ? `${completed}行を再生成したところで停止しました: ${failure}` : `${completed}行を再生成しました。`);
+    if (failure) setNotice(`${completed}行を再生成したところで停止しました: ${failure}`);
+    else setStatusNotice(`${completed}行を再生成しました。`);
   };
 }

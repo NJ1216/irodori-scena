@@ -1,6 +1,6 @@
 [package]
 name = "irodori-scena"
-version = "26.11.27"
+version = "26.11.28"
 description = "irodori SCENA development shell"
 authors = ["irodori SCENA"]
 edition = "2021"

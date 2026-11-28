@@ -5,7 +5,7 @@ import { importDesignedReference, saveDesignedReference } from "./referenceVoice
 import type { CharacterActionModel } from "./studioCharacterActionTypes";
 
 export function useVoiceCandidateActions(model: CharacterActionModel) {
-  const { editSession, setBusy, setNotice, stop } = model;
+  const { editSession, setBusy, setNotice, setStatusNotice, stop } = model;
   async function generateCandidates(keywords: string, count: number, sampleText: string, options?: { kind: "baseline" | "emotion"; emotion?: VoiceDesignEmotion; referenceCandidateId?: string; speechRate?: number; textCfg?: number; voiceCfg?: number; captionCfg?: number; voiceDesign?: VoiceDesign }) {
     setBusy("candidates");
     setNotice("VoiceDesign候補を生成しています。最初の生成は少し時間がかかります。");
@@ -15,7 +15,8 @@ export function useVoiceCandidateActions(model: CharacterActionModel) {
         (current, result) => ({ ...current, candidates: [...current.candidates, ...result.candidates] }),
       );
       if (!result) return false;
-      setNotice(`${result.candidates.length} 件の声候補を追加しました。採用しない候補はページを離れると消去されます。`);
+      // A status notice: the candidates appear in the dialog itself, so the completion must not cover it with the overlay.
+      setStatusNotice(`${result.candidates.length} 件の声候補を追加しました。採用しない候補はページを離れると消去されます。`);
       return true;
     } catch (error) {
       setNotice(`候補を作れませんでした: ${(error as Error).message}`);
@@ -24,7 +25,7 @@ export function useVoiceCandidateActions(model: CharacterActionModel) {
       setBusy(null);
     }
   }
-  const importVoiceDesignReference = (file: File, options?: { kind: "baseline" | "emotion"; emotion?: VoiceDesignEmotion; referenceCandidateId?: string }) => importDesignedReference({ stop, setBusy, editSession, setNotice }, file, options);
-  const saveVoiceDesign = (payload: Parameters<typeof api.saveVoiceDesign>[0]) => saveDesignedReference({ stop, setBusy, editSession, setNotice }, payload);
+  const importVoiceDesignReference = (file: File, options?: { kind: "baseline" | "emotion"; emotion?: VoiceDesignEmotion; referenceCandidateId?: string }) => importDesignedReference({ stop, setBusy, editSession, setNotice, setStatusNotice }, file, options);
+  const saveVoiceDesign = (payload: Parameters<typeof api.saveVoiceDesign>[0]) => saveDesignedReference({ stop, setBusy, editSession, setNotice, setStatusNotice }, payload);
   return { generateCandidates, importVoiceDesignReference, saveVoiceDesign };
 }

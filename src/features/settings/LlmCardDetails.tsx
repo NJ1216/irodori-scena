@@ -4,7 +4,7 @@ import { LlmCardTestControls } from "./LlmCardTestControls";
 import { modelTestDisabled } from "./modelRuntimeChoices";
 import { ModelRuntimeSetting } from "./ModelRuntimeSetting";
 import { MtpSetting } from "./MtpSetting";
-import { visibleEndpointUrl } from "./llmCardPresentation";
+import { isAnthropicEndpoint, llmProviderLabel, visibleEndpointUrl } from "./llmCardPresentation";
 import { DeferredNumberInput } from "../shared/DeferredNumberInput";
 
 type Settings = LlmCard["settings"];
@@ -13,13 +13,6 @@ const statusLabels: Record<LlmCard["testStatus"]["state"], string> = {
   failed: "接続またはモデルの使用に問題があります。",
   testing: "接続とモデルの基本動作を確認しています…",
   untested: "まだ動作確認していません。",
-};
-
-const providerLabels: Record<LlmEndpoint["provider"], string> = {
-  ollama: "Ollama",
-  lmstudio: "LM Studio",
-  openai: "OpenAI互換",
-  "scena-local": "SCENA",
 };
 
 const capabilitySources = {
@@ -90,34 +83,37 @@ function AdvancedSettings({ card, endpoint, settings, setSettings }: { card: Llm
         <input type="checkbox" checked={settings.thinking} onChange={(event) => setSettings({ ...settings, thinking: event.target.checked })} />
         Thinkingを有効にする
       </label>
-      <fieldset className="llm-sampling-settings">
-        <legend>生成のばらつき</legend>
-        <p className="subtle">未指定の項目は、台本作成や発音提案など各機能の既定値を使います。</p>
-        <label>
-          Temperature
-          <DeferredNumberInput min={0} max={2} step={0.05} placeholder="機能の既定値" value={settings.temperature ?? undefined} onCommit={(value) => setSettings({ ...settings, temperature: value ?? null })} />
-        </label>
-        <label>
-          Top-p
-          <DeferredNumberInput min={0} max={1} step={0.05} placeholder="モデルの既定値" value={settings.topP ?? undefined} onCommit={(value) => setSettings({ ...settings, topP: value ?? null })} />
-        </label>
-        {endpoint?.provider !== "openai" && (
-          <>
-            <label>
-              Top-k
-              <DeferredNumberInput min={0} max={1000} step={1} placeholder="モデルの既定値" value={settings.topK ?? undefined} onCommit={(value) => setSettings({ ...settings, topK: value ?? null })} />
-            </label>
-            <label>
-              Min-p
-              <DeferredNumberInput min={0} max={1} step={0.01} placeholder="モデルの既定値" value={settings.minP ?? undefined} onCommit={(value) => setSettings({ ...settings, minP: value ?? null })} />
-            </label>
-            <label>
-              繰り返し抑制
-              <DeferredNumberInput min={0} max={2} step={0.05} placeholder="モデルの既定値" value={settings.repetitionPenalty ?? undefined} onCommit={(value) => setSettings({ ...settings, repetitionPenalty: value ?? null })} />
-            </label>
-          </>
-        )}
-      </fieldset>
+      {/* The server never sends sampling values to Anthropic, so the controls would have no effect. */}
+      {!isAnthropicEndpoint(endpoint) && (
+        <fieldset className="llm-sampling-settings">
+          <legend>生成のばらつき</legend>
+          <p className="subtle">未指定の項目は、台本作成や発音提案など各機能の既定値を使います。</p>
+          <label>
+            Temperature
+            <DeferredNumberInput min={0} max={2} step={0.05} placeholder="機能の既定値" value={settings.temperature ?? undefined} onCommit={(value) => setSettings({ ...settings, temperature: value ?? null })} />
+          </label>
+          <label>
+            Top-p
+            <DeferredNumberInput min={0} max={1} step={0.05} placeholder="モデルの既定値" value={settings.topP ?? undefined} onCommit={(value) => setSettings({ ...settings, topP: value ?? null })} />
+          </label>
+          {endpoint?.provider !== "openai" && (
+            <>
+              <label>
+                Top-k
+                <DeferredNumberInput min={0} max={1000} step={1} placeholder="モデルの既定値" value={settings.topK ?? undefined} onCommit={(value) => setSettings({ ...settings, topK: value ?? null })} />
+              </label>
+              <label>
+                Min-p
+                <DeferredNumberInput min={0} max={1} step={0.01} placeholder="モデルの既定値" value={settings.minP ?? undefined} onCommit={(value) => setSettings({ ...settings, minP: value ?? null })} />
+              </label>
+              <label>
+                繰り返し抑制
+                <DeferredNumberInput min={0} max={2} step={0.05} placeholder="モデルの既定値" value={settings.repetitionPenalty ?? undefined} onCommit={(value) => setSettings({ ...settings, repetitionPenalty: value ?? null })} />
+              </label>
+            </>
+          )}
+        </fieldset>
+      )}
       {endpoint?.provider === "scena-local" && (
         <>
           <label className="checkbox-line">
@@ -219,7 +215,7 @@ function ConnectionFacts({ card, endpoint, endpointUrl }: { card: LlmCard; endpo
       <div>
         <dt>LLMモデル</dt>
         <dd title={card.modelId}>
-          {card.modelId} ({endpoint ? providerLabels[endpoint.provider] : "LLM"})
+          {card.modelId} ({endpoint ? llmProviderLabel(endpoint) : "LLM"})
         </dd>
       </div>
       {endpointUrl && (

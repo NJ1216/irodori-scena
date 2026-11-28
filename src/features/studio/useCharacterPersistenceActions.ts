@@ -5,7 +5,7 @@ import { adoptCandidateReference, replaceCharacterReference } from "./referenceV
 import type { CharacterActionModel } from "./studioCharacterActionTypes";
 
 export function useCharacterPersistenceActions(model: CharacterActionModel) {
-  const { editSession, setNotice, setBusy, stop } = model;
+  const { editSession, setNotice, setStatusNotice, setBusy, stop } = model;
   async function acceptCandidate(candidate: VoiceCandidate, name: string, profile: string) {
     setBusy(candidate.id);
     try {
@@ -23,8 +23,8 @@ export function useCharacterPersistenceActions(model: CharacterActionModel) {
       setBusy(null);
     }
   }
-  const updateCharacterReference = (character: Character, file: File) => replaceCharacterReference({ stop, setBusy, editSession, setNotice }, character, file);
-  const applyCandidateReference = (character: Character, candidateId: string) => adoptCandidateReference({ stop, setBusy, editSession, setNotice }, character, candidateId);
+  const updateCharacterReference = (character: Character, file: File) => replaceCharacterReference({ stop, setBusy, editSession, setNotice, setStatusNotice }, character, file);
+  const applyCandidateReference = (character: Character, candidateId: string) => adoptCandidateReference({ stop, setBusy, editSession, setNotice, setStatusNotice }, character, candidateId);
   async function importReference(file: File, name: string, profile: string) {
     setBusy("import-reference");
     try {
@@ -89,7 +89,7 @@ export function useCharacterPersistenceActions(model: CharacterActionModel) {
         (current, result) => ({ ...current, characters: current.characters.map((item) => (item.id === result.id ? result : item)) }),
       );
       if (!updated) return false;
-      setNotice(`「${updated.name}」の画像を更新しました。`);
+      setStatusNotice(`「${updated.name}」の画像を更新しました。`);
       return true;
     } catch (error) {
       setNotice(`キャラクター画像を保存できませんでした: ${(error as Error).message}`);
@@ -106,7 +106,7 @@ export function useCharacterPersistenceActions(model: CharacterActionModel) {
         (current, result) => ({ ...current, characters: current.characters.map((item) => (item.id === result.id ? result : item)) }),
       );
       if (!updated) return false;
-      setNotice(`「${updated.name}」の画像を解除しました。`);
+      setStatusNotice(`「${updated.name}」の画像を解除しました。`);
       return true;
     } catch (error) {
       setNotice(`キャラクター画像を解除できませんでした: ${(error as Error).message}`);

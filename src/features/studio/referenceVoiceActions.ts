@@ -7,6 +7,7 @@ type ReferenceVoiceModel = {
   setBusy: (value: string | null) => void;
   editSession: ProjectEditSession;
   setNotice: (message: string) => void;
+  setStatusNotice: (message: string) => void;
 };
 
 export async function replaceCharacterReference(model: ReferenceVoiceModel, character: Character, file: File) {
@@ -79,7 +80,7 @@ export async function importDesignedReference(model: ReferenceVoiceModel, file: 
       (current, value) => ({ ...current, candidates: [...current.candidates, value.candidate] }),
     );
     if (!result) return null;
-    model.setNotice(options?.kind === "emotion" ? "参照ボイスを感情候補として読み込みました。" : "参照ボイスを基準候補として読み込みました。");
+    model.setStatusNotice(options?.kind === "emotion" ? "参照ボイスを感情候補として読み込みました。" : "参照ボイスを基準候補として読み込みました。");
     return result.candidate;
   } catch (error) {
     model.setNotice(`参照ボイスを読み込めませんでした: ${(error as Error).message}`);

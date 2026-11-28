@@ -4,6 +4,7 @@ import socket
 
 from server.app_deps import hashlib, http, time, Path, Any, Callable, urlsplit, uuid4
 from server.registry import deps
+from server.modules.anthropic_messages import MessagesResponse, outgoing_request
 
 # Bound a silent connection, not the total duration of a long script.
 LLM_SOCKET_TIMEOUT_SECONDS = 600
@@ -65,6 +66,7 @@ def openai_http_post(
     also interrupts DNS/TCP/TLS setup and the wait for response headers.
     """
     _raise_if_draft_cancelled(should_cancel)
+    endpoint, body, headers, anthropic_stream = outgoing_request(endpoint, body, headers)
     parsed = urlsplit(endpoint)
     if parsed.scheme not in {"http", "https"} or not parsed.hostname:
         raise RuntimeError("LLM endpoint must be an HTTP or HTTPS URL.")
@@ -77,6 +79,8 @@ def openai_http_post(
         connection._scena_socket = getattr(connection, "sock", None)
         response = connection.getresponse()
         _raise_if_draft_cancelled(should_cancel)
+        if anthropic_stream is not None:
+            response = MessagesResponse(response, stream=anthropic_stream)
         return (connection, response)
     except Exception as error:
         unregister_draft_llm_response(connection)

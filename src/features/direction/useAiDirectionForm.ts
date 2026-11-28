@@ -5,6 +5,7 @@ import type { ProjectEditSession, ProjectOperation } from "../studio/projectEdit
 import { IRODORI_EMOJI_PALETTE } from "../shared/studio-utils";
 import { buildDirectionLines, type RangeKey, type Removal, type Setting, type TakeMode } from "./aiDirectionLines";
 import { useAiDirectionProgress } from "./useAiDirectionProgress";
+import { useInlineValidation } from "../shared/useInlineValidation";
 
 type CompleteHandler = (project: StudioProject, lineIds: string[], takeMode: TakeMode, operation: ProjectOperation) => void;
 
@@ -48,7 +49,12 @@ export function useAiDirectionForm({ project, projectSession, onClose, onComplet
   const { selected, removed, toggleDirectionMode } = useSettingToggles();
   const [castEmoji, setCastEmoji] = useState<Record<string, boolean>>({});
   const [allowed, setAllowed] = useState<string[]>(IRODORI_EMOJI_PALETTE.map(([emoji]) => emoji));
-  const { ranges, setRange } = useRangeDrafts();
+  const { ranges, setRange: setRangeDraft } = useRangeDrafts();
+  const validation = useInlineValidation();
+  const setRange = (key: RangeKey, value: string) => {
+    setRangeDraft(key, value);
+    validation.clear(key.startsWith("rate") ? "rate" : "gap");
+  };
   const [takeMode, setTakeMode] = useState<TakeMode>("append");
   const [job, setJob] = useState<DraftJob | null>(null);
   const running = Boolean(job && ["planning", "generating"].includes(job.status));
@@ -58,10 +64,11 @@ export function useAiDirectionForm({ project, projectSession, onClose, onComplet
   const targetCasts = targetCastIds.map((id) => project.characters.find((character) => character.id === id)).filter((character) => character !== undefined);
   const emojiActive = selected.emoji && targetCastIds.some((id) => castEmoji[id] ?? true);
   const parsedRanges = [ranges.rateMin, ranges.rateMax, ranges.gapMin, ranges.gapMax].map(Number);
-  const rangeValid = (!selected.rate || (Number.isFinite(parsedRanges[0]) && Number.isFinite(parsedRanges[1]) && parsedRanges[0] <= parsedRanges[1])) && (!selected.gap || (Number.isFinite(parsedRanges[2]) && Number.isFinite(parsedRanges[3]) && parsedRanges[2] <= parsedRanges[3]));
+  const validRange = (min: string, max: string) => min.trim() !== "" && max.trim() !== "" && Number.isFinite(Number(min)) && Number.isFinite(Number(max)) && Number(min) <= Number(max);
+  const invalidRange = selected.rate && !validRange(ranges.rateMin, ranges.rateMax) ? "rate" : selected.gap && !validRange(ranges.gapMin, ranges.gapMax) ? "gap" : null;
   const execute = async () => {
-    if (!rangeValid) {
-      onNotice("話速と発話間隔は、最小値が最大値以下になる数値で入力してください。");
+    if (invalidRange) {
+      validation.report("話速と発話間隔は、最小値が最大値以下になる数値で入力してください。", invalidRange);
       return;
     }
     try {
@@ -93,5 +100,33 @@ export function useAiDirectionForm({ project, projectSession, onClose, onComplet
     }
   };
   const enabled = emojiActive || selected.rate || selected.gap || selected.direction || Object.values(removed).some(Boolean);
-  return { lines, start, setStart, end, setEnd, overwriteExisting, setOverwriteExisting, selected, removed, toggleDirectionMode, castEmoji, setCastEmoji, allowed, setAllowed, ranges, setRange, takeMode, setTakeMode, job, setJob, running, targetCasts, emojiActive, rangeValid, execute, enabled };
+  return {
+    lines,
+    start,
+    setStart,
+    end,
+    setEnd,
+    overwriteExisting,
+    setOverwriteExisting,
+    selected,
+    removed,
+    toggleDirectionMode,
+    castEmoji,
+    setCastEmoji,
+    allowed,
+    setAllowed,
+    ranges,
+    setRange,
+    takeMode,
+    setTakeMode,
+    job,
+    setJob,
+    running,
+    targetCasts,
+    emojiActive,
+    rangeError: validation.fieldError("rate") || validation.fieldError("gap"),
+    rangeErrorField: validation.fieldError("rate") ? ("rate" as const) : validation.fieldError("gap") ? ("gap" as const) : null,
+    execute,
+    enabled,
+  };
 }

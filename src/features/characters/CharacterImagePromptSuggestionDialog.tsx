@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { FormError } from "../shared/InlineValidation";
 import { createPortal } from "react-dom";
 import type { CharactersViewModel } from "./useCharactersViewModel";
 import { ACCESSORY_GROUPS, prioritizedAppearanceOptions } from "./imagePromptAppearanceOptions";
@@ -345,11 +346,7 @@ export function CharacterImagePromptSuggestionDialog({ model: m }: { model: Char
               </label>
             </fieldset>
           </div>
-          {m.imagePromptSuggestionError && (
-            <p className="character-profile-suggestion-error" role="alert">
-              {m.imagePromptSuggestionError}
-            </p>
-          )}
+          <FormError message={m.imagePromptSuggestionError} />
           <DialogFooter className="image-prompt-footer">
             <button type="button" disabled={m.suggestingImagePrompt} onClick={() => m.setImagePromptSuggestionOpen(false)}>
               キャンセル

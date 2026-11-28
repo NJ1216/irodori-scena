@@ -1,11 +1,12 @@
 import { useEffect, useId, useRef, useState } from "react";
+import { FieldError } from "../shared/InlineValidation";
 import { createPortal } from "react-dom";
 import { InformationTip } from "../shared/InformationTip";
 import type { VoiceDesign } from "./voiceDesign";
 import { voiceDesignAges, voiceDesignGenders, voiceDesignPitches, voiceDesignQualities, voiceDesignStyles } from "./voiceDesign";
 
 type Field = "age" | "gender" | "pitch" | "qualities" | "style" | "notes";
-type Props = { value: VoiceDesign; suggested: Set<Field>; onChange: (value: VoiceDesign, field: Field) => void };
+type Props = { value: VoiceDesign; suggested: Set<Field>; notesError?: string; onChange: (value: VoiceDesign, field: Field) => void };
 
 function Menu({ anchor, children, onClose }: { anchor: HTMLElement; children: React.ReactNode; onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -156,7 +157,7 @@ function QualitySelect({ value, suggested, onChange }: { value: string[]; sugges
   );
 }
 
-export function VoiceDesignForm({ value, suggested, onChange }: Props) {
+export function VoiceDesignForm({ value, suggested, notesError = "", onChange }: Props) {
   const set = <K extends keyof VoiceDesign>(key: K, next: VoiceDesign[K], field: Field) => onChange({ ...value, [key]: next }, field);
   return (
     <div className="voice-design-structured-grid">
@@ -167,7 +168,8 @@ export function VoiceDesignForm({ value, suggested, onChange }: Props) {
       <SingleSelect label="話し方" value={value.style} options={voiceDesignStyles} suggested={suggested.has("style")} onChange={(next) => set("style", next, "style")} />
       <label className={`voice-design-field voice-design-notes-field${suggested.has("notes") ? " is-ai-suggested" : ""}`}>
         <span>追加要望・備考</span>
-        <textarea value={value.notes} onChange={(event) => set("notes", event.target.value, "notes")} placeholder="選択肢にない特徴や補足" />
+        <textarea value={value.notes} data-validation-field="notes" aria-invalid={Boolean(notesError) || undefined} onChange={(event) => set("notes", event.target.value, "notes")} placeholder="選択肢にない特徴や補足" />
+        <FieldError message={notesError} />
       </label>
     </div>
   );

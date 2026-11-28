@@ -10,6 +10,7 @@ import { CharacterRelationFields, CharacterSpeechFields } from "./CharacterSpeec
 import { CharacterImagePromptEditor } from "./CharacterImagePromptEditor";
 import { AudioPlaybackBar } from "./AudioPlaybackBar";
 import { CharacterMemoField } from "./CharacterMemoField";
+import { FieldError } from "../shared/InlineValidation";
 
 function ReferenceChangeSetting({ model }: { model: CharactersViewModel }) {
   const { editing, busy, referenceInput, activeReferenceAudio, onUpdateReference, setEditing, beginReferenceVoiceDesign, beginReferencePlayback, endReferencePlayback, voiceDesignUnavailableReason } = model;
@@ -60,12 +61,31 @@ function ReferenceChangeSetting({ model }: { model: CharactersViewModel }) {
 }
 
 export function CharacterEditDialog({ model }: { model: CharactersViewModel }) {
-  const { busy, editing, setEditing, editProfile, setEditProfile, setAvatarSource, editAvatarChange, setEditAvatarChange, setProfileSuggestionOpen, setProfileSuggestionError, profileSuggestionFields, profileSuggestionRelations, avatarInput, suggestingProfile, editAvatarPreview, chooseAvatar, saveEdit } = model;
+  const {
+    busy,
+    editing,
+    setEditing,
+    editProfile,
+    setEditProfile,
+    setAvatarSource,
+    editAvatarChange,
+    setEditAvatarChange,
+    setProfileSuggestionOpen,
+    setProfileSuggestionError,
+    profileSuggestionFields,
+    profileSuggestionRelations,
+    avatarInput,
+    suggestingProfile,
+    editAvatarPreview,
+    chooseAvatar,
+    saveEdit,
+    editValidation,
+  } = model;
   return (
     <>
       {editing && (
         <div className="modal-backdrop">
-          <form className="modal character-edit-modal" onSubmit={(event) => void saveEdit(event)}>
+          <form className="modal character-edit-modal" noValidate onSubmit={(event) => void saveEdit(event)}>
             <DialogHeader
               eyebrow="EDIT CAST"
               title="キャストの設定を編集"
@@ -102,7 +122,7 @@ export function CharacterEditDialog({ model }: { model: CharactersViewModel }) {
                 <b>キャラクター画像</b>
                 <small>未設定時は頭文字アイコンを使用します。</small>
                 <div className="avatar-setting-actions">
-                  <button type="button" className="secondary" disabled={busy === `avatar-${editing.id}`} onClick={() => avatarInput.current?.click()}>
+                  <button type="button" className="secondary" data-validation-field="avatar" disabled={busy === `avatar-${editing.id}`} onClick={() => avatarInput.current?.click()}>
                     画像を選択
                   </button>
                   {editAvatarPreview && (
@@ -116,6 +136,7 @@ export function CharacterEditDialog({ model }: { model: CharactersViewModel }) {
                     </button>
                   )}
                 </div>
+                <FieldError message={editValidation.fieldError("avatar")} />
               </div>
               <CharacterImagePromptEditor model={model} />
             </div>
@@ -126,7 +147,7 @@ export function CharacterEditDialog({ model }: { model: CharactersViewModel }) {
             <CharacterDetailFields model={model} />
             <section className="character-settings-section underlined-fields" aria-labelledby="character-memo-heading">
               <h2 id="character-memo-heading">自由メモ</h2>
-              <CharacterMemoField label="上の項目に収まらない設定" value={editProfile} onChange={setEditProfile} placeholder="上の項目に収まらない設定や、補足。" />
+              <CharacterMemoField label="上の項目に収まらない設定" validationField="editProfile" value={editProfile} onChange={setEditProfile} placeholder="上の項目に収まらない設定や、補足。" />
             </section>
             <DialogFooter>
               <button

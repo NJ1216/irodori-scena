@@ -53,6 +53,32 @@ it("reflects the newly added default model without a separate selection request"
   }
 });
 
+it("adds Anthropic as the official endpoint with a required key and labels its card", async () => {
+  vi.spyOn(api, "llmRegistry").mockResolvedValue({ ...registry, defaultCardId: "gemma" });
+  const endpoint = { id: "claude", provider: "openai", displayName: "openai", baseUrl: "https://api.anthropic.com/v1", hasCredential: true } as LlmRegistry["endpoints"][number];
+  const card = { ...registry.cards[0], id: "claude-card", endpointId: "claude", modelId: "claude-sonnet-5-5", displayName: "Claude" };
+  const saved = { ...registry, defaultCardId: card.id, endpoints: [...registry.endpoints, endpoint], cards: [...registry.cards, card] };
+  const inspect = vi.spyOn(api, "inspectRemoteLlmModels").mockResolvedValue({ models: [card.modelId] });
+  const add = vi.spyOn(api, "createRemoteLlmSetting").mockResolvedValue({ registry: saved, card });
+  render(<LlmRegistrySetting />);
+  fireEvent.click(await screen.findByRole("button", { name: /Gemma/ }));
+  fireEvent.click(await screen.findByRole("button", { name: /接続先を追加/ }));
+  const dialog = within(await screen.findByRole("dialog", { name: "接続先からLLMを追加" }));
+  fireEvent.change(dialog.getByRole("combobox", { name: "種類" }), { target: { value: "anthropic" } });
+  expect(dialog.getByRole("textbox", { name: "URL" })).toHaveValue("https://api.anthropic.com/v1");
+  expect(dialog.queryByRole("checkbox", { name: /API Keyを設定/ })).not.toBeInTheDocument();
+  expect(dialog.getByRole("button", { name: "モデルを確認" })).toBeDisabled();
+  fireEvent.change(dialog.getByLabelText(/^API Key(?!を)/), { target: { value: "sk-ant-test" } });
+  fireEvent.click(dialog.getByRole("button", { name: "モデルを確認" }));
+  await waitFor(() => expect(dialog.getByRole("button", { name: "このモデルを追加" })).toBeEnabled());
+  fireEvent.click(dialog.getByRole("button", { name: "このモデルを追加" }));
+  const expected = { provider: "openai", baseUrl: "https://api.anthropic.com/v1", credential: "sk-ant-test" };
+  expect(inspect).toHaveBeenCalledWith(expected);
+  expect(add).toHaveBeenCalledWith({ ...expected, modelId: "claude-sonnet-5-5" });
+  const added = await screen.findByRole("button", { name: /Claude/ });
+  expect(within(added).getByText("Anthropic")).toBeInTheDocument();
+});
+
 it("does not present an unselected Ollama card as the default", async () => {
   vi.spyOn(api, "llmRegistry").mockResolvedValue(registry);
   render(<LlmRegistrySetting />);

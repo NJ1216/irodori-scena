@@ -9,6 +9,7 @@ import { confirmDestructiveAction, useDestructiveConfirmation } from "../shared/
 import { BuiltInLlmDialog } from "./BuiltInLlmDialog";
 import { RemoteDialog } from "./RemoteLlmDialog";
 import { LlmCardDetails } from "./LlmCardDetails";
+import { llmProviderLabel } from "./llmCardPresentation";
 import { ModelBoardCardFooter } from "./ModelBoardCardFooter";
 import { modelRegistryCache } from "../shared/modelRegistryCache";
 import { ModelSelectionPopover } from "./ModelSelectionPopover";
@@ -16,12 +17,6 @@ import { sortLlmModelCards } from "./modelCardOrder";
 import { OmlxRuntimeSetting } from "./OmlxRuntimeSetting";
 import { useSequentialPolling } from "../shared/useSequentialPolling";
 
-const labels: Record<LlmEndpoint["provider"], string> = {
-  ollama: "Ollama",
-  lmstudio: "LM Studio",
-  openai: "OpenAI互換",
-  "scena-local": "SCENA",
-};
 const providerClasses: Record<LlmEndpoint["provider"], string> = {
   ollama: "is-ollama",
   lmstudio: "is-lmstudio",
@@ -120,7 +115,7 @@ function LlmCardContent({ card, endpoint, isDefault }: { card: LlmCard; endpoint
       <span className="model-card-heading">
         <strong>{card.displayName}</strong>
       </span>
-      <span className="model-card-body llm-card-meta">{endpoint ? <span className={`model-card-tag ${providerClasses[endpoint.provider]}`}>{labels[endpoint.provider]}</span> : <span className="model-card-tag is-unknown">LLM</span>}</span>
+      <span className="model-card-body llm-card-meta">{endpoint ? <span className={`model-card-tag ${providerClasses[endpoint.provider]}`}>{llmProviderLabel(endpoint)}</span> : <span className="model-card-tag is-unknown">LLM</span>}</span>
       {card.source !== "remote" && <RuntimeBadge card={card} />}
       <ModelBoardCardFooter isDefault={isDefault} metadata={`${revision} · ${size}`} />
     </>
@@ -156,7 +151,7 @@ function LlmModelSelector({ registry, message, onAccept, onMessage, onDialog, on
     </button>,
     <button key="remote" type="button" className="llm-add-card model-add-card registry-add-card" onClick={() => onDialog("remote")}>
       <strong>+ 接続先を追加</strong>
-      <span>Ollama・LM Studio・OpenAI互換</span>
+      <span>Ollama・LM Studio・OpenAI互換・Anthropic</span>
     </button>,
   ];
   return (

@@ -1,4 +1,5 @@
 import type { CharactersViewModel } from "./useCharactersViewModel";
+import { FormError } from "../shared/InlineValidation";
 import { DialogFooter, DialogHeader, ModalBackdrop } from "../shared/overlays";
 
 export function CharacterProfileSuggestionDialog({ model }: { model: CharactersViewModel }) {
@@ -70,11 +71,7 @@ export function CharacterProfileSuggestionDialog({ model }: { model: CharactersV
                   autoFocus
                 />
               </label>
-              {profileSuggestionError && (
-                <p className="character-profile-suggestion-error" role="alert">
-                  {profileSuggestionError}
-                </p>
-              )}
+              <FormError message={profileSuggestionError} />
               {suggestingProfile && profileSuggestionProgress && (
                 <p className="connection-hint" role="status">
                   {profileSuggestionProgress}

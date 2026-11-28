@@ -35,5 +35,7 @@ export type CharactersViewModelProps = {
   onClearCandidates: () => Promise<void>;
   onClearCandidateScope: (kind: "baseline" | "emotion", options?: { emotion?: VoiceDesignEmotion; referenceCandidateId?: string }) => Promise<boolean>;
   onNotice: (text: string) => void;
+  /** Header-only notice for results the open dialog already shows; never raises the dialog overlay. */
+  onStatusNotice: (text: string) => void;
   onBusy: (value: string | null) => void;
 };

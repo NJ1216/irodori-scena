@@ -288,8 +288,8 @@ test("regenerates a saved cast reference through VoiceDesign", async ({ page }) 
   await page.getByRole("button", { name: "VoiceDesignで再生成" }).click();
   await expect(page.getByRole("dialog", { name: "声の候補をつくる" })).toBeVisible();
   await page.getByRole("button", { name: "基準ボイス候補をつくる" }).click();
-  await expect(page.getByRole("status", { name: "通知" })).toContainText("声候補を追加しました");
-  await page.getByRole("button", { name: "通知を閉じる" }).click();
+  await expect(page.locator(".notice")).toContainText("声候補を追加しました");
+  await expect(page.getByRole("status", { name: "通知" })).toBeHidden();
   await page.getByRole("button", { name: "基準候補 Aを再生" }).click();
   await page.getByRole("button", { name: "参照ボイスを置き換える" }).click();
   await expect(page.locator(".notice")).toContainText("参照ボイスを更新");

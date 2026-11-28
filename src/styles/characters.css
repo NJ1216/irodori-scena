@@ -1475,17 +1475,6 @@
   padding: 10px var(--scena-space-3);
   resize: vertical;
 }
-.character-profile-suggestion-error {
-  margin: 0;
-  padding: 9px 10px;
-  color: var(--scena-danger-strong);
-  background: var(--scena-danger-soft);
-  border: 1px solid var(--scena-danger-border);
-  border-radius: var(--scena-radius-sm);
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.55;
-}
 .character-edit-voice {
   display: grid;
   gap: 6px;
@@ -1719,13 +1708,6 @@
 }
 .character-settings-section textarea {
   min-height: var(--scena-cast-settings-long-field-height);
-}
-.character-memo-limit-error {
-  margin: 0;
-  color: var(--scena-danger-strong);
-  font-size: var(--type-small-size);
-  font-weight: 800;
-  line-height: 1.5;
 }
 .character-settings-grid {
   display: grid;

@@ -9,6 +9,8 @@ from typing import Any
 from urllib.parse import urlsplit
 
 VERIFIED_AT = "2026-09-05"
+# Families re-checked after VERIFIED_AT keep their own date.
+VERIFIED_AT_BY_FAMILY = {"claude": "2026-11-28"}
 
 # family, exact IDs, context/input ceiling, output ceiling, official source
 CATALOG = (
@@ -28,9 +30,12 @@ CATALOG = (
      "https://developers.openai.com/api/docs/models/gpt-4.1"),
     ("openai", ("gpt-5.2", "gpt-5.2-2025-12-11"), 400000, 128000,
      "https://developers.openai.com/api/docs/models/gpt-5.2"),
-    ("claude", ("claude-fable-5-1", "claude-opus-5", "claude-sonnet-5"), 1000000, 128000,
+    ("claude", ("claude-fable-5-2", "claude-fable-5-1", "claude-fable-5", "claude-mythos-5-2",
+                "claude-mythos-5-1", "claude-mythos-5", "claude-opus-5-5", "claude-opus-5", "claude-opus-4-8",
+                "claude-opus-4-7", "claude-opus-4-6", "claude-sonnet-5-5", "claude-sonnet-5",
+                "claude-sonnet-4-6", "claude-haiku-5-5"), 1000000, 128000,
      "https://platform.claude.com/docs/en/models/overview"),
-    ("claude", ("claude-haiku-4-5-20251001",), 200000, 64000,
+    ("claude", ("claude-haiku-4-5", "claude-haiku-4-5-20251001"), 200000, 64000,
      "https://platform.claude.com/docs/en/models/overview"),
     ("deepseek", ("deepseek-v4-flash", "deepseek-v4-pro"), 1000000, 384000,
      "https://api-docs.deepseek.com/quick_start/pricing/"),
@@ -52,6 +57,8 @@ ENDPOINTS = {
     ("generativelanguage.googleapis.com", "/v1beta/openai"): "gemini",
     ("generativelanguage.googleapis.com", "/v1/openai"): "gemini",
     ("api.openai.com", "/v1"): "openai",
+    ("api.anthropic.com", ""): "claude",
+    ("api.anthropic.com", "/v1"): "claude",
     ("api.deepseek.com", ""): "deepseek",
     ("api.deepseek.com", "/v1"): "deepseek",
     ("coding-intl.dashscope.aliyuncs.com", "/v1"): "qwen",
@@ -65,7 +72,8 @@ def catalog_entry(family: str, model: str) -> dict[str, Any] | None:
     for entry_family, ids, context, output, url in CATALOG:
         if family == entry_family and identity in ids:
             return {"family": family, "modelId": identity, "inputTokenLimit": context,
-                    "outputTokenLimit": output, "sourceUrl": url, "verifiedAt": VERIFIED_AT}
+                    "outputTokenLimit": output, "sourceUrl": url,
+                    "verifiedAt": VERIFIED_AT_BY_FAMILY.get(family, VERIFIED_AT)}
     return None
 
 

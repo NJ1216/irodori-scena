@@ -14,6 +14,8 @@ from server.modules.llm_response_reading import (  # noqa: F401 - registered bel
     extract_usage_metrics,
 )
 from server.modules.windows_external_memory import windows_accelerator_handoff
+from server.modules.anthropic_messages import anthropic_headers, anthropic_models_url, is_anthropic_base_url, model_ids
+from server.modules.llm_official_endpoints import chat_model_ids
 
 def request_headers(api_key: str) -> dict[str, str]:
     headers = {"Content-Type": "application/json"}
@@ -38,6 +40,8 @@ def list_llm_models(request: deps.ModelListRequest) -> list[str]:
         endpoint = f"{root}/api/tags"
     elif request.provider == "lmstudio":
         return deps.list_lmstudio_models(request)
+    elif is_anthropic_base_url(base):
+        return _list_anthropic_models(request)
     else:
         endpoint = base if base.endswith("/models") else f"{base}/models"
     call = urllib.request.Request(endpoint, headers=request_headers(request.api_key), method="GET")
@@ -55,7 +59,32 @@ def list_llm_models(request: deps.ModelListRequest) -> list[str]:
         for item in items
         if isinstance(item, dict)
     ]
-    return sorted({name for name in names if name})
+    return sorted(set(chat_model_ids(base, [name for name in names if name])))
+
+
+def _fetch_model_page(endpoint: str, headers: dict[str, str]) -> Any:
+    call = urllib.request.Request(endpoint, headers=headers, method="GET")
+    try:
+        with urllib.request.urlopen(call, timeout=15) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as error:
+        detail = error.read().decode("utf-8", errors="replace")
+        raise HTTPException(status_code=502, detail=f"Model list error {error.code}: {detail[-600:]}") from error
+    except OSError as error:
+        raise HTTPException(status_code=502, detail=f"Cannot reach the model list endpoint: {error}") from error
+
+
+def _list_anthropic_models(request: deps.ModelListRequest) -> list[str]:
+    """Anthropic's Models API pages with x-api-key; the bearer header is never sent there."""
+    headers = anthropic_headers(request_headers(request.api_key))
+    names: list[str] = []
+    after: str | None = None
+    for _ in range(20):
+        ids, after = model_ids(_fetch_model_page(anthropic_models_url(after), headers))
+        names.extend(ids)
+        if not after:
+            break
+    return sorted(set(names))
 
 def _lmstudio_json_result(
     request: deps.DraftRequest, *, system: str, user: dict[str, Any], max_tokens: int, temperature: float,

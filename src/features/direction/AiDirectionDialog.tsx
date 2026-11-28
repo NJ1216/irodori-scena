@@ -45,14 +45,14 @@ export function AiDirectionDialog({ project, projectSession, connection, onClose
             <RangeSection lines={lines} start={form.start} end={form.end} overwriteExisting={form.overwriteExisting} onStart={form.setStart} onEnd={form.setEnd} onToggleOverwrite={() => form.setOverwriteExisting((value) => !value)} />
             <ModeSection selected={selected} removed={form.removed} onToggle={form.toggleDirectionMode} />
             {selected.emoji && <EmojiSection allowed={form.allowed} setAllowed={form.setAllowed} targetCasts={form.targetCasts} castEmoji={form.castEmoji} setCastEmoji={form.setCastEmoji} />}
-            {(selected.rate || selected.gap) && <NumberRangesSection step={3 + Number(selected.emoji)} selected={selected} ranges={form.ranges} onChange={form.setRange} />}
+            {(selected.rate || selected.gap) && <NumberRangesSection step={3 + Number(selected.emoji)} selected={selected} ranges={form.ranges} error={form.rangeError} errorField={form.rangeErrorField} onChange={form.setRange} />}
             <TakeSection step={3 + Number(selected.emoji) + Number(selected.rate || selected.gap)} takeMode={form.takeMode} onChange={form.setTakeMode} />
           </div>
           <DialogFooter className="ai-direction-actions">
             <button type="button" className="button-secondary" onClick={onClose}>
               キャンセル
             </button>
-            <button type="button" className="button-ai" disabled={!form.enabled || !form.rangeValid || (form.emojiActive && !form.allowed.length) || !connection.model} onClick={() => void form.execute()}>
+            <button type="button" className="button-ai" disabled={!form.enabled || (form.emojiActive && !form.allowed.length) || !connection.model} onClick={() => void form.execute()}>
               AI演出を反映
             </button>
           </DialogFooter>

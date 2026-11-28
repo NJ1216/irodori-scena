@@ -5,7 +5,7 @@ import type { StudioProjectEditingActions } from "./useStudioProjectEditing";
 import type { StudioState } from "./useStudioState";
 import { wakeContinuousPlaybackWaiters } from "./continuousPlaybackWait";
 
-type LineModel = Pick<StudioState, "project" | "editSession" | "setNotice" | "busy" | "setBusy" | "setLineAssistantTarget" | "setFocusedLineId" | "setSelectedLineIds" | "setSelectionAnchorLineId" | "playingLineId" | "stopRef" | "continuousPlaybackWaiters" | "autoRenderActiveLineId"> & {
+type LineModel = Pick<StudioState, "project" | "editSession" | "setNotice" | "setStatusNotice" | "busy" | "setBusy" | "setLineAssistantTarget" | "setFocusedLineId" | "setSelectedLineIds" | "setSelectionAnchorLineId" | "playingLineId" | "stopRef" | "continuousPlaybackWaiters" | "autoRenderActiveLineId"> & {
   autoGenerateEnabledRef?: { current: boolean };
 } & Pick<StudioProjectEditingActions, "updateProject" | "queueAutoRender">;
 
@@ -36,7 +36,7 @@ async function switchProjectCharacters(model: Pick<LineModel, "project" | "stopR
 
 // eslint-disable-next-line max-lines-per-function
 export function useStudioLineActions(model: LineModel) {
-  const { project, setNotice, busy, setBusy, setLineAssistantTarget, setFocusedLineId, setSelectedLineIds, setSelectionAnchorLineId, playingLineId, stopRef, updateProject, queueAutoRender } = model;
+  const { project, setNotice, setStatusNotice, busy, setBusy, setLineAssistantTarget, setFocusedLineId, setSelectedLineIds, setSelectionAnchorLineId, playingLineId, stopRef, updateProject, queueAutoRender } = model;
   async function changeLineCharacter(line: DialogueLine, characterId: string) {
     if (line.characterId === characterId) return;
     if (playingLineId === line.id) stopRef.current();
@@ -228,7 +228,7 @@ export function useStudioLineActions(model: LineModel) {
         (value, operation) => applyGeneratedTake(sceneId, line.id, value, false, operation),
       );
       if (!take) return false;
-      setNotice("新しいテイクを生成しました。");
+      setStatusNotice("新しいテイクを生成しました。");
       return true;
     } catch (error) {
       setNotice(`生成できませんでした: ${(error as Error).message}`);
@@ -265,7 +265,7 @@ export function useStudioLineActions(model: LineModel) {
         (value, operation) => applyGeneratedTake(sceneId, line.id, value, false, operation),
       );
       if (!take) return false;
-      setNotice(`Seed ${seed} で新しいテイクを追加しました。`);
+      setStatusNotice(`Seed ${seed} で新しいテイクを追加しました。`);
       return true;
     } catch (error) {
       setNotice(`Seed指定のテイクを生成できませんでした: ${(error as Error).message}`);
@@ -303,7 +303,7 @@ export function useStudioLineActions(model: LineModel) {
         (value, operation) => applyGeneratedTake(sceneId, line.id, value, true, operation),
       );
       if (!take) return false;
-      setNotice("選択テイクを上書き再生成しました。");
+      setStatusNotice("選択テイクを上書き再生成しました。");
       return true;
     } catch (error) {
       setNotice(`再生成できませんでした: ${(error as Error).message}`);

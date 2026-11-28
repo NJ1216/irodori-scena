@@ -47,6 +47,25 @@
 .warning-text {
   color: var(--scena-warning-text);
 }
+/* Inline input checks (InlineValidation.tsx): under the field at fault, or above a dialog footer. */
+.field-error {
+  margin: 0;
+  color: var(--scena-danger-strong);
+  font-size: var(--type-small-size);
+  font-weight: 800;
+  line-height: 1.5;
+}
+.form-error {
+  margin: 0;
+  padding: 9px 10px;
+  color: var(--scena-danger-strong);
+  background: var(--scena-danger-soft);
+  border: 1px solid var(--scena-danger-border);
+  border-radius: var(--scena-radius-sm);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.55;
+}
 .visually-hidden {
   position: absolute;
   width: 1px;

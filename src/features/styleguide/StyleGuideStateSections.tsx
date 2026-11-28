@@ -1,5 +1,6 @@
 import { LineStatusIcon } from "../script/LineStatusIcon";
 import { Card, Section } from "./StyleGuideParts";
+import { FieldError, FormError } from "../shared/InlineValidation";
 import { audit, auditSummary } from "./styleGuideAudit";
 
 function TakeTooltipPreview() {
@@ -67,6 +68,16 @@ export function FeedbackSection() {
             </aside>
           </div>
           <p className="subtle">CenteredNotice。ダイアログ中の通知（neutral、背景を暗くし、閉じる・Esc・背景クリックで閉じる）と破壊的操作の確認（danger）で共通です。</p>
+        </Card>
+        <Card>
+          <h3>入力チェック</h3>
+          <label className="styleguide-field-error-preview">
+            キャスト名
+            <input aria-invalid="true" defaultValue="" />
+            <FieldError message="キャスト名は必須です。" />
+          </label>
+          <FormError message="先に基準ボイスを選んでください。" />
+          <p className="subtle">FieldError・FormError。保存・生成などを押したときの入力不足を、ダイアログに重ねず、原因の欄の下（FieldError）か、欄が1つに決まらないときはフッターの上（FormError）に出します。欄を直す・条件を満たして押し直すと消えます。</p>
         </Card>
         <Card>
           <h3>テイク情報ツールチップ</h3>

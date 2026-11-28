@@ -6,8 +6,8 @@ import { ProjectEditSession } from "./projectEditSession";
 import { useDictionaryRegeneration } from "./useDictionaryRegeneration";
 import { createRenderJob, nextRenderSequence } from "./renderJobQueue";
 
-const mocks = vi.hoisted(() => ({ generateLine: vi.fn(), regenerateLine: vi.fn() }));
-vi.mock("../../api", () => ({ api: { ...mocks, project: vi.fn() } }));
+const mocks = vi.hoisted(() => ({ generateLine: vi.fn(), regenerateLine: vi.fn(), project: vi.fn() }));
+vi.mock("../../api", () => ({ api: mocks }));
 
 const take = { id: "take", audioUrl: "/take.wav", seed: 1, quality: "fast", stageDirection: "", createdAt: 1 } as const;
 const project = {
@@ -52,5 +52,34 @@ describe("useDictionaryRegeneration", () => {
     expect(stop).not.toHaveBeenCalled();
     expect(mocks.generateLine).not.toHaveBeenCalled();
     expect(mocks.regenerateLine).not.toHaveBeenCalled();
+  });
+
+  it("reports a finished regeneration in the header only, and a failure as an overlay notice", async () => {
+    const editSession = new ProjectEditSession(() => {});
+    editSession.replace(project);
+    const model = {
+      projectRef: { current: project },
+      editSession,
+      setBusy: vi.fn(),
+      setBatchGeneratingLineId: vi.fn(),
+      setNotice: vi.fn(),
+      setStatusNotice: vi.fn(),
+      stop: vi.fn(),
+      autoGenerateEnabledRef: { current: false },
+      autoRenderQueue: { current: [] },
+      processAutoRenderQueueRef: { current: async () => {} },
+      applyGeneratedTake: vi.fn(),
+    };
+    const { result } = renderHook(() => useDictionaryRegeneration(model));
+
+    mocks.project.mockResolvedValue(project);
+    mocks.regenerateLine.mockResolvedValueOnce(take);
+    await act(() => result.current(["line-1"], "replace"));
+    expect(model.setStatusNotice).toHaveBeenLastCalledWith("1行を再生成しました。");
+    expect(model.setNotice).not.toHaveBeenCalled();
+
+    mocks.regenerateLine.mockRejectedValueOnce(new Error("engine down"));
+    await act(() => result.current(["line-1"], "replace"));
+    expect(model.setNotice).toHaveBeenLastCalledWith("0行を再生成したところで停止しました: engine down");
   });
 });

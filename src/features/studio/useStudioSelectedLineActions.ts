@@ -237,7 +237,7 @@ async function runSelectedGenerationBatch(model: SelectedLineActionsModel, batch
         ({ playback } = await processBatchRows(model, batch, generationRun, playbackStopRun));
       });
       if (model.selectedLineGenerationRun.current === generationRun && !batch.paused) {
-        model.setNotice(`${batch.completedIds.length} 行を${batch.replace ? "上書き再生成" : "新規生成"}しました${batch.skipped ? `（${batch.skipped} 行を除外）` : ""}。`);
+        model.setStatusNotice(`${batch.completedIds.length} 行を${batch.replace ? "上書き再生成" : "新規生成"}しました${batch.skipped ? `（${batch.skipped} 行を除外）` : ""}。`);
       }
     } catch (error) {
       if (!batch.paused && !batch.cancelled) await model.editSession.requestProject(() => api.project());

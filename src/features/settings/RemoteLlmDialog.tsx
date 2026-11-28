@@ -4,13 +4,18 @@ import type { LlmRegistry } from "../../types";
 import { DialogFooter, DialogHeader, ModalBackdrop } from "../shared/overlays";
 import { DropdownIndicator } from "../shared/DropdownIndicator";
 import { isWindows } from "../shared/platform";
+import { ANTHROPIC_BASE_URL } from "./llmCardPresentation";
 
-type Provider = "ollama" | "lmstudio" | "openai";
+// "anthropic" is a dialog choice only: it is saved as an OpenAI-compatible endpoint
+// with the official URL, which the server translates to the Anthropic Messages API.
+type Provider = "ollama" | "lmstudio" | "openai" | "anthropic";
 const defaults: Record<Provider, string> = {
   ollama: "http://127.0.0.1:11434/v1",
   lmstudio: "http://127.0.0.1:1234/v1",
   openai: "",
+  anthropic: ANTHROPIC_BASE_URL,
 };
+const storedProvider = (provider: Provider) => (provider === "anthropic" ? "openai" : provider);
 
 function ModelCombobox({ value, options, onChange }: { value: string; options: string[]; onChange: (value: string) => void }) {
   const [open, setOpen] = useState(false);
@@ -80,7 +85,7 @@ function useRemoteLlmForm(onClose: () => void, onAdded: (value: LlmRegistry) => 
     setFailed(false);
     try {
       const result = await api.inspectRemoteLlmModels({
-        provider,
+        provider: storedProvider(provider),
         baseUrl,
         credential: keyEnabled ? credential : undefined,
       });
@@ -98,7 +103,7 @@ function useRemoteLlmForm(onClose: () => void, onAdded: (value: LlmRegistry) => 
   const add = async () => {
     try {
       const result = await api.createRemoteLlmSetting({
-        provider,
+        provider: storedProvider(provider),
         baseUrl,
         modelId,
         credential: keyEnabled ? credential : undefined,
@@ -112,6 +117,8 @@ function useRemoteLlmForm(onClose: () => void, onAdded: (value: LlmRegistry) => 
   const changeProvider = (next: Provider) => {
     setProvider(next);
     setBaseUrl(defaults[next]);
+    // Anthropic always needs a key, so its optional-key checkbox is hidden.
+    if (next === "anthropic") setKeyEnabled(true);
     setModels([]);
     setModelId("");
     setChecked(false);
@@ -146,16 +153,19 @@ export function RemoteDialog({ onClose, onAdded }: { onClose: () => void; onAdde
               <option value="ollama">Ollama</option>
               <option value="lmstudio">LM Studio</option>
               <option value="openai">OpenAI互換</option>
+              <option value="anthropic">Anthropic</option>
             </select>
           </label>
           <label className="dialog-form-field">
             URL
             <input value={form.baseUrl} onChange={(event) => form.changeBaseUrl(event.target.value)} />
           </label>
-          <label className="checkbox-line">
-            <input type="checkbox" checked={form.keyEnabled} onChange={(event) => form.changeKeyEnabled(event.target.checked)} />
-            API Keyを設定（任意）
-          </label>
+          {form.provider !== "anthropic" && (
+            <label className="checkbox-line">
+              <input type="checkbox" checked={form.keyEnabled} onChange={(event) => form.changeKeyEnabled(event.target.checked)} />
+              API Keyを設定（任意）
+            </label>
+          )}
           {form.keyEnabled && (
             <label className="dialog-form-field">
               API Key

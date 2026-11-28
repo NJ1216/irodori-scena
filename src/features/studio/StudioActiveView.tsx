@@ -125,6 +125,7 @@ function CharactersActiveView({ model }: { model: StudioController }) {
       onClearCandidates={model.clearCandidates}
       onClearCandidateScope={model.clearCandidateScope}
       onNotice={model.setNotice}
+      onStatusNotice={model.setStatusNotice}
       onBusy={model.setBusy}
       onImportCasts={() => void model.prepareCastImport()}
     />

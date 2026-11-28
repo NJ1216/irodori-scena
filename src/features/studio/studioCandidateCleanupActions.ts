@@ -16,7 +16,7 @@ export function createStudioCandidateCleanupActions(model: StudioEditingModel) {
     try {
       const project = await model.editSession.requestProject(() => api.clearCandidateScope(kind, options));
       if (!project) return false;
-      model.setNotice(kind === "baseline" ? "基準ボイス候補を消去しました。" : "感情ボイス候補を消去しました。");
+      model.setStatusNotice(kind === "baseline" ? "基準ボイス候補を消去しました。" : "感情ボイス候補を消去しました。");
       return true;
     } catch (error) {
       model.setNotice(`声候補を消去できませんでした: ${(error as Error).message}`);

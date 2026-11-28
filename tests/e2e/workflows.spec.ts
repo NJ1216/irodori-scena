@@ -2,18 +2,15 @@ import { expect, test, type Page } from "@playwright/test";
 import { testToneWav } from "./audio-fixtures";
 import { installMockApi } from "./mock-api";
 
-async function dismissDialogNotice(page: Page, text: string, key?: "Escape") {
-  const notice = page.getByRole("status", { name: "通知" });
-  await expect(notice).toContainText(text);
-  if (key) await page.keyboard.press(key);
-  else await page.getByRole("button", { name: "通知を閉じる" }).click();
-  await expect(notice).toBeHidden();
+async function expectHeaderOnlyNotice(page: Page, text: string) {
+  await expect(page.locator(".notice")).toContainText(text);
+  await expect(page.getByRole("status", { name: "通知" })).toBeHidden();
 }
 
 async function generateAndPickEmotionCandidates(page: Page) {
   for (const label of ["普通", "喜", "怒", "哀", "楽"]) {
     await page.getByRole("button", { name: `${label}の候補をつくる` }).click();
-    await dismissDialogNotice(page, "声候補を追加しました");
+    await expectHeaderOnlyNotice(page, "声候補を追加しました");
     await page.getByRole("button", { name: `${label}候補 Aを再生` }).click();
   }
 }
@@ -221,7 +218,7 @@ test("saves a complete VoiceDesign reference set", async ({ page }) => {
     await expect.poll(async () => (await setupContent.boundingBox())?.height ?? 0).toBeLessThanOrEqual(2);
   };
   const inspectGenerated = async () => {
-    await dismissDialogNotice(page, "声候補を追加しました");
+    await expectHeaderOnlyNotice(page, "声候補を追加しました");
     await expect(page.getByRole("heading", { name: /AUDITION/ })).toBeVisible();
     const consultAgain = page.getByRole("button", { name: "再びAIに声の設計を相談" });
     await expect(consultAgain).toBeVisible();
@@ -250,9 +247,11 @@ test("saves a complete VoiceDesign reference set", async ({ page }) => {
     await expect(castName).toHaveCSS("background-color", "rgb(255, 244, 247)");
     await expect(castName).toHaveCSS("border-color", "rgb(183, 92, 120)");
     await page.getByRole("button", { name: "参照ボイスを保存" }).click();
-    await expect(page.locator(".notice-message .notice-screen-reader-text")).toHaveText("キャスト名は必須です。");
-    await dismissDialogNotice(page, "キャスト名は必須です。", "Escape");
+    await expect(castName.locator("xpath=..").getByRole("alert")).toHaveText("キャスト名は必須です。");
+    await expect(castName).toBeFocused();
+    await expect(page.getByRole("status", { name: "通知" })).toBeHidden();
     await castName.fill("入力済みの名前");
+    await expect(voiceDesignDialog.getByText("キャスト名は必須です。")).toHaveCount(0);
     await page.getByRole("button", { name: /基準候補 Aを/ }).click();
     await expect(castName).toHaveValue("入力済みの名前");
     await expect(castName).toHaveAttribute("aria-invalid", "false");
@@ -301,7 +300,26 @@ test("keeps VoiceDesign setup open when audition validation fails", async ({ pag
 
   await expect(page.getByRole("textbox", { name: "追加要望・備考" })).toBeVisible();
   await expect(page.getByRole("button", { name: "基準ボイスの設定を折りたたむ" })).toBeAttached();
-  await expect(page.locator(".notice")).toContainText("声の条件を1項目以上入力してください");
+  const footerError = page.getByRole("dialog", { name: "声の候補をつくる" }).locator(".dialog-footer").getByRole("alert");
+  await expect(footerError).toHaveText("声の条件を1項目以上入力してください。");
+  await expect(page.getByRole("status", { name: "通知" })).toBeHidden();
+  await page.getByRole("textbox", { name: "追加要望・備考" }).fill("明るい声");
+  await expect(footerError).toHaveCount(0);
+});
+
+test("shows a missing audition line under its field and focuses it", async ({ page }) => {
+  await page.getByRole("button", { name: "キャスト", exact: true }).click();
+  await page.getByRole("button", { name: /声をつくる/ }).click();
+  await page.getByRole("textbox", { name: "追加要望・備考" }).fill("明るい声");
+  const sample = page.getByRole("textbox", { name: "基準用の試聴台詞" });
+  await sample.fill("");
+  await page.getByRole("button", { name: "基準ボイス候補をつくる" }).click();
+  await expect(sample).toBeFocused();
+  await expect(sample).toHaveAttribute("aria-invalid", "true");
+  await expect(sample.locator("xpath=..").getByRole("alert")).toHaveText("候補を聞き比べるサンプル台詞を入力してください。");
+  await expect(page.getByRole("status", { name: "通知" })).toBeHidden();
+  await sample.fill("こんにちは。");
+  await expect(page.getByText("候補を聞き比べるサンプル台詞を入力してください。")).toHaveCount(0);
 });
 
 test("keeps dialog header and footer fixed while its body scrolls", async ({ page }) => {

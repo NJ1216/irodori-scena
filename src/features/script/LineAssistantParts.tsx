@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { DraftGenerationDialog } from "../draft/DraftStatus";
 import { DialogFooter } from "../shared/overlays";
+import { FormError } from "../shared/InlineValidation";
 import type { ScriptAssistantJob } from "./scriptAssistantTypes";
 
 export function LineAssistantProgress({ job, insert, onCancel }: { job: ScriptAssistantJob; insert: boolean; onCancel: () => Promise<void> }) {
@@ -39,6 +40,7 @@ export function LineAssistantProgress({ job, insert, onCancel }: { job: ScriptAs
 }
 
 export function LineAssistantFooter({
+  error = "",
   preview,
   running,
   insert,
@@ -49,6 +51,7 @@ export function LineAssistantFooter({
   onApply,
   onGenerate,
 }: {
+  error?: string;
   preview: boolean;
   running: boolean;
   insert: boolean;
@@ -79,7 +82,7 @@ export function LineAssistantFooter({
     );
   }
   return (
-    <DialogFooter>
+    <DialogFooter leading={error ? <FormError message={error} /> : undefined}>
       <button type="button" disabled={busy === "script-assistant-apply"} onClick={onClose}>
         閉じる
       </button>

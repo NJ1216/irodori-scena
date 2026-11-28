@@ -168,6 +168,7 @@ describe("selectedActionLineIds", () => {
     await waitFor(() => expect(playSelectedLines).toHaveBeenCalledWith(["line-1"]));
     expect(applyGeneratedTake).toHaveBeenCalledWith("scene-1", "line-1", expect.anything(), true, expect.objectContaining({ projectId: project.id }));
     expect(playSelectedLines).not.toHaveBeenCalledWith(["line-3"]);
+    await waitFor(() => expect(mocks.generateLine).toHaveBeenCalledWith("line-3", "fast", true, undefined, undefined, expect.any(String)));
     await act(async () => {
       finishMissing({});
       await operation;
@@ -221,6 +222,7 @@ describe("selectedActionLineIds", () => {
     });
     await waitFor(() => expect(playSelectedLines).toHaveBeenCalledWith(["line-1"]));
     playbackStopRun.current += 1;
+    await waitFor(() => expect(mocks.generateLine).toHaveBeenCalledWith("line-3", "fast", true, undefined, undefined, expect.any(String)));
     await act(async () => {
       finishSecond({});
       await operation;

@@ -17,7 +17,8 @@ function complete(model: StudioEffectModel, job: DraftJob) {
     model.setDraftCompletionSummary((current) => (current?.id === job.id ? current : job));
   }
   model.setBusy(null);
-  model.setNotice("AI台本を台本へ追加しました。音声合成を再開できます。");
+  // The completion summary dialog already reports this, so it must not be overlaid on top of it.
+  model.setStatusNotice("AI台本を台本へ追加しました。音声合成を再開できます。");
 }
 
 export function useStudioDraftMonitor(model: StudioEffectModel) {
