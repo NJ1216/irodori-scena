@@ -358,10 +358,21 @@ def compact_draft_chapter_outline(chapters: list[dict[str, Any]]) -> list[dict[s
             "title": str(chapter.get("title", ""))[:60],
             "objective": str(chapter.get("objective", ""))[:160],
             "closing_state": str(chapter.get("closing_state", ""))[:120],
-            "novelty_requirement": str(chapter.get("novelty_requirement", ""))[:120],
         }
         for index, chapter in enumerate(chapters)
     ]
+
+
+def draft_story_outline_context(plan: dict[str, Any], theme: str) -> dict[str, Any]:
+    """The story bible and global map; a bible that only repeats the theme is not sent again.
+
+    The current chapter's novelty requirement travels in its own packet, so the map omits it.
+    """
+    story_bible = str(plan.get("story_bible", "")).strip()
+    context: dict[str, Any] = {} if not story_bible or theme.strip().startswith(story_bible) else {
+        "story_bible": story_bible}
+    context["global_chapter_outline"] = compact_draft_chapter_outline(plan.get("chapters", []))
+    return context
 
 
 def fixed_dialogue_block_characters(
@@ -454,6 +465,7 @@ deps.register(
         "_draft_plan_texts",
         "_normalized_draft_chapter",
         "compact_draft_chapter_outline",
+        "draft_story_outline_context",
         "complete_draft_plan",
         "create_draft_plan",
         "detail_draft_chapter",

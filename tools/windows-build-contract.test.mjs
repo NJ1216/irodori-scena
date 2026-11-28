@@ -183,6 +183,19 @@ test("builds pnpm and Tauri commands without relying on pnpm.cmd lookup", () => 
   assert.throws(() => pnpmInvocation(undefined, []), /pnpm\.cmd tauri build/);
 });
 
+test("pnpm installs let pnpm's own install script place its executable", () => {
+  // 2026-11-28: reinstalling pnpm 12 with --ignore-scripts on the Gitea runner left pnpm.cmd
+  // pointing at a missing file, because pnpm 11+ places its native binary from install.js.
+  const scripts = ["tools/release/setup-windows-runner.ps1", "tools/windows-dev/setup-toolchain.ps1", ".gitea/scripts/update-windows-runner.ps1"];
+  for (const path of scripts.filter((path) => existsSync(new URL(path, root)))) {
+    const installs = read(path)
+      .split(/\r?\n/)
+      .filter((line) => line.includes("pnpm@latest"));
+    assert.ok(installs.length > 0, path);
+    for (const line of installs) assert.doesNotMatch(line, /--ignore-scripts/, path);
+  }
+});
+
 test("runs the standalone pnpm 12 executable directly instead of loading it into Node", () => {
   const pnpmExe = "C:\\Users\\runner\\AppData\\Local\\tools\\node_modules\\pnpm\\pnpm.exe";
   assert.deepEqual(pnpmInvocation(pnpmExe, ["--version"]), [pnpmExe, ["--version"]]);

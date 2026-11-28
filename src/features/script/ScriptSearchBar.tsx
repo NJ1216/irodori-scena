@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/set-state-in-effect -- This component synchronizes controlled drafts, imperative media, or stable lifecycle owners at explicit boundaries. */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import type { DialogueLine, StudioProject } from "../../types";
 import { findScriptMatches, replaceLineMatches } from "./scriptSearch";
 import { listenForScriptSearch } from "./scriptSearchEvents";
@@ -25,8 +25,21 @@ function focusLine(lineId: string, onFocusLine: (lineId: string) => void) {
 }
 
 type HighlightRegistry = { set: (name: string, value: unknown) => void; delete: (name: string) => void };
-function domRange(lineId: string, start: number, end: number) {
-  const root = document.querySelector<HTMLElement>(`[data-line-id="${CSS.escape(lineId)}"] .line-text-editor`);
+function lineTextRoot(lineId: string) {
+  return document.querySelector<HTMLElement>(`[data-line-id="${CSS.escape(lineId)}"] .line-text-editor`);
+}
+
+/** The text editors of the line cards on screen, read once per paint; long scripts mount only a few. */
+function mountedLineTextRoots() {
+  const roots = new Map<string, HTMLElement>();
+  for (const root of document.querySelectorAll<HTMLElement>("[data-line-id] .line-text-editor")) {
+    const id = root.closest<HTMLElement>("[data-line-id]")?.dataset.lineId;
+    if (id && !roots.has(id)) roots.set(id, root);
+  }
+  return roots;
+}
+
+function domRange(lineId: string, start: number, end: number, root: HTMLElement | null = lineTextRoot(lineId)) {
   if (!root) return null;
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
     acceptNode: (node) => (node.parentElement?.closest("rt") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
@@ -61,7 +74,12 @@ function paintMatches(matches: ReturnType<typeof findScriptMatches>, current: nu
   const registry = (CSS as typeof CSS & { highlights?: HighlightRegistry }).highlights;
   const HighlightType = (window as typeof window & { Highlight?: new (...ranges: Range[]) => unknown }).Highlight;
   if (!registry || !HighlightType) return () => {};
-  const ranges = matches.map((item) => domRange(item.lineId, item.start, item.end)).filter((item): item is Range => Boolean(item));
+  const roots = mountedLineTextRoots();
+  const ranges = matches.flatMap((item) => {
+    const root = roots.get(item.lineId);
+    const range = root && domRange(item.lineId, item.start, item.end, root);
+    return range ? [range] : [];
+  });
   registry.set("script-search", new HighlightType(...ranges));
   const active = matches[current] && domRange(matches[current].lineId, matches[current].start, matches[current].end);
   if (active) registry.set("script-search-current", new HighlightType(active));
@@ -186,7 +204,9 @@ export function ScriptSearchBar({ project, onFocusLine, onReplace }: { project: 
   const input = useRef<HTMLInputElement>(null);
   const onFocusLineRef = useRef(onFocusLine);
   const scenes = project.scenes;
-  const matches = useMemo(() => findScriptMatches({ scenes }, query), [query, scenes]);
+  // Typing stays immediate; the whole-script search follows as soon as the page is free.
+  const searchedQuery = useDeferredValue(query);
+  const matches = useMemo(() => findScriptMatches({ scenes }, searchedQuery), [searchedQuery, scenes]);
   useEffect(() => {
     onFocusLineRef.current = onFocusLine;
   }, [onFocusLine]);

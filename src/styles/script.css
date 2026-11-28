@@ -1017,6 +1017,8 @@
   font-weight: var(--type-card-description-weight);
 }
 .line-gap-control {
+  /* Contains its visually hidden label; otherwise it is positioned against the page and stretches it. */
+  position: relative;
   display: flex;
   flex: 0 0 auto;
   align-items: center;

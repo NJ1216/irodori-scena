@@ -1,7 +1,9 @@
-import type { LlmSessionOperation, LlmSessionUsage, LlmUsageClassification } from "../../types";
+import type { LlmSessionOperation, LlmSessionUsage, LlmTokenUsage, LlmUsageClassification } from "../../types";
 
 const format = (value: number) => value.toLocaleString("ja-JP");
 const accuracy = (value?: LlmUsageClassification) => (value === "reported" ? "実測" : value === "partial" ? "一部概算" : "概算");
+// Providers such as Ollama do not report cache reuse; an unreported zero is shown as unknown, not as no reuse.
+const cached = (value?: LlmTokenUsage) => (!value || (value.cachedInputEstimated && !value.cachedInputTokens) ? "不明" : format(value.cachedInputTokens));
 const status = (value: LlmSessionOperation["status"]) => (value === "running" ? "処理中" : value === "completed" ? "成功" : value === "cancelled" ? "キャンセル" : "失敗");
 
 export function TokenUsageMenu({ usage, onReset }: { usage: LlmSessionUsage | null; onReset: () => void }) {
@@ -34,6 +36,10 @@ export function TokenUsageMenu({ usage, onReset }: { usage: LlmSessionUsage | nu
             <dt>合計</dt>
             <dd>{format(total?.totalTokens ?? 0)}</dd>
           </div>
+          <div>
+            <dt>うちキャッシュ</dt>
+            <dd>{cached(total)}</dd>
+          </div>
         </dl>
         <ol>
           {usage?.history?.map((item) => (
@@ -41,7 +47,7 @@ export function TokenUsageMenu({ usage, onReset }: { usage: LlmSessionUsage | nu
               <b>{item.name}</b>
               <span>{status(item.status)}</span>
               <small>
-                {item.model || "モデル不明"} · 入力 {format(item.usage.inputTokens)} / 出力 {format(item.usage.outputTokens)} / 合計 {format(item.usage.totalTokens)} · {accuracy(item.classification)}
+                {item.model || "モデル不明"} · 入力 {format(item.usage.inputTokens)}（キャッシュ {cached(item.usage)}） / 出力 {format(item.usage.outputTokens)} / 合計 {format(item.usage.totalTokens)} · {accuracy(item.classification)}
               </small>
             </li>
           ))}

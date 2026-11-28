@@ -54,6 +54,7 @@ export function beginScriptSceneDeletion(id: string) {
   try {
     stop = renderCastDissolve(canvas, snapshot, undefined, deletionDurationMs, {
       tintParticles: true,
+      inkOnly: true,
       particleLimit: sceneParticleBudget(snapshot.height),
       onMetrics: (metrics) =>
         recordParticleDeletionDiagnostic({

@@ -1,15 +1,16 @@
 // @vitest-environment jsdom
 import { afterEach, expect, it, vi } from "vitest";
-import { createParticleGpuLayer } from "./particleDissolveGpu";
+import { createParticleGpuLayer, releaseIdleParticleGpu } from "./particleDissolveGpu";
 import type { CastSnapshot } from "./castSnapshot";
 import { createCastParticles } from "./castParticles";
 
 afterEach(() => {
+  releaseIdleParticleGpu();
   document.body.replaceChildren();
   vi.restoreAllMocks();
 });
 
-function setup(alpha: number, renderer = "Hardware") {
+function setup(alpha: number, renderer = "Hardware", probes = { count: 0 }) {
   const shaders: string[] = [];
   const uniforms: Array<[string, number]> = [];
   const parent = document.createElement("div");
@@ -53,6 +54,7 @@ function setup(alpha: number, renderer = "Hardware") {
       getError: () => 0,
       isContextLost: () => false,
       readPixels: (_x: number, _y: number, _w: number, _h: number, _format: number, _type: number, result: Uint8Array) => {
+        probes.count++;
         result[3] = alpha;
       },
     },
@@ -77,11 +79,30 @@ it("draws 3 CSS pixel grains with individual motion and releases the GPU layer",
 });
 
 it("rejects transparent shader output and software WebGL", () => {
+  releaseIdleParticleGpu();
   const transparent = setup(0);
   expect(createParticleGpuLayer(transparent.target, [transparent.group])).toBeNull();
   document.body.replaceChildren();
   vi.restoreAllMocks();
+  releaseIdleParticleGpu();
   const software = setup(255, "SwiftShader");
   expect(createParticleGpuLayer(software.target, [software.group])).toBeNull();
+  expect(document.querySelector(".particle-deletion-gpu")).toBeNull();
+});
+
+it("reuses one GPU context for the next deletion and still checks its pixels", () => {
+  const probes = { count: 0 };
+  const { target, group } = setup(255, "Hardware", probes);
+  const getContext = vi.mocked(HTMLCanvasElement.prototype.getContext);
+  createParticleGpuLayer(target, [group])?.dispose();
+  const second = createParticleGpuLayer(target, [group]);
+  expect(second).not.toBeNull();
+  expect(getContext.mock.calls.filter(([type]) => type === "webgl2")).toHaveLength(1);
+  expect(probes.count).toBe(2);
+  const overlapping = createParticleGpuLayer(target, [group]);
+  expect(overlapping).not.toBeNull();
+  expect(getContext.mock.calls.filter(([type]) => type === "webgl2")).toHaveLength(2);
+  second?.dispose();
+  overlapping?.dispose();
   expect(document.querySelector(".particle-deletion-gpu")).toBeNull();
 });

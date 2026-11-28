@@ -7,6 +7,7 @@ generated. Anthropic defaults to low effort, matching the Gemini thinking policy
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import threading
 from typing import Any
@@ -17,7 +18,7 @@ from server.modules.anthropic_messages import effort_supported, is_anthropic_bas
 
 # Parameters SCENA may omit without changing what is asked; others are never dropped.
 DROPPABLE_PARAMETERS = {"temperature", "top_p", "reasoning_effort", "seed", "presence_penalty",
-                        "frequency_penalty", "stream_options"}
+                        "frequency_penalty", "stream_options", "prompt_cache_key"}
 NON_CHAT_OPENAI_MODELS = ("embedding", "tts", "whisper", "dall-e", "moderation", "transcribe",
                           "gpt-image", "realtime", "davinci", "babbage", "sora")
 # (parameter, rejected JSON value or None when the parameter itself is unsupported)
@@ -55,14 +56,26 @@ def _value(value: Any) -> str:
     return json.dumps(value, sort_keys=True, ensure_ascii=False)
 
 
+def _prompt_cache_key(payload: dict[str, Any]) -> str | None:
+    """Route calls that share fixed instructions together so OpenAI reuses their cached prefix."""
+    system = next((message.get("content") for message in payload.get("messages") or []
+                   if isinstance(message, dict) and message.get("role") in {"system", "developer"}), None)
+    if not isinstance(system, str) or not system:
+        return None
+    return "scena-" + hashlib.sha256(system.encode("utf-8")).hexdigest()[:24]
+
+
 def prepare_official_payload(request: Any, payload: dict[str, Any]) -> dict[str, Any]:
     """Return a copy adapted to the official endpoint; other endpoints only drop known rejections."""
     if getattr(request, "provider", None) != "openai":
         return payload
     payload = dict(payload)
     base_url = str(getattr(request, "base_url", ""))
-    if is_openai_base_url(base_url) and "max_tokens" in payload:
-        payload["max_completion_tokens"] = payload.pop("max_tokens")
+    if is_openai_base_url(base_url):
+        if "max_tokens" in payload:
+            payload["max_completion_tokens"] = payload.pop("max_tokens")
+        if key := _prompt_cache_key(payload):
+            payload.setdefault("prompt_cache_key", key)
     elif is_anthropic_base_url(base_url) and "reasoning_effort" not in payload:
         settings = deps.resolve_llm_settings(request.provider, base_url, request.model)
         if not settings.get("thinking") and effort_supported(str(request.model)):

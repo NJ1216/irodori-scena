@@ -47,9 +47,48 @@ class AnthropicPayloadTests(unittest.TestCase):
                    "top_p": 0.9, "seed": 3, "stream_options": {"include_usage": True}, "reasoning_effort": "none",
                    "messages": [{"role": "system", "content": "rules"}, {"role": "user", "content": "{\"a\":1}"}]}
         body = anthropic_messages.messages_payload(payload)
-        self.assertEqual(body, {"model": "claude-opus-5-5", "max_tokens": 900, "system": "rules", "stream": True,
+        self.assertEqual(body, {"model": "claude-opus-5-5", "max_tokens": 900, "stream": True,
+                                "system": [{"type": "text", "text": "rules", "cache_control": {"type": "ephemeral"}}],
                                 "messages": [{"role": "user", "content": "{\"a\":1}"}],
                                 "output_config": {"effort": "low"}})
+
+    def test_the_stable_opening_of_a_prompt_is_cached_and_rejoins_to_the_original(self) -> None:
+        from server.modules.llm_prompt_profile import canonical_prompt_json
+        sections = {"sections": [{"theme_or_situation": "雨宿り"}, {"request_settings": {"a": 1}},
+                                 {"participating_casts": [{"cast": "A", "profile": "誕生日: 4月18日"}]},
+                                 {"story_bible_and_global_outline": {"global_chapter_outline": []}},
+                                 {"current_packet": [{"title": "導入"}]}, {"previous_chapter_state": "x"}]}
+        keyed = {"character_id": "c1", "immutable_character_core": "核", "author_idea": "案",
+                 "relation_targets": ["B"], "completion_rule": "r"}
+        for user, stable_end in ((sections, '{"global_chapter_outline":[]}},'), (keyed, '"author_idea":"案",')):
+            with self.subTest(user=next(iter(user))):
+                text = canonical_prompt_json(user)
+                content = anthropic_messages.messages_payload(
+                    {"model": "m", "messages": [{"role": "user", "content": text}]})["messages"][0]["content"]
+                self.assertEqual(len(content), 2)
+                self.assertTrue(content[0]["text"].endswith(stable_end))
+                self.assertEqual(content[0]["cache_control"], {"type": "ephemeral"})
+                self.assertNotIn("cache_control", content[1])
+                self.assertEqual(content[0]["text"] + content[1]["text"], text)
+
+    def test_prompts_without_a_stable_opening_stay_one_uncached_string(self) -> None:
+        from server.modules.llm_prompt_profile import canonical_prompt_json
+        for text in ("plain words", canonical_prompt_json({"author_instruction": "x", "participating_casts": []}),
+                     canonical_prompt_json({"sections": [{"current_packet": []}, {"request_settings": {}}]}),
+                     canonical_prompt_json({"participating_casts": []}), "{\"participating_casts\": [], \"x\": 1}"):
+            with self.subTest(text=text):
+                body = anthropic_messages.messages_payload({"model": "m", "messages": [{"role": "user", "content": text}]})
+                self.assertEqual(body["messages"][0]["content"], text)
+
+    def test_only_the_fixed_instructions_are_marked_for_caching(self) -> None:
+        body = anthropic_messages.messages_payload({"model": "claude-sonnet-5-5", "messages": [
+            {"role": "system", "content": "a"}, {"role": "developer", "content": "b"},
+            {"role": "user", "content": "per-call request"}]})
+        self.assertEqual(body["system"], [{"type": "text", "text": "a\n\nb", "cache_control": {"type": "ephemeral"}}])
+        self.assertEqual(body["messages"], [{"role": "user", "content": "per-call request"}])
+        self.assertNotIn("cache_control", body)
+        self.assertNotIn("system", anthropic_messages.messages_payload(
+            {"model": "m", "messages": [{"role": "user", "content": "x"}]}))
 
     def test_effort_is_omitted_for_models_that_reject_it(self) -> None:
         for model in ("claude-haiku-4-5", "claude-sonnet-4-5-20250929", "claude-sonnet-4-20250514"):
@@ -233,6 +272,28 @@ class OpenAiOfficialTests(unittest.TestCase):
         other = llm_official_endpoints.prepare_official_payload(
             _request("https://proxy.example/v1", "m"), {"model": "m", "max_tokens": 50})
         self.assertEqual(other, {"model": "m", "max_tokens": 50})
+
+    def test_official_openai_groups_calls_by_their_fixed_instructions(self) -> None:
+        def prepared(base_url: str, system: str, user: str) -> dict:
+            return llm_official_endpoints.prepare_official_payload(_request(base_url, "gpt-5.2"), {
+                "model": "gpt-5.2", "messages": [{"role": "system", "content": system},
+                                                 {"role": "user", "content": user}]})
+        first, second = prepared(OPENAI, "rules", "one")["prompt_cache_key"], prepared(OPENAI, "rules", "two")["prompt_cache_key"]
+        self.assertEqual(first, second)
+        self.assertRegex(first, r"^scena-[0-9a-f]{24}$")
+        self.assertNotEqual(first, prepared(OPENAI, "other rules", "one")["prompt_cache_key"])
+        self.assertNotIn("prompt_cache_key", prepared("https://proxy.example/v1", "rules", "one"))
+        self.assertNotIn("prompt_cache_key", llm_official_endpoints.prepare_official_payload(
+            _request(OPENAI, "gpt-5.2"), {"model": "gpt-5.2", "messages": [{"role": "user", "content": "x"}]}))
+
+    def test_a_rejected_prompt_cache_key_is_dropped_and_not_sent_again(self) -> None:
+        request = _request(OPENAI, "gpt-cache-less")
+        payload = {"model": "gpt-cache-less", "messages": [{"role": "system", "content": "rules"}]}
+        prepared = llm_official_endpoints.prepare_official_payload(request, payload)
+        detail = json.dumps({"error": {"param": "prompt_cache_key", "code": "unsupported_parameter"}})
+        self.assertTrue(llm_official_endpoints.adapt_rejected_parameter(request, prepared, 400, detail))
+        self.assertNotIn("prompt_cache_key", prepared)
+        self.assertNotIn("prompt_cache_key", llm_official_endpoints.prepare_official_payload(request, payload))
 
     def test_rejected_sampling_value_is_dropped_once_and_remembered_for_the_model(self) -> None:
         request = _request(OPENAI, "gpt-5")

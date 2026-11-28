@@ -199,7 +199,7 @@ function LineGenerateActions({
   );
 }
 
-type LineEditorProps = {
+export type LineEditorProps = {
   line: DialogueLine;
   previewLine?: DialogueLine;
   lineNumber: number | null;

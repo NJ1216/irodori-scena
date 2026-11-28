@@ -105,6 +105,7 @@ test("previews an insertion position before revealing its actions", async ({ pag
   const appendZone = page.locator(".line-insert-zone.is-append").last();
   const appendMarker = appendZone.getByRole("button", { name: "発話行を追加", exact: true });
   await expect(appendMarker).toBeVisible();
+  await expect(insertZone.locator(".insert-marker")).toBeHidden();
   await expect(appendZone.locator(".line-insert-actions")).toHaveCSS("opacity", "0");
   const [appendZoneBox, appendButtonBox] = await Promise.all([appendZone.boundingBox(), appendMarker.boundingBox()]);
   const appendZoneCenter = (appendZoneBox?.y ?? 0) + (appendZoneBox?.height ?? 0) / 2;
@@ -117,6 +118,7 @@ test("previews an insertion position before revealing its actions", async ({ pag
   await expect(insertZone.locator(".line-insert-actions")).toHaveCSS("opacity", "0");
   await insertZone.hover();
   await expect(insertZone).not.toHaveClass(/is-revealed/);
+  await expect(insertZone.getByRole("button", { name: "発話行を追加", exact: true })).toBeVisible();
   await expect(insertZone).toHaveCSS("height", "9px");
   const preview = await insertZone.evaluate((element) => {
     const style = getComputedStyle(element, "::after");

@@ -170,16 +170,14 @@ participating_casts の profile、一人称・二人称・呼び方・relations�
                 "gap_seconds": [request.performance_gap_min, request.performance_gap_max],
                 "negative_gap_allowed": request.overlapping_speech,
             },
-            "allowed_emojis": sorted(allowed_ai_emojis) if deps.emoji_enabled_for_request(request) else [],
+            # The system prompt already lists the allowed emojis; only their absence is stated here.
+            **({} if deps.emoji_enabled_for_request(request) else {"allowed_emojis": []}),
             "emoji_enabled_by_cast": emoji_enabled_by_alias,
             "simultaneous_cues_enabled": request.simultaneous_cues,
             "filler_guidance": filler_guidance,
         }},
         {"participating_casts": cast_context},
-        {"story_bible_and_global_outline": {
-            "story_bible": plan.get("story_bible", ""),
-            "global_chapter_outline": deps.compact_draft_chapter_outline(plan.get("chapters", [])),
-        }},
+        {"story_bible_and_global_outline": deps.draft_story_outline_context(plan, request.theme)},
         {"current_packet": packet_chapters},
         {"previous_chapter_state": continuity_state or "（最初の章。前章はない）"},
         {"completion_ledger": completion_ledger or {

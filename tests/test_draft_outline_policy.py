@@ -55,5 +55,21 @@ class DraftOutlinePlanningTests(unittest.TestCase):
         self.assertNotIn(request.theme, beats)
 
 
+class DraftStoryOutlineContextTests(unittest.TestCase):
+    def test_a_story_bible_that_repeats_the_theme_is_not_sent_twice(self) -> None:
+        from server.modules.draft_planning import draft_story_outline_context
+        chapters = [{"title": "導入", "objective": "目的", "closing_state": "終わり",
+                     "novelty_requirement": "新しい出来事を一つ入れる。", "beats": ["b"]}]
+        theme = "雨宿りをきっかけに二人が本音を話す。"
+        repeated = draft_story_outline_context({"story_bible": theme, "chapters": chapters}, theme)
+        self.assertNotIn("story_bible", repeated)
+        self.assertEqual(repeated["global_chapter_outline"],
+                         [{"chapter": 1, "title": "導入", "objective": "目的", "closing_state": "終わり"}])
+        truncated = draft_story_outline_context({"story_bible": theme[:6], "chapters": []}, theme)
+        self.assertNotIn("story_bible", truncated)
+        own = draft_story_outline_context({"story_bible": "二人は幼なじみで、駅で再会する。", "chapters": []}, theme)
+        self.assertEqual(own["story_bible"], "二人は幼なじみで、駅で再会する。")
+
+
 if __name__ == "__main__":
     unittest.main()

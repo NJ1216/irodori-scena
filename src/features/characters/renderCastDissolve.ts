@@ -6,7 +6,8 @@ import "../../styles/particle-deletion.css";
 export const gpuParticleLimit = castParticleLimit;
 export const maximumGpuParticleLimit = 10_000;
 export type DissolveMetrics = { preparationMs: number; particleCount: number; initialParticleCount: number; renderer: "webgl2" | "canvas2d" | "dom"; fallbackReason?: string; drawMedianMs: number; drawP95Ms: number; frameMedianMs: number; frameP95Ms: number };
-type DissolveOptions = { particleLimit?: number; tintParticles?: boolean; onMetrics?: (metrics: DissolveMetrics) => void };
+/** inkOnly: grains come from text, icons and lines, not from the flat paper they sit on (the paper still fades). */
+type DissolveOptions = { particleLimit?: number; tintParticles?: boolean; inkOnly?: boolean; onMetrics?: (metrics: DissolveMetrics) => void };
 function brandTint(reference: HTMLCanvasElement): [number, number, number] | undefined {
   const match = /^#([\da-f]{6})$/i.exec(getComputedStyle(reference).getPropertyValue("--scena-brand").trim());
   if (!match) return undefined;
@@ -18,7 +19,7 @@ function percentile(values: number[], fraction: number) {
   return sorted[Math.ceil(sorted.length * fraction) - 1];
 }
 
-function prepareGroups(snapshots: CastSnapshot[], limit: number, tint?: readonly [number, number, number]): ParticleGroup[] {
+function prepareGroups(snapshots: CastSnapshot[], limit: number, tint?: readonly [number, number, number], inkOnly = false): ParticleGroup[] {
   const totalPixels = snapshots.reduce((sum, image) => sum + image.canvas.width * image.canvas.height, 0);
   let remaining = limit;
   return snapshots.map((snapshot, index) => {
@@ -26,7 +27,7 @@ function prepareGroups(snapshots: CastSnapshot[], limit: number, tint?: readonly
     if (!source) throw new Error("Canvas unavailable");
     const allocation = index === snapshots.length - 1 ? remaining : Math.min(remaining, Math.floor((limit * snapshot.canvas.width * snapshot.canvas.height) / totalPixels));
     remaining -= allocation;
-    return { snapshot, particles: createCastParticles(source.getImageData(0, 0, snapshot.canvas.width, snapshot.canvas.height).data, snapshot.canvas.width, snapshot.canvas.height, Math.random, allocation, tint) };
+    return { snapshot, particles: createCastParticles(source.getImageData(0, 0, snapshot.canvas.width, snapshot.canvas.height).data, snapshot.canvas.width, snapshot.canvas.height, Math.random, allocation, tint, inkOnly) };
   });
 }
 
@@ -94,7 +95,7 @@ export function renderCastDissolve(canvas: HTMLCanvasElement, input: CastSnapsho
   let groups: ParticleGroup[];
   let gpu: ParticleGpu | null = null;
   try {
-    groups = prepareGroups(snapshots, maxParticles, options.tintParticles ? brandTint(canvas) : undefined);
+    groups = prepareGroups(snapshots, maxParticles, options.tintParticles ? brandTint(canvas) : undefined, options.inkOnly);
     gpu = createParticleGpuLayer(canvas, groups);
   } catch (error) {
     backgrounds.forEach((background) => background.remove());

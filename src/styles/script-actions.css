@@ -382,6 +382,9 @@
   line-height: 1;
   transform: translate(-50%, -50%);
 }
+.insert-zone:not(:hover):not(.is-append) > .insert-marker {
+  display: none;
+}
 .insert-marker:hover,
 .insert-marker:focus-visible {
   color: var(--scena-surface-raised);

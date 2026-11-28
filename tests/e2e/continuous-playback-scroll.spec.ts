@@ -214,3 +214,19 @@ test("completes negative-gap playback through the shared media fetch path", asyn
 
   await expect(page.locator(".notice-screen-reader-text")).toHaveText("連続再生が終わりました。", { timeout: 5_000 });
 });
+
+test("following the last line keeps the page itself in place", async ({ page }) => {
+  // 2026-11-28: the hidden labels of the per-line gap controls were positioned against the page, not
+  // the script canvas, so they stretched the page below the window. Centering the last line during
+  // continuous playback then scrolled the whole page and left a blank band under the script.
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await installMockApi(page, { lineCount: 30, generatedTake: true, completeTakes: true });
+  await page.goto("/");
+  const last = page.locator('[data-line-id="line-30"]');
+  await expect(last).toHaveCount(1);
+  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBe(await page.evaluate(() => document.documentElement.clientHeight));
+  await last.evaluate((element) => element.scrollIntoView({ behavior: "instant", block: "center" }));
+  expect(await page.evaluate(() => document.documentElement.scrollTop)).toBe(0);
+  const canvas = page.locator(".script-canvas");
+  expect(await canvas.evaluate((element) => element.scrollHeight - element.clientHeight - element.scrollTop)).toBeLessThanOrEqual(1);
+});

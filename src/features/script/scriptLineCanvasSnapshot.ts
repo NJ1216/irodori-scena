@@ -1,6 +1,9 @@
 import { castSnapshotMaxPixels, snapshotSvgDocument, type CastSnapshot } from "../characters/castSnapshot";
 import { rasterizeSnapshotSvg, snapshotImageUrl } from "../characters/castSnapshotResources";
 import { ParticlePreparationFailure } from "../shared/particleDeletionDiagnostics";
+import { createCaptureYield, createSnapshotStyler, type SnapshotStyler } from "../shared/snapshotStyles";
+
+type CopyContext = { visible: DOMRect; crop: boolean; outsideCrop: Map<HTMLElement, boolean>; imageTasks: Promise<void>[]; signal: AbortSignal; styler: SnapshotStyler };
 
 function isOutsideCrop(original: HTMLElement, visible: DOMRect, outsideCrop: Map<HTMLElement, boolean>) {
   const line = original.closest<HTMLElement>(".line-card");
@@ -12,11 +15,10 @@ function isOutsideCrop(original: HTMLElement, visible: DOMRect, outsideCrop: Map
   return outsideCrop.get(line) ?? false;
 }
 
-function copyVisibleElement(original: HTMLElement, copy: HTMLElement, visible: DOMRect, crop: boolean, outsideCrop: Map<HTMLElement, boolean>, imageTasks: Promise<void>[], signal: AbortSignal) {
+function copyVisibleElement(original: HTMLElement, copy: HTMLElement, { visible, crop, outsideCrop, imageTasks, signal, styler }: CopyContext) {
   const outside = crop && isOutsideCrop(original, visible, outsideCrop);
   if (outside && !original.matches(".line-card")) return;
-  const computed = getComputedStyle(original);
-  for (const property of computed) copy.style.setProperty(property, computed.getPropertyValue(property));
+  styler(original, copy);
   copy.style.animation = "none";
   copy.style.transition = "none";
   copy.removeAttribute("id");
@@ -28,12 +30,13 @@ function copyVisibleElement(original: HTMLElement, copy: HTMLElement, visible: D
     return;
   }
   if (original instanceof HTMLImageElement) {
-    imageTasks.push(
-      snapshotImageUrl(original.currentSrc || original.src, signal).then((url) => {
-        copy.removeAttribute("srcset");
-        copy.setAttribute("src", url);
-      }),
-    );
+    const task = snapshotImageUrl(original.currentSrc || original.src, signal).then((url) => {
+      copy.removeAttribute("srcset");
+      copy.setAttribute("src", url);
+    });
+    // A later pause may abort the capture before these are awaited.
+    task.catch(() => undefined);
+    imageTasks.push(task);
   } else if (original instanceof HTMLTextAreaElement && copy instanceof HTMLTextAreaElement) {
     copy.textContent = original.value;
   } else if (original instanceof HTMLInputElement && copy instanceof HTMLInputElement) {
@@ -55,9 +58,12 @@ async function captureScriptCanvas(card: HTMLElement, signal: AbortSignal, crop?
   const copies = [clone, ...clone.querySelectorAll<HTMLElement>("*")];
   const imageTasks: Promise<void>[] = [];
   const outsideCrop = new Map<HTMLElement, boolean>();
-  originals.forEach((original, index) => {
-    copyVisibleElement(original, copies[index], visible, Boolean(crop), outsideCrop, imageTasks, signal);
-  });
+  const context: CopyContext = { visible, crop: Boolean(crop), outsideCrop, imageTasks, signal, styler: createSnapshotStyler(originals) };
+  const pause = createCaptureYield();
+  for (const [index, original] of originals.entries()) {
+    await pause(signal);
+    copyVisibleElement(original, copies[index], context);
+  }
   try {
     await Promise.all(imageTasks);
   } catch (error) {

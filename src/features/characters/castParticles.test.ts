@@ -63,3 +63,22 @@ it("fills the budget for sparse text-like ink while reaching every row band", ()
   expect(new Set(particles.map((particle) => `${particle.x},${particle.y}`)).size).toBe(10_000);
   for (const y of bands) expect(particles.some((particle) => particle.y === y || particle.y === y + 1)).toBe(true);
 });
+
+it("takes grains from ink, not from the flat paper it sits on, when asked", () => {
+  const width = 100,
+    height = 20;
+  const pixels = new Uint8ClampedArray(width * height * 4);
+  for (let pixel = 0; pixel < width * height; pixel++) pixels.set([253, 252, 255, 255], pixel * 4);
+  for (let x = 10; x < 90; x++) for (let y = 8; y < 10; y++) pixels.set([40, 36, 70, 255], (y * width + x) * 4);
+  const ink = createCastParticles(pixels, width, height, Math.random, 500, undefined, true);
+  expect(ink.length).toBe(160);
+  expect(ink.every((particle) => particle.color === "rgba(40,36,70,1)")).toBe(true);
+  const everything = createCastParticles(pixels, width, height, Math.random, 500);
+  expect(everything.some((particle) => particle.color === "rgba(253,252,255,1)")).toBe(true);
+});
+
+it("keeps the paper as the source when it carries no ink", () => {
+  const pixels = new Uint8ClampedArray(30 * 10 * 4).fill(255);
+  for (let x = 0; x < 5; x++) pixels.set([0, 0, 0, 255], x * 4);
+  expect(createCastParticles(pixels, 30, 10, Math.random, 100, undefined, true)).toHaveLength(100);
+});

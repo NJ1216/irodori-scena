@@ -4,7 +4,7 @@ import type { Character, DialogueLine, Scene, Take } from "../../types";
 import { LINE_INSERT_REVEAL_DELAY_MS } from "../shared/studio-utils";
 import { prepareScriptSceneSnapshot } from "./scriptSceneCapture";
 
-import { LineEditor } from "./LineEditor";
+import { StableLineEditor } from "./StableLineEditor";
 import { VirtualSceneCues } from "./VirtualSceneCues";
 import type { LineTextEditorElement } from "./EmojiTextArea";
 import { cueMetadataByLine, sceneDialogueCues } from "./dialogueCues";
@@ -224,7 +224,7 @@ export function SceneEditor({
     );
     return (
       <Fragment key={line.id}>
-        <LineEditor
+        <StableLineEditor
           line={line}
           previewLine={previewLines?.get(line.id)}
           lineNumber={lineNumbers.get(line.id) ?? null}
@@ -359,7 +359,6 @@ function SceneHeader({ scene, sceneLabel, busy, onUpdate, onDelete }: { scene: S
 
 function LineInsertControl({ label, append = false, beforeLineId, onInsert, onAssist }: { label: string; append?: boolean; beforeLineId?: string; onInsert: () => Promise<void>; onAssist: () => void }) {
   const [revealed, setRevealed] = useState(false);
-  const [hovered, setHovered] = useState(false);
   const timer = useRef<number | null>(null);
   const clearTimer = () => {
     if (timer.current !== null) {
@@ -373,16 +372,15 @@ function LineInsertControl({ label, append = false, beforeLineId, onInsert, onAs
       data-line-drop-before={beforeLineId ?? ""}
       onMouseEnter={() => {
         clearTimer();
-        setHovered(true);
         timer.current = window.setTimeout(() => setRevealed(true), LINE_INSERT_REVEAL_DELAY_MS);
       }}
       onMouseLeave={() => {
         clearTimer();
-        setHovered(false);
         setRevealed(false);
       }}
     >
-      {(append || hovered) && !revealed && (
+      {/* Shown on hover by CSS: a hover state re-rendered the zone each time a scrolled line passed under the pointer. */}
+      {!revealed && (
         <button type="button" className="insert-marker" aria-label="発話行を追加" onClick={() => void onInsert()}>
           ＋
         </button>
@@ -401,7 +399,6 @@ function LineInsertControl({ label, append = false, beforeLineId, onInsert, onAs
 
 export function SceneInsertControl({ label, onInsert, empty = false }: { label: string; onInsert: () => void; empty?: boolean }) {
   const [revealed, setRevealed] = useState(false);
-  const [hovered, setHovered] = useState(false);
   const timer = useRef<number | null>(null);
   const clearTimer = () => {
     if (timer.current !== null) {
@@ -414,7 +411,6 @@ export function SceneInsertControl({ label, onInsert, empty = false }: { label: 
       className={`insert-zone scene-insert-zone ${empty ? "empty-scene-zone" : ""} ${revealed ? "is-revealed" : ""}`}
       onMouseEnter={() => {
         clearTimer();
-        setHovered(true);
         if (empty) {
           setRevealed(true);
           return;
@@ -423,11 +419,10 @@ export function SceneInsertControl({ label, onInsert, empty = false }: { label: 
       }}
       onMouseLeave={() => {
         clearTimer();
-        setHovered(false);
         setRevealed(false);
       }}
     >
-      {!empty && hovered && !revealed && (
+      {!empty && !revealed && (
         <button type="button" className="insert-marker" aria-label="シーンを追加" onClick={onInsert}>
           ＋
         </button>

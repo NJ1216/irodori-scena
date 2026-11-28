@@ -1,4 +1,5 @@
 import { rasterizeSnapshotSvg, snapshotImageUrl } from "./castSnapshotResources";
+import { createCaptureYield, createSnapshotStyler, type SnapshotStyler } from "../shared/snapshotStyles";
 
 export type CastSnapshot = { canvas: HTMLCanvasElement; width: number; height: number; left: number; top: number };
 const paperSelector = ".cast-notebook-spread, .cast-notebook-page";
@@ -9,9 +10,8 @@ export function snapshotSvgDocument(xml: string, width: number, height: number) 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><foreignObject width="100%" height="100%">${xml}</foreignObject></svg>`;
 }
 
-function copyAppearance(source: HTMLElement, target: HTMLElement) {
-  const computed = getComputedStyle(source);
-  for (const property of computed) target.style.setProperty(property, computed.getPropertyValue(property));
+function copyAppearance(styler: SnapshotStyler, source: HTMLElement, target: HTMLElement) {
+  styler(source, target);
   target.style.animation = "none";
   target.style.transition = "none";
   target.style.boxShadow = "none";
@@ -33,19 +33,23 @@ async function cloneNotebook(source: HTMLElement, signal: AbortSignal) {
   const originals = [source, ...source.querySelectorAll<HTMLElement>("*")];
   const copies = [clone, ...clone.querySelectorAll<HTMLElement>("*")];
   const images: Promise<void>[] = [];
-  originals.forEach((original, index) => {
+  const styler = createSnapshotStyler(originals);
+  const pause = createCaptureYield();
+  for (const [index, original] of originals.entries()) {
+    await pause(signal);
     const copy = copies[index];
-    copyAppearance(original, copy);
+    copyAppearance(styler, original, copy);
     if (original instanceof HTMLImageElement) {
-      images.push(
-        snapshotImageUrl(original.currentSrc || original.src, signal).then((url) => {
-          copy.removeAttribute("srcset");
-          copy.removeAttribute("loading");
-          copy.setAttribute("src", url);
-        }),
-      );
+      const task = snapshotImageUrl(original.currentSrc || original.src, signal).then((url) => {
+        copy.removeAttribute("srcset");
+        copy.removeAttribute("loading");
+        copy.setAttribute("src", url);
+      });
+      // A later pause may abort the capture before these are awaited.
+      task.catch(() => undefined);
+      images.push(task);
     }
-  });
+  }
   await Promise.all(images);
   signal.throwIfAborted();
   // This notebook uses installed system fonts, preserved by computed font-family.

@@ -68,7 +68,7 @@ class DraftCastEmojiPolicyTests(unittest.TestCase):
             )
         sections = completion.call_args.kwargs["user"]["sections"]
         settings = next(section["request_settings"] for section in sections if "request_settings" in section)
-        self.assertEqual(settings["allowed_emojis"], ["😊", "😌"])
+        self.assertNotIn("allowed_emojis", settings)  # listed once, in the system prompt
         self.assertEqual(settings["emoji_enabled_by_cast"], {"A": True, "B": False})
         self.assertEqual(next(section["participating_casts"] for section in sections if "participating_casts" in section), cast_context)
         system = completion.call_args.kwargs["system"]
@@ -76,6 +76,7 @@ class DraftCastEmojiPolicyTests(unittest.TestCase):
         self.assertIn("`emoji=😆@😆`", system)
         self.assertIn("独立AI演出と同じ基準", system)
         self.assertIn("割り込むB自身へ負値を書くと", system)
+        self.assertIn("許可EMOJI: 😊、😌。", system)
 
     def test_integrated_emoji_is_applied_without_a_second_direction_call(self) -> None:
         request = DraftRequest(

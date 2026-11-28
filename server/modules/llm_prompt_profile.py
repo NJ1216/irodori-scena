@@ -17,6 +17,46 @@ def canonical_prompt_json(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
 
 
+# Prompt entries that stay the same for every call of one job. A prompt that opens with a run of
+# them has a stable prefix a provider may cache; ordering is never changed to create one.
+STABLE_PROMPT_ENTRIES = frozenset({
+    "theme_or_situation", "request_settings", "participating_casts", "story_bible_and_global_outline",
+    "character_id", "immutable_character_core", "author_idea",
+})
+
+
+def stable_prompt_prefix(content: str) -> str | None:
+    """Return the leading text of a canonical prompt that holds only stable entries, if any.
+
+    The prefix is cut from the serialized text itself and checked against it, so joining the
+    prefix and the rest always gives back the exact original.
+    """
+    try:
+        value = json.loads(content)
+    except (TypeError, ValueError):
+        return None
+    if not isinstance(value, dict) or not value:
+        return None
+    sections = value.get("sections") if len(value) == 1 else None
+    if isinstance(sections, list):
+        leading = []
+        for section in sections:
+            if not (isinstance(section, dict) and len(section) == 1 and next(iter(section)) in STABLE_PROMPT_ENTRIES):
+                break
+            leading.append(canonical_prompt_json(section))
+        prefix = '{"sections":[' + ",".join(leading) + ","
+    else:
+        leading = []
+        for key, item in value.items():
+            if key not in STABLE_PROMPT_ENTRIES:
+                break
+            leading.append(canonical_prompt_json(key) + ":" + canonical_prompt_json(item))
+        prefix = "{" + ",".join(leading) + ","
+    if not leading or len(prefix) >= len(content) or not content.startswith(prefix):
+        return None
+    return prefix
+
+
 def _digest(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
@@ -143,5 +183,5 @@ deps.register(
     __name__,
     ["INTEGRATED_DRAFT_PROTOCOL_VERSION", "PROMPT_PROTOCOL_VERSION", "begin_llm_observation", "cache_metric_delta",
      "canonical_prompt_json", "cast_context_fingerprint", "describe_llm_prompt",
-     "finish_llm_observation"],
+     "finish_llm_observation", "stable_prompt_prefix"],
 )

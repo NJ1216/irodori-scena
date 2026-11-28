@@ -11,6 +11,8 @@ import re
 from typing import Any, Iterator
 from urllib.parse import quote, urlsplit
 
+from server.modules.llm_prompt_profile import stable_prompt_prefix
+
 ANTHROPIC_HOST = "api.anthropic.com"
 ANTHROPIC_VERSION = "2026-10-21"
 _ROOT_PATHS = {"", "/v1"}
@@ -88,6 +90,21 @@ def _schema(value: Any) -> Any:
     return value
 
 
+_CACHE = {"type": "ephemeral"}
+
+
+def _user_content(text: str) -> str | list[dict[str, Any]]:
+    """Split off the job-constant opening of a prompt (casts, theme, outline) and cache it.
+
+    The two blocks join back to the exact original text; the per-call rest stays uncached.
+    """
+    prefix = stable_prompt_prefix(text)
+    if prefix is None:
+        return text
+    return [{"type": "text", "text": prefix, "cache_control": dict(_CACHE)},
+            {"type": "text", "text": text[len(prefix):]}]
+
+
 def messages_payload(payload: dict[str, Any]) -> dict[str, Any]:
     """Build a Messages request; sampling, seed and OpenAI-only options are not sent."""
     system: list[str] = []
@@ -100,7 +117,8 @@ def messages_payload(payload: dict[str, Any]) -> dict[str, Any]:
         if message.get("role") in {"system", "developer"}:
             system.append(text)
         else:
-            messages.append({"role": "assistant" if message.get("role") == "assistant" else "user", "content": text})
+            messages.append({"role": "assistant" if message.get("role") == "assistant" else "user",
+                             "content": _user_content(text) if message.get("role") == "user" else text})
     model = str(payload.get("model") or "")
     body: dict[str, Any] = {
         "model": model,
@@ -108,7 +126,9 @@ def messages_payload(payload: dict[str, Any]) -> dict[str, Any]:
         "messages": messages,
     }
     if system:
-        body["system"] = "\n\n".join(system)
+        # The fixed instructions come first and repeat across a job's calls; cache them.
+        # A prompt below the model's minimum is simply not cached.
+        body["system"] = [{"type": "text", "text": "\n\n".join(system), "cache_control": dict(_CACHE)}]
     if payload.get("stream"):
         body["stream"] = True
     output_config: dict[str, Any] = {}

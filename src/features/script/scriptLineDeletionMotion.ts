@@ -57,6 +57,7 @@ export function beginScriptLineDeletion(ids: readonly string[]) {
     overlay.append(canvas);
     stopAnimation = renderCastDissolve(canvas, images, undefined, scriptDeletionDurationMs, {
       tintParticles: true,
+      inkOnly: true,
       onMetrics: (metrics) =>
         recordParticleDeletionDiagnostic({
           target: "line",

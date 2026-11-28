@@ -35,7 +35,7 @@ $env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [En
 if (!(Get-Command uv.exe -ErrorAction SilentlyContinue)) { throw 'uv was installed but is not discoverable; inspect its location before continuing' }
 Invoke-Checked 'uv.exe' @('python', 'install', '3.13.12')
 $prefix = Join-Path $env:LOCALAPPDATA 'irodori-scena-dev-tools'
-Invoke-Checked 'npm.cmd' @('install', '--global', '--prefix', $prefix, '--ignore-scripts', 'pnpm@latest')
+Invoke-Checked 'npm.cmd' @('install', '--global', '--prefix', $prefix, 'pnpm@latest')
 $env:Path = $prefix + ';' + $env:Path
 Invoke-Checked 'rustc.exe' @('--version')
 Invoke-Checked 'cargo.exe' @('--version')
